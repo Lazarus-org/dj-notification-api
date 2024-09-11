@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "dj-notification-api"
+version = "0.1.0"
+description = "dj-notification-api is a Django package developed by Lazarus for efficiently handling notifications through various APIs"
+authors = ["ARYAN-NIKNEZHAD <aryan513966@gmail.com>", "MEHRSHAD-MIRSHEKARY <mehrshad_mirshekary@email.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
