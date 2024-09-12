@@ -47,7 +47,10 @@ class NotificationRecipient(Model):
         verbose_name_plural: str = _("Notification Recipients")
         unique_together: Tuple[str, str] = ("recipient", "notification")
         indexes: List[Index] = [
-            Index(fields=["notification", "recipient"]),
+            Index(
+                fields=["notification", "recipient"],
+                name="notification_recipient_idx",
+            ),
         ]
 
     def __str__(self) -> str:
