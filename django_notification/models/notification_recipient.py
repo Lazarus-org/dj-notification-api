@@ -26,14 +26,14 @@ class NotificationRecipient(Model):
              including details of the associated notification and the recipient.
     """
 
-    notification: ForeignKey["Notification"] = ForeignKey(
+    notification = ForeignKey(
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that is being sent."),
         on_delete=CASCADE,
         related_name="notification_recipients",
     )
-    recipient: ForeignKey[settings.AUTH_USER_MODEL] = ForeignKey(
+    recipient = ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("Recipient"),
         help_text=_("The user who will receive the notification."),

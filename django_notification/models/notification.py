@@ -63,7 +63,7 @@ class Notification(Model):
         timestamp (DateTimeField): Time when the notification was created.
     """
 
-    recipient: ManyToManyField(settings.AUTH_USER_MODEL) = ManyToManyField(
+    recipient = ManyToManyField(
         settings.AUTH_USER_MODEL,
         through=NotificationRecipient,
         verbose_name=_("Recipient"),
@@ -71,48 +71,48 @@ class Notification(Model):
         related_name="notifications",
         blank=True,
     )
-    group: ManyToManyField(Group) = ManyToManyField(
+    group = ManyToManyField(
         Group,
         verbose_name=_("Group"),
         help_text=_("The groups that will receive the notification."),
         blank=True,
     )
-    verb: CharField = CharField(
+    verb = CharField(
         verbose_name=_("Verb"),
         help_text=_(
             "The action verb associated with the notification, e.g., 'liked', 'commented'."
         ),
         max_length=127,
     )
-    description: TextField = TextField(
+    description = TextField(
         verbose_name=_("Description"),
         help_text=_("The description of the notification."),
         max_length=512,
         blank=True,
         null=True,
     )
-    status: CharField = CharField(
+    status = CharField(
         choices=NotificationStatus.choices,
         verbose_name=_("Status"),
         help_text=_("The current status of the notification."),
         max_length=15,
         default=NotificationStatus.INFO,
     )
-    actor_content_type: ForeignKey[ContentType] = ForeignKey(
+    actor_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Actor ContentType"),
         help_text=_("The content type of the actor object."),
         on_delete=CASCADE,
         related_name="actor_content_type_notifications",
     )
-    actor_object_id: PositiveIntegerField = PositiveIntegerField(
+    actor_object_id = PositiveIntegerField(
         verbose_name=_("Actor object ID"),
         help_text=_("The ID of the actor object."),
     )
-    actor: GenericForeignKey = GenericForeignKey(
+    actor = GenericForeignKey(
         "actor_content_type", "actor_object_id"
     )
-    target_content_type: ForeignKey[ContentType] = ForeignKey(
+    target_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Target ContentType"),
         help_text=_("The content type of the target object."),
@@ -121,16 +121,16 @@ class Notification(Model):
         blank=True,
         null=True,
     )
-    target_object_id: PositiveIntegerField = PositiveIntegerField(
+    target_object_id = PositiveIntegerField(
         verbose_name=_("Target object ID"),
         help_text=_("The ID of the target object."),
         blank=True,
         null=True,
     )
-    target: GenericForeignKey = GenericForeignKey(
+    target = GenericForeignKey(
         "target_content_type", "target_object_id"
     )
-    action_object_content_type: ForeignKey[ContentType] = ForeignKey(
+    action_object_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Action object ContentType"),
         help_text=_("The content type of the action object."),
@@ -139,33 +139,33 @@ class Notification(Model):
         blank=True,
         null=True,
     )
-    action_object_object_id: PositiveIntegerField = PositiveIntegerField(
+    action_object_object_id = PositiveIntegerField(
         verbose_name=_("Action object ID"),
         help_text=_("The ID of the action object."),
         blank=True,
         null=True,
     )
-    action_object: GenericForeignKey = GenericForeignKey(
+    action_object = GenericForeignKey(
         "action_object_content_type", "action_object_object_id"
     )
-    link: URLField = URLField(
+    link = URLField(
         verbose_name=_("Link"),
         help_text=_("A URL associated with the action."),
         blank=True,
         null=True,
     )
-    is_sent: BooleanField = BooleanField(
+    is_sent = BooleanField(
         verbose_name=_("Is sent"),
         help_text=_("indicate whether the notification has been sent."),
         default=False,
     )
-    seen_by: ManyToManyField(settings.AUTH_USER_MODEL) = ManyToManyField(
+    seen_by = ManyToManyField(
         settings.AUTH_USER_MODEL,
         through=NotificationSeen,
         verbose_name=_("Seen by"),
         help_text=_("Users who have seen the notification."),
     )
-    public: BooleanField = BooleanField(
+    public = BooleanField(
         verbose_name=_("Public"),
         help_text=_("Indicate whether the notification is public."),
         default=True,
@@ -176,7 +176,7 @@ class Notification(Model):
         blank=True,
         null=True,
     )
-    timestamp: DateTimeField = DateTimeField(
+    timestamp = DateTimeField(
         verbose_name=_("Timestamp"),
         help_text=_("The time when the notification was created."),
         default=timezone.now,

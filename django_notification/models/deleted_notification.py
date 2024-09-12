@@ -36,21 +36,21 @@ class DeletedNotification(Model):
             Saves the object to the database after checking if the user has permission to delete the notification.
     """
 
-    notification: ForeignKey["Notification"] = ForeignKey(
+    notification = ForeignKey(
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that was deleted."),
         on_delete=CASCADE,
         related_name="deleted",
     )
-    user: ForeignKey[settings.AUTH_USER_MODEL] = ForeignKey(
+    user = ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
         help_text=_("The user who deleted the notification."),
         on_delete=CASCADE,
         related_name="deleted_notifications",
     )
-    deleted_at: DateTimeField = DateTimeField(
+    deleted_at = DateTimeField(
         verbose_name=_("Deleted at"),
         help_text=_("The time when the notification was deleted."),
         default=timezone.now,

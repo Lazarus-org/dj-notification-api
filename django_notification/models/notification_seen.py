@@ -50,21 +50,21 @@ class NotificationSeen(Model):
         when a specific user saw a notification or how many users have seen it.
     """
 
-    notification: ForeignKey["Notification"] = ForeignKey(
+    notification = ForeignKey(
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that was seen."),
         on_delete=CASCADE,
         related_name="seen",
     )
-    user: ForeignKey[settings.AUTH_USER_MODEL] = ForeignKey(
+    user = ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
         help_text=_("The recipient or a group member who has seen the notification."),
         on_delete=CASCADE,
         related_name="seen_notifications",
     )
-    seen_at: DateTimeField = DateTimeField(
+    seen_at = DateTimeField(
         verbose_name=_("Seen at"),
         help_text=_("The time that the notification was seen."),
         default=timezone.now,
