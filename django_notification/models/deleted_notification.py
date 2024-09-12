@@ -62,7 +62,10 @@ class DeletedNotification(Model):
         verbose_name_plural: str = _("Deleted Notifications")
         unique_together: Tuple[str, str] = ("user", "notification")
         indexes: List[Index] = [
-            Index(fields=["notification", "user"]),
+            Index(
+                fields=["notification", "user"],
+                name="deleted_notification_user_idx",
+            ),
         ]
 
     def __str__(self) -> str:

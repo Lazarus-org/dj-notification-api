@@ -76,7 +76,10 @@ class NotificationSeen(Model):
         verbose_name_plural: str = _("Notifications Seen")
         unique_together: Tuple[str, str] = ("notification", "user")
         indexes: List[Index] = [
-            Index(fields=["notification", "user"]),
+            Index(
+                fields=["notification", "user"],
+                name="notification_seen_user_idx",
+            ),
         ]
         ordering: Tuple[str] = ("-seen_at",)
 
