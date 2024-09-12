@@ -30,6 +30,7 @@ from django_notification.models.helper.enums.status_choices import NotificationS
 from django_notification.models.permissions.notification_permission import (
     NotificationPermission,
 )
+from django_notification.repository.queryset.notification import NotificationQuerySet
 
 
 class Notification(Model):
@@ -183,6 +184,7 @@ class Notification(Model):
         db_index=True,
     )
     objects = Manager()
+    queryset = NotificationQuerySet.as_manager()
 
     class Meta:
         db_table: str = "notification"
