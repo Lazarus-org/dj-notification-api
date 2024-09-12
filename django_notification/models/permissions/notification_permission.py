@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 import logging
 
+from django_notification.utils.user_model import get_username
+
 
 class NotificationPermission:
     """
@@ -52,7 +54,7 @@ class NotificationPermission:
             PermissionError: If the user does not have permission.
         """
         if not self.user_has_permission(user):
-            username = getattr(user, user.USERNAME_FIELD, "Unknown")
+            username = get_username(user)
             logging.warning(
                 "User %s (ID: %s) tried to %s notification %s without permission.",
                 username,
