@@ -1,4 +1,6 @@
 import logging
+from typing import Tuple
+
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -183,10 +185,10 @@ class Notification(Model):
     objects = Manager()
 
     class Meta:
-        db_table = "notification"
-        verbose_name = _("Notification")
-        verbose_name_plural = _("Notifications")
-        ordering = ("-timestamp",)
+        db_table: str = "notification"
+        verbose_name: str = _("Notification")
+        verbose_name_plural: str = _("Notifications")
+        ordering: Tuple[str] = ("-timestamp",)
 
     def __str__(self) -> str:
         """
