@@ -1,0 +1,2 @@
+from .notification import NotificationAdmin
+from .deleted_notification import DeletedNotificationAdmin

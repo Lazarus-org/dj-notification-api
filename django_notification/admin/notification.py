@@ -1,4 +1,7 @@
+from typing import List
 from django.contrib import admin
+from django.http import HttpRequest
+from django.db.models import QuerySet
 
 from django_notification.mixins import ReadOnlyAdminMixin
 from django_notification.models.notification import (
@@ -10,44 +13,102 @@ from django_notification.utils.user_model import USERNAME_FIELD
 
 
 class NotificationRecipientInline(admin.TabularInline):
+    """
+    Inline admin interface for NotificationRecipient model.
+
+    Attributes:
+        model: The model associated with this inline.
+        extra: Number of empty forms to display.
+    """
+
     model = NotificationRecipient
     extra = 0
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """
         Override the get_queryset method to select related fields for performance optimization.
+
+        Args:
+            request: The current HTTP request.
+
+        Returns:
+            A queryset with selected related fields for performance optimization.
         """
         return super().get_queryset(request).select_related("notification", "recipient")
 
 
 class NotificationSeenInline(admin.TabularInline):
+    """
+    Inline admin interface for NotificationSeen model.
+
+    Attributes:
+        model: The model associated with this inline.
+        extra: Number of empty forms to display.
+    """
+
     model = NotificationSeen
     extra = 0
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """
         Override the get_queryset method to select related fields for performance optimization.
+
+        Args:
+            request: The current HTTP request.
+
+        Returns:
+            A queryset with selected related fields for performance optimization.
         """
         return super().get_queryset(request).select_related("notification", "user")
 
 
 @admin.register(Notification)
 class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
-    actions = ["mark_as_sent"]
-    inlines = [NotificationRecipientInline, NotificationSeenInline]
-    list_display = ["id", "get_title", "is_sent", "public", "timestamp"]
-    list_filter = ["is_sent", "public", "timestamp"]
-    list_per_page = 10
-    search_fields = ["id", f"recipient__{USERNAME_FIELD}", "group__name"]
+    """
+    Admin interface for managing Notification model.
 
-    def get_title(self, instance):
+    Attributes:
+        actions: List of actions available for the admin.
+        inlines: List of inline admin interfaces associated with this model.
+        list_display: Fields to display in the list view.
+        list_filter: Fields to filter the list view.
+        list_per_page: Number of items per page in the list view.
+        search_fields: Fields to search through in the list view.
+    """
+
+    actions: List[str] = ["mark_as_sent"]
+    inlines: List[admin.TabularInline] = [
+        NotificationRecipientInline,
+        NotificationSeenInline,
+    ]
+    list_display: List[str] = ["id", "get_title", "is_sent", "public", "timestamp"]
+    list_filter: List[str] = ["is_sent", "public", "timestamp"]
+    list_per_page: int = 10
+    search_fields: List[str] = ["id", f"recipient__{USERNAME_FIELD}", "group__name"]
+
+    def get_title(self, instance: Notification) -> str:
+        """
+        Retrieve the title of the notification for display in the list view.
+
+        Args:
+            instance: The Notification instance being displayed.
+
+        Returns:
+            A string representation of the notification.
+        """
         return str(instance)
 
     get_title.short_description = "Title"
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         """
         Override the get_queryset method to select related fields for performance optimization.
+
+        Args:
+            request: The current HTTP request.
+
+        Returns:
+            A queryset with selected related fields for performance optimization.
         """
         return (
             super()
@@ -59,10 +120,15 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
             )
         )
 
-    # Admin action to mark selected notifications as sent
-    def mark_as_sent(self, request, queryset):
+    def mark_as_sent(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """
+        Admin action to mark selected notifications as sent.
+
+        Args:
+            request: The current HTTP request.
+            queryset: The queryset of selected notifications.
+        """
         updated = queryset.update(is_sent=True)
         self.message_user(
-            request,
-            f"{updated} notification(s) successfully marked as sent."
+            request, f"{updated} notification(s) successfully marked as sent."
         )
