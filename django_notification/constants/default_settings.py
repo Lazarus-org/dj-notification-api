@@ -19,13 +19,13 @@ class DefaultAPISettings:
     authenticated_user_throttle_rate: str = "30/minute"
     staff_user_throttle_rate: str = "100/minute"
     throttle_class: str = (
-        "notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"
+        "django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"
     )
     pagination_class: str = (
-        "notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
+        "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
     )
     filterset_class: str = (
-        "notification.api.filters.notification_filter.NotificationFilter"
+        "django_notification.api.filters.notification_filter.NotificationFilter"
     )
     extra_permission_class: Optional[str] = None
     parser_classes: List[str] = field(
@@ -37,6 +37,6 @@ class DefaultAPISettings:
     )
 
     ordering_fields: List[str] = field(
-        default_factory=lambda: ["id", "timestamp", "email_sent", "public"]
+        default_factory=lambda: ["id", "timestamp", "public"]
     )
     search_fields: List[str] = field(default_factory=lambda: ["verb", "description"])
