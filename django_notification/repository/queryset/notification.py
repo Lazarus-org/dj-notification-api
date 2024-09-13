@@ -5,7 +5,8 @@ from django.db import transaction
 from django.db.models import QuerySet, Q, Model, JSONField, Subquery
 from rest_framework.generics import get_object_or_404
 
-from django_notification.models import NotificationSeen, DeletedNotification
+from django_notification.models.notification_seen import NotificationSeen
+from django_notification.models.deleted_notification import DeletedNotification
 
 
 class NotificationQuerySet(QuerySet):
