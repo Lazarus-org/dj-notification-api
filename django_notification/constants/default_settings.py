@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Type
-
-from rest_framework.permissions import BasePermission
+from typing import List, Optional
 
 from django_notification.utils.user_model import USERNAME_FIELD, REQUIRED_FIELDS
 
@@ -16,6 +14,8 @@ class DefaultAPISettings:
     user_serializer_fields: List[str] = field(
         default_factory=lambda: [USERNAME_FIELD] + list(REQUIRED_FIELDS)
     )
+    user_serializer_class: Optional[str] = None
+    group_serializer_class: Optional[str] = None
     authenticated_user_throttle_rate: str = "30/minute"
     staff_user_throttle_rate: str = "100/minute"
     throttle_class: str = (
@@ -27,11 +27,16 @@ class DefaultAPISettings:
     filterset_class: str = (
         "notification.api.filters.notification_filter.NotificationFilter"
     )
-    extra_permission_class: Optional[Type[BasePermission]] = None
+    extra_permission_class: Optional[str] = None
+    parser_classes: List[str] = field(
+        default_factory=lambda: [
+            "rest_framework.parsers.JSONParser",
+            "rest_framework.parsers.MultiPartParser",
+            "rest_framework.parsers.FormParser",
+        ]
+    )
 
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "email_sent", "public"]
     )
-    search_fields: List[str] = field(
-        default_factory=lambda: ["verb", "description"]
-    )
+    search_fields: List[str] = field(default_factory=lambda: ["verb", "description"])

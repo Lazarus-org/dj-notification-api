@@ -1,8 +1,13 @@
-from typing import Dict
+from typing import Dict, Type
 
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+    BaseSerializer,
+)
 from django_notification.api.serializers import GroupSerializer, UserSerializer
 from django_notification.models.notification import Notification
+from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
@@ -30,9 +35,23 @@ class NotificationSerializer(ModelSerializer):
         timestamp: Time when the notification was created.
     """
 
-    group = GroupSerializer(many=True, read_only=True)
-    recipient = UserSerializer(many=True, read_only=True)
-    seen_by = UserSerializer(many=True, read_only=True)
+    @staticmethod
+    def group_serializer_class():
+        """
+        Get the serializer class for the group field, either from config or the default.
+        """
+        return config.group_serializer_class or GroupSerializer
+
+    @staticmethod
+    def user_serializer_class() -> Type[BaseSerializer]:
+        """
+        Get the serializer class for the recipient and seen_by fields, either from config or the default.
+        """
+        return config.user_serializer_class or UserSerializer
+
+    group = group_serializer_class()(many=True, read_only=True)
+    recipient = user_serializer_class()(many=True, read_only=True)
+    seen_by = user_serializer_class()(many=True, read_only=True)
     title = SerializerMethodField()
 
     class Meta:
