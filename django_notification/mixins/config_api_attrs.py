@@ -1,6 +1,6 @@
 from typing import List, Optional, Type
 
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser, BaseParser
+from rest_framework.parsers import BaseParser
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.throttling import BaseThrottle
 
@@ -40,7 +40,7 @@ class ConfigurableAttrsMixin:
         """
         self.ordering_fields: Optional[List[str]] = config.api_ordering_fields
         self.search_fields: Optional[List[str]] = config.api_search_fields
-        self.parser_classes: List[Type[BaseParser]] = [JSONParser, MultiPartParser, FormParser]
+        self.parser_classes: List[Type[BaseParser]] = config.api_parser_classes
 
         self.permission_classes: List[Type[BasePermission]] = [IsAuthenticated]
 

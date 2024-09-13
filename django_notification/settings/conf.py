@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Union
 from django.conf import settings
 from django.utils.module_loading import import_string
 
@@ -62,13 +62,13 @@ class NotificationConfig:
             "DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS",
             self.default_api_settings.user_serializer_fields,
         )
-        self.user_serializer_class: Optional[Type[Any]] = self.get_optional_class(
+        self.user_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS",
-            self.default_api_settings.user_serializer_class
+            self.default_api_settings.user_serializer_class,
         )
-        self.group_serializer_class: Optional[Type[Any]] = self.get_optional_class(
+        self.group_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS",
-            self.default_api_settings.group_serializer_class
+            self.default_api_settings.group_serializer_class,
         )
         self.authenticated_user_throttle_rate: str = self.get_setting(
             "DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE",
@@ -78,19 +78,25 @@ class NotificationConfig:
             "DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE",
             self.default_api_settings.staff_user_throttle_rate,
         )
-        self.api_throttle_class: Optional[Type[Any]] = self.get_optional_class(
+        self.api_throttle_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_THROTTLE_CLASS",
             self.default_api_settings.throttle_class,
         )
-        self.api_pagination_class: Optional[Type[Any]] = self.get_optional_class(
+        self.api_pagination_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_PAGINATION_CLASS",
             self.default_api_settings.pagination_class,
         )
-        self.api_extra_permission_class: Optional[Type[Any]] = self.get_optional_class(
-            "DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS",
-            self.default_api_settings.extra_permission_class,
+        self.api_extra_permission_class: Optional[Type[Any]] = (
+            self.get_optional_classes(
+                "DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS",
+                self.default_api_settings.extra_permission_class,
+            )
         )
-        self.api_filterset_class: Optional[Type[Any]] = self.get_optional_class(
+        self.api_parser_classes: Optional[List[Type[Any]]] = self.get_optional_classes(
+            "DJANGO_NOTIFICATION_API_PARSER_CLASSES",
+            self.default_api_settings.parser_classes,
+        )
+        self.api_filterset_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_FILTERSET_CLASS",
             self.default_api_settings.filterset_class,
         )
@@ -116,27 +122,40 @@ class NotificationConfig:
         """
         return getattr(settings, setting_name, default_value)
 
-    def get_optional_class(
-        self, setting_name: str, default_path: Optional[str]
-    ) -> Optional[Type[Any]]:
+    def get_optional_classes(
+        self,
+        setting_name: str,
+        default_path: Optional[Union[str, List[str]]],
+    ) -> Optional[Union[Type[Any], List[Type[Any]]]]:
         """
         Dynamically load a class based on a setting, or return None if the setting
         is None or invalid.
 
         Args:
             setting_name (str): The name of the setting for the class path.
-            default_path (Optional[str]): The default import path for the class.
+            default_path (Optional[Union[str, List[str]]): The default import path for the class.
 
         Returns:
-            Optional[Type[Any]]: The imported class or None if import fails or the path is invalid.
+            Optional[Union[Type[Any], List[Type[Any]]]]: The imported class or None
+             if import fails or the path is invalid.
         """
-        class_path: Optional[str] = self.get_setting(setting_name, default_path)
+        class_path: Optional[Union[str, List[str]]] = self.get_setting(setting_name, default_path)
 
         if class_path and isinstance(class_path, str):
             try:
                 return import_string(class_path)
             except ImportError:
                 return None
+        elif class_path and isinstance(class_path, list):
+            try:
+                return [
+                    import_string(cls_path)
+                    for cls_path in class_path
+                    if isinstance(cls_path, str)
+                ]
+            except ImportError:
+                return []
+
         return None
 
 

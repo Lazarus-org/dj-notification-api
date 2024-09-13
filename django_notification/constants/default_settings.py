@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Type
-
-from rest_framework.permissions import BasePermission
+from typing import List, Optional
 
 from django_notification.utils.user_model import USERNAME_FIELD, REQUIRED_FIELDS
 
@@ -29,7 +27,14 @@ class DefaultAPISettings:
     filterset_class: str = (
         "notification.api.filters.notification_filter.NotificationFilter"
     )
-    extra_permission_class: Optional[Type[BasePermission]] = None
+    extra_permission_class: Optional[str] = None
+    parser_classes: List[str] = field(
+        default_factory=lambda: [
+            "rest_framework.parsers.JSONParser",
+            "rest_framework.parsers.MultiPartParser",
+            "rest_framework.parsers.FormParser",
+        ]
+    )
 
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "email_sent", "public"]
