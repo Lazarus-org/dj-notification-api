@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from notification.settings.conf import config
+from django_notification.settings.conf import config
 from django_notification.utils.user_model import UserModel
 
 
