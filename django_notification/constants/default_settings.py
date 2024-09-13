@@ -16,6 +16,8 @@ class DefaultAPISettings:
     user_serializer_fields: List[str] = field(
         default_factory=lambda: [USERNAME_FIELD] + list(REQUIRED_FIELDS)
     )
+    user_serializer_class: Optional[str] = None
+    group_serializer_class: Optional[str] = None
     authenticated_user_throttle_rate: str = "30/minute"
     staff_user_throttle_rate: str = "100/minute"
     throttle_class: str = (
@@ -32,6 +34,4 @@ class DefaultAPISettings:
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "email_sent", "public"]
     )
-    search_fields: List[str] = field(
-        default_factory=lambda: ["verb", "description"]
-    )
+    search_fields: List[str] = field(default_factory=lambda: ["verb", "description"])

@@ -64,11 +64,11 @@ class NotificationConfig:
         )
         self.user_serializer_class: Optional[Type[Any]] = self.get_optional_class(
             "DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS",
-            "django_notification.api.serializers.UserSerializer",
+            self.default_api_settings.user_serializer_class
         )
         self.group_serializer_class: Optional[Type[Any]] = self.get_optional_class(
             "DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS",
-            "django_notification.api.serializers.GroupSerializer",
+            self.default_api_settings.group_serializer_class
         )
         self.authenticated_user_throttle_rate: str = self.get_setting(
             "DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE",
