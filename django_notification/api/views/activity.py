@@ -18,7 +18,7 @@ from django_notification.api.serializers.notification import NotificationSeriali
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.settings.conf import config
 from django_notification.models.notification import Notification
-from django_notification.utils.action_decorator import conditional_action
+from django_notification.decorators.action import conditional_action
 
 
 class ActivityViewSet(
@@ -136,7 +136,7 @@ class ActivityViewSet(
             QuerySet: A queryset of seen notifications, filtered by user and groups.
         """
         if self.request.user.is_staff:
-            self.get_staff_queryset()
+            return self.get_staff_queryset()
 
         if config.include_serializer_full_details:
             display_detail = True
