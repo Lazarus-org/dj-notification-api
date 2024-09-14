@@ -47,11 +47,14 @@ class NotificationQuerySet(QuerySet):
         Returns:
             QuerySet: A queryset of notifications that match the given conditions.
         """
+        queryset = self.with_related()
 
-        deleted_notifications = self._get_deleted_notifications(
-            deleted_by=exclude_deleted_by
-        )
-        queryset = self.with_related().exclude(id__in=Subquery(deleted_notifications))
+        if exclude_deleted_by:
+            deleted_notifications = self._get_deleted_notifications(
+                deleted_by=exclude_deleted_by
+            )
+            queryset = self.with_related().exclude(id__in=Subquery(deleted_notifications))
+
         if conditions:
             queryset = queryset.filter(conditions)
         if not display_detail:

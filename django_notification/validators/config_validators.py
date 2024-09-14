@@ -178,7 +178,7 @@ def validate_optional_classes_setting(
             Error(
                 f"Invalid type for setting '{setting_name}'.",
                 hint=f"The setting must be either a list of strings. (e.g., ['myapp.module.MyClass'])",
-                id=f"django_notification.E0011_{setting_name}",
+                id=f"django_notification.E011_{setting_name}",
             )
         )
         return errors
@@ -190,7 +190,7 @@ def validate_optional_classes_setting(
                 Error(
                     f"Invalid type for class path in '{setting_name}'.",
                     hint=f"Each item in the list must be a valid string representing a class path.",
-                    id=f"django_notification.E0012_{setting_name}",
+                    id=f"django_notification.E012_{setting_name}",
                 )
             )
         else:

@@ -91,8 +91,7 @@ class NotificationSeen(Model):
         """
         Saves the object to the database.
 
-        This method checks if the user has permission to mark the notification as seen and
-        validates that the `seen_at` time is not in the past.
+        This method checks if the user has permission to mark the notification as seen.
 
         Args:
             *args: Additional positional arguments passed to the parent `save` method.
@@ -100,16 +99,11 @@ class NotificationSeen(Model):
 
         Raises:
             PermissionError: If the user does not have permission to mark the notification as seen.
-            ValidationError: If the `seen_at` time is in the past.
 
         Returns:
             None
         """
-        permission_class = NotificationPermission(self)
+        permission_class = NotificationPermission(self.notification)
         permission_class.validate_permission(self.user, "mark as seen")
-
-        # Validate that seen_at is not in the past for the initial save
-        if not self.pk and self.seen_at and self.seen_at < timezone.now():
-            raise ValidationError("The 'seen_at' time cannot be in the past.")
 
         super().save(*args, **kwargs)
