@@ -8,6 +8,9 @@ from django_notification.utils.user_model import USERNAME_FIELD, REQUIRED_FIELDS
 class DefaultAPISettings:
     include_soft_delete: bool = True
     include_hard_delete: bool = False
+    admin_has_add_permission: bool = False
+    admin_has_change_permission: bool = False
+    admin_has_delete_permission: bool = False
     allow_list: bool = True
     allow_retrieve: bool = True
     include_serializer_full_details: bool = False

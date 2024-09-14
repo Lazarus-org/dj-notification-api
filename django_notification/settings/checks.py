@@ -8,7 +8,7 @@ from django_notification.validators.config_validators import (
     validate_list_fields,
     validate_throttle_rate,
     validate_optional_class_setting,
-    validate_optional_classes_setting
+    validate_optional_classes_setting,
 )
 
 
@@ -48,7 +48,26 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
     )
     errors.extend(
         validate_boolean_setting(
-            config.include_serializer_full_details, "DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS"
+            config.admin_has_add_permission,
+            "DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION",
+        )
+    )
+    errors.extend(
+        validate_boolean_setting(
+            config.admin_has_change_permission,
+            "DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION",
+        )
+    )
+    errors.extend(
+        validate_boolean_setting(
+            config.admin_has_delete_permission,
+            "DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION",
+        )
+    )
+    errors.extend(
+        validate_boolean_setting(
+            config.include_serializer_full_details,
+            "DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS",
         )
     )
     errors.extend(
@@ -127,7 +146,6 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
             config.get_setting("DJANGO_NOTIFICATION_API_FILTERSET_CLASS", None),
             "DJANGO_NOTIFICATION_API_FILTERSET_CLASS",
         )
-
     )
     errors.extend(
         validate_optional_class_setting(
