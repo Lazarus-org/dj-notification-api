@@ -177,7 +177,7 @@ class ActivityViewSet(
         """
         Notification.queryset.clear_all(request.user)
         return Response(
-            {"detail: all activities cleared."}, status=status.HTTP_204_NO_CONTENT
+            {"detail": "all activities cleared."}, status=status.HTTP_204_NO_CONTENT
         )
 
     @conditional_action(condition=config.include_soft_delete, detail=True)
