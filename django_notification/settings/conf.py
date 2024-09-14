@@ -45,6 +45,18 @@ class NotificationConfig:
             "DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE",
             self.default_api_settings.include_hard_delete,
         )
+        self.admin_has_add_permission: bool = self.get_setting(
+            "DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION",
+            self.default_api_settings.admin_has_add_permission,
+        )
+        self.admin_has_change_permission: bool = self.get_setting(
+            "DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION",
+            self.default_api_settings.admin_has_change_permission,
+        )
+        self.admin_has_delete_permission: bool = self.get_setting(
+            "DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION",
+            self.default_api_settings.admin_has_delete_permission,
+        )
 
         self.include_serializer_full_details: bool = self.get_setting(
             "DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS",
