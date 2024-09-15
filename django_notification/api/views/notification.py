@@ -11,11 +11,12 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import GenericViewSet
 
-from django_notification.api.serializers.notification import NotificationSerializer
-from django_notification.api.serializers.simple_notification import (
-    SimpleNotificationSerializer,
-)
-from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
+from django_notification.api.serializers.notification import \
+    NotificationSerializer
+from django_notification.api.serializers.simple_notification import \
+    SimpleNotificationSerializer
+from django_notification.mixins import (ConfigurableAttrsMixin,
+                                        DisableMethodsMixin)
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
 
