@@ -87,7 +87,7 @@ def configure_django_settings() -> None:
                 "django.contrib.messages.middleware.MessageMiddleware",
                 "django.middleware.clickjacking.XFrameOptionsMiddleware",
             ],
-            ROOT_URLCONF="kernel.urls",
+            ROOT_URLCONF="django_notification.tests.urls",
             DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE=True,
             DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE=True,
             DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION=False,
