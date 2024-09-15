@@ -1,15 +1,22 @@
 from typing import Any, List, Optional, Type, Union
+
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-from django_notification.constants.default_settings import DefaultAPISettings
+from django_notification.constants.default_settings import (
+    DefaultAdminPermSettings,
+    DefaultAPISettings,
+    DefaultPaginationAndFilteringSettings,
+    DefaultSerializerSettings,
+    DefaultThrottleSettings,
+)
 
 
+# pylint: disable=too-many-instance-attributes
 class NotificationConfig:
-    """
-    A configuration handler for the Django Notification API, allowing settings
-    to be dynamically loaded from Django settings with defaults provided
-    through `DefaultAPISettings`.
+    """A configuration handler for the Django Notification API, allowing
+    settings to be dynamically loaded from Django settings with defaults
+    provided through `DefaultAPISettings`.
 
     Attributes:
         include_soft_delete (bool): Whether soft delete is enabled for notifications.
@@ -28,15 +35,20 @@ class NotificationConfig:
         api_filterset_class (Optional[Type[Any]]): The class used for filtering.
         api_ordering_fields (List[str]): Fields that can be used for ordering.
         api_search_fields (List[str]): Fields that can be searched.
+
     """
 
     default_api_settings: DefaultAPISettings = DefaultAPISettings()
+    default_serializer_settings: DefaultSerializerSettings = DefaultSerializerSettings()
+    default_admin_perm_settings: DefaultAdminPermSettings = DefaultAdminPermSettings()
+    default_pagination_and_filter_settings: DefaultPaginationAndFilteringSettings = (
+        DefaultPaginationAndFilteringSettings()
+    )
+    default_throttle_settings: DefaultThrottleSettings = DefaultThrottleSettings()
 
     def __init__(self) -> None:
-        """
-        Initialize the NotificationConfig, loading values from Django settings
-        or falling back to the default API settings.
-        """
+        """Initialize the NotificationConfig, loading values from Django
+        settings or falling back to the default API settings."""
         self.include_soft_delete: bool = self.get_setting(
             "DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE",
             self.default_api_settings.include_soft_delete,
@@ -47,15 +59,15 @@ class NotificationConfig:
         )
         self.admin_has_add_permission: bool = self.get_setting(
             "DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION",
-            self.default_api_settings.admin_has_add_permission,
+            self.default_admin_perm_settings.admin_has_add_permission,
         )
         self.admin_has_change_permission: bool = self.get_setting(
             "DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION",
-            self.default_api_settings.admin_has_change_permission,
+            self.default_admin_perm_settings.admin_has_change_permission,
         )
         self.admin_has_delete_permission: bool = self.get_setting(
             "DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION",
-            self.default_api_settings.admin_has_delete_permission,
+            self.default_admin_perm_settings.admin_has_delete_permission,
         )
 
         self.include_serializer_full_details: bool = self.get_setting(
@@ -72,37 +84,37 @@ class NotificationConfig:
         )
         self.user_serializer_fields: List[str] = self.get_setting(
             "DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS",
-            self.default_api_settings.user_serializer_fields,
+            self.default_serializer_settings.user_serializer_fields,
         )
         self.user_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS",
-            self.default_api_settings.user_serializer_class,
+            self.default_serializer_settings.user_serializer_class,
         )
         self.group_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS",
-            self.default_api_settings.group_serializer_class,
+            self.default_serializer_settings.group_serializer_class,
         )
         self.authenticated_user_throttle_rate: str = self.get_setting(
             "DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE",
-            self.default_api_settings.authenticated_user_throttle_rate,
+            self.default_throttle_settings.authenticated_user_throttle_rate,
         )
         self.staff_user_throttle_rate: str = self.get_setting(
             "DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE",
-            self.default_api_settings.staff_user_throttle_rate,
+            self.default_throttle_settings.staff_user_throttle_rate,
         )
         self.api_throttle_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_THROTTLE_CLASS",
-            self.default_api_settings.throttle_class,
+            self.default_throttle_settings.throttle_class,
         )
         self.api_pagination_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_PAGINATION_CLASS",
-            self.default_api_settings.pagination_class,
+            self.default_pagination_and_filter_settings.pagination_class,
         )
-        self.api_extra_permission_class: Optional[Type[Any]] = (
-            self.get_optional_classes(
-                "DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS",
-                self.default_api_settings.extra_permission_class,
-            )
+        self.api_extra_permission_class: Optional[
+            Type[Any]
+        ] = self.get_optional_classes(
+            "DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS",
+            self.default_api_settings.extra_permission_class,
         )
         self.api_parser_classes: Optional[List[Type[Any]]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_PARSER_CLASSES",
@@ -110,20 +122,19 @@ class NotificationConfig:
         )
         self.api_filterset_class: Optional[Type[Any]] = self.get_optional_classes(
             "DJANGO_NOTIFICATION_API_FILTERSET_CLASS",
-            self.default_api_settings.filterset_class,
+            self.default_pagination_and_filter_settings.filterset_class,
         )
         self.api_ordering_fields: List[str] = self.get_setting(
             "DJANGO_NOTIFICATION_API_ORDERING_FIELDS",
-            self.default_api_settings.ordering_fields,
+            self.default_pagination_and_filter_settings.ordering_fields,
         )
         self.api_search_fields: List[str] = self.get_setting(
             "DJANGO_NOTIFICATION_API_SEARCH_FIELDS",
-            self.default_api_settings.search_fields,
+            self.default_pagination_and_filter_settings.search_fields,
         )
 
     def get_setting(self, setting_name: str, default_value: Any) -> Any:
-        """
-        Retrieve a setting from Django settings with a default fallback.
+        """Retrieve a setting from Django settings with a default fallback.
 
         Args:
             setting_name (str): The name of the setting to retrieve.
@@ -131,6 +142,7 @@ class NotificationConfig:
 
         Returns:
             Any: The value of the setting or the default value if not found.
+
         """
         return getattr(settings, setting_name, default_value)
 
@@ -139,9 +151,8 @@ class NotificationConfig:
         setting_name: str,
         default_path: Optional[Union[str, List[str]]],
     ) -> Optional[Union[Type[Any], List[Type[Any]]]]:
-        """
-        Dynamically load a class based on a setting, or return None if the setting
-        is None or invalid.
+        """Dynamically load a class based on a setting, or return None if the
+        setting is None or invalid.
 
         Args:
             setting_name (str): The name of the setting for the class path.
@@ -150,8 +161,11 @@ class NotificationConfig:
         Returns:
             Optional[Union[Type[Any], List[Type[Any]]]]: The imported class or None
              if import fails or the path is invalid.
+
         """
-        class_path: Optional[Union[str, List[str]]] = self.get_setting(setting_name, default_path)
+        class_path: Optional[Union[str, List[str]]] = self.get_setting(
+            setting_name, default_path
+        )
 
         if class_path and isinstance(class_path, str):
             try:
