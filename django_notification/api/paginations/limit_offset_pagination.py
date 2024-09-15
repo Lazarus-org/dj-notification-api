@@ -1,14 +1,12 @@
-from rest_framework.pagination import LimitOffsetPagination
 from typing import Optional
 
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.request import Request
 
 
 class DefaultLimitOffSetPagination(LimitOffsetPagination):
-    """
-    A custom LimitOffsetPagination class that enforces minimum and maximum limits
-    on the number of items returned per page.
-    """
+    """A custom LimitOffsetPagination class that enforces minimum and maximum
+    limits on the number of items returned per page."""
 
     # Minimum limit allowed in query parameters
     min_limit: int = 1
@@ -20,10 +18,9 @@ class DefaultLimitOffSetPagination(LimitOffsetPagination):
     default_limit: int = 10
 
     def get_limit(self, request: Request) -> Optional[int]:
-        """
-        Override the `get_limit` method to enforce minimum and maximum limits on the
-        number of items returned per page. The limit is extracted from the request's
-        query parameters.
+        """Override the `get_limit` method to enforce minimum and maximum
+        limits on the number of items returned per page. The limit is extracted
+        from the request's query parameters.
 
         Parameters:
         -----------
@@ -35,6 +32,7 @@ class DefaultLimitOffSetPagination(LimitOffsetPagination):
         Optional[int]
             The number of items to be returned per page, constrained by the defined
             minimum and maximum limits, or the default limit if not specified.
+
         """
         limit = request.query_params.get(self.limit_query_param)
 

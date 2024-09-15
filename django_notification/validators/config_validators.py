@@ -113,8 +113,7 @@ def validate_throttle_rate(rate: str, setting_name: str) -> List[Error]:
 def validate_optional_class_setting(
     setting_value: str, setting_name: str
 ) -> List[Error]:
-    """
-    Validate that the setting is a valid class path and can be imported.
+    """Validate that the setting is a valid class path and can be imported.
 
     Args:
         setting_value (str): The value of the setting to validate, typically a class path.
@@ -122,6 +121,7 @@ def validate_optional_class_setting(
 
     Returns:
         List[Error]: A list of validation errors, or an empty list if valid.
+
     """
     errors: List[Error] = []
 
@@ -157,8 +157,8 @@ def validate_optional_class_setting(
 def validate_optional_classes_setting(
     setting_value: List[str], setting_name: str
 ) -> List[Error]:
-    """
-    Validate that the setting value is a list of class paths and ensure that they can be imported.
+    """Validate that the setting value is a list of class paths and ensure that
+    they can be imported.
 
     Args:
         setting_value (List[str]): The setting value to validate, typically a list of class paths.
@@ -166,6 +166,7 @@ def validate_optional_classes_setting(
 
     Returns:
         List[Error]: A list of validation errors, or an empty list if the setting is valid.
+
     """
     errors: List[Error] = []
 
@@ -177,7 +178,7 @@ def validate_optional_classes_setting(
         errors.append(
             Error(
                 f"Invalid type for setting '{setting_name}'.",
-                hint=f"The setting must be either a list of strings. (e.g., ['myapp.module.MyClass'])",
+                hint="The setting must be either a list of strings. (e.g., ['myapp.module.MyClass'])",
                 id=f"django_notification.E011_{setting_name}",
             )
         )
@@ -189,7 +190,7 @@ def validate_optional_classes_setting(
             errors.append(
                 Error(
                     f"Invalid type for class path in '{setting_name}'.",
-                    hint=f"Each item in the list must be a valid string representing a class path.",
+                    hint="Each item in the list must be a valid string representing a class path.",
                     id=f"django_notification.E012_{setting_name}",
                 )
             )

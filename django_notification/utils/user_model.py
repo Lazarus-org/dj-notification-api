@@ -7,13 +7,13 @@ REQUIRED_FIELDS = UserModel.REQUIRED_FIELDS
 
 
 def get_username(user: UserModel) -> str:
-    """
-    Utility function to get a user's username.
+    """Utility function to get a user's username.
 
     Args:
         user (User): The user object.
 
     Returns:
         str: The username of the user, or "Unknown" if the field is not available.
+
     """
     return getattr(user, USERNAME_FIELD, "Unknown")

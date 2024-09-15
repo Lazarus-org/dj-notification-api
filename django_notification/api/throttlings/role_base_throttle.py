@@ -4,8 +4,8 @@ from rest_framework.views import APIView
 
 
 class RoleBasedUserRateThrottle(UserRateThrottle):
-    """
-    A custom throttle class that limits the rate of requests based on the user's role.
+    """A custom throttle class that limits the rate of requests based on the
+    user's role.
 
     This throttle applies different rates for authenticated users and staff users:
 
@@ -16,12 +16,12 @@ class RoleBasedUserRateThrottle(UserRateThrottle):
 
     The rate limits are retrieved from the project's settings to allow for easy
     configuration adjustments without modifying the code.
+
     """
 
     def allow_request(self, request: Request, view: APIView) -> bool:
-        """
-        Determine whether the current request is allowed based on the user's role and
-        the configured throttle rates.
+        """Determine whether the current request is allowed based on the user's
+        role and the configured throttle rates.
 
         For authenticated users, the throttle rate is dynamically set based on their role:
 
@@ -37,6 +37,7 @@ class RoleBasedUserRateThrottle(UserRateThrottle):
 
         Returns:
             bool: True if the request is allowed based on the user's rate limit; False otherwise.
+
         """
         from django_notification.settings.conf import config
 

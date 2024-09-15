@@ -4,14 +4,15 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 
 
 def generate_title(notification: Dict[str, Any]) -> str:
-    """
-    Generate the title for the notification if it is a dictionary, (when using values() method in queryset).
+    """Generate the title for the notification if it is a dictionary, (when
+    using values() method in queryset).
 
     Args:
         notification (dict): A dictionary representing the notification retrieved from the queryset.
 
     Returns:
         str: The title of the notification, including its description and the time since the timestamp.
+
     """
     try:
         description = notification.get("description")
@@ -25,7 +26,7 @@ def generate_title(notification: Dict[str, Any]) -> str:
 
         raise ValueError("No description provided.")
 
-    except AttributeError:
+    except AttributeError as e:
         raise ValueError(
             "The notification must be a dictionary with 'description' and 'timestamp' keys."
-        )
+        ) from e

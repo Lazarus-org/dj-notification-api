@@ -4,9 +4,7 @@ from django_notification.models.notification import Notification
 
 
 class NotificationFilter(filters.FilterSet):
-    """
-    Filter set for filtering notifications based on various criteria.
-    """
+    """Filter set for filtering notifications based on various criteria."""
 
     timestamp = filters.DateTimeFromToRangeFilter(
         field_name="timestamp",

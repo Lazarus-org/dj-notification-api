@@ -1,4 +1,5 @@
 import sys
+from typing import List
 from unittest.mock import Mock
 
 import pytest
@@ -197,7 +198,7 @@ class TestNotificationAdminSite:
         ), "'user' field not optimized with select_related."
 
     def test_mark_all_as_sent_action(
-        self, admin_user: User, notifications: list[Notification]
+        self, admin_user: User, notifications: List[Notification]
     ) -> None:
         """
         Test the 'mark_as_sent' action in the NotificationAdmin interface for bulk marking notifications as sent.

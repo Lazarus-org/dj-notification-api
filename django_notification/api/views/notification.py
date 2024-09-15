@@ -1,30 +1,31 @@
 from typing import List, Type
 
 from django.db.models import QuerySet
-from rest_framework.request import Request
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import GenericViewSet
 
-from django_notification.api.serializers.notification import NotificationSerializer
-from django_notification.api.serializers.simple_notification import (
-    SimpleNotificationSerializer,
-)
-from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
-from django_notification.settings.conf import config
+from django_notification.api.serializers.notification import \
+    NotificationSerializer
+from django_notification.api.serializers.simple_notification import \
+    SimpleNotificationSerializer
+from django_notification.mixins import (ConfigurableAttrsMixin,
+                                        DisableMethodsMixin)
 from django_notification.models.notification import Notification
+from django_notification.settings.conf import config
 
 
+# pylint: disable=too-many-ancestors
 class NotificationViewSet(
     GenericViewSet, ListModelMixin, DisableMethodsMixin, ConfigurableAttrsMixin
 ):
-    """
-    API ViewSet for managing notifications.
+    """API ViewSet for managing notifications.
 
     This viewset provides an interface for viewing and interacting with notifications.
     It allows users to list unseen notifications, mark notifications as seen, and
@@ -70,18 +71,19 @@ class NotificationViewSet(
 
     Parsers and filters are automatically applied based on the request's `Content-Type`
     and query parameters, making the viewset flexible and adaptable to various use cases.
+
     """
 
     filter_backends: List = [DjangoFilterBackend, OrderingFilter, SearchFilter]
 
     def __init__(self, *args, **kwargs) -> None:
-        """
-        Initialize the NotificationViewSet, configure dynamic attributes, and disable methods
-        as needed based on settings.
+        """Initialize the NotificationViewSet, configure dynamic attributes,
+        and disable methods as needed based on settings.
 
         Args:
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
+
         """
         super().__init__(*args, **kwargs)
         self.configure_attrs()
@@ -95,21 +97,21 @@ class NotificationViewSet(
             self.disable_methods(["RETRIEVE"])
 
     def get_user_groups(self) -> QuerySet:
-        """
-        Get the groups associated with the current user.
+        """Get the groups associated with the current user.
 
         Returns:
             QuerySet: A queryset of the groups the user belongs to.
+
         """
         return self.request.user.groups.all()
 
     def get_staff_queryset(self) -> QuerySet:
-        """
-        Get the queryset for staff users. Staff users can view all unseen notifications
-        with full details.
+        """Get the queryset for staff users. Staff users can view all unseen
+        notifications with full details.
 
         Returns:
             QuerySet: A queryset of unseen notifications for staff users.
+
         """
         return Notification.queryset.unseen(
             unseen_by=self.request.user,
@@ -117,15 +119,16 @@ class NotificationViewSet(
         )
 
     def get_queryset(self, display_detail: bool = False) -> QuerySet:
-        """
-        Get the queryset of unseen notifications for the current user, either staff or non-staff.
-        The queryset can include full details based on user roles and configuration.
+        """Get the queryset of unseen notifications for the current user,
+        either staff or non-staff. The queryset can include full details based
+        on user roles and configuration.
 
         Args:
             display_detail (bool): Whether to display full details for notifications. Defaults to False.
 
         Returns:
             QuerySet: A queryset of unseen notifications for the current user.
+
         """
         if self.request.user.is_staff:
             return self.get_staff_queryset()
@@ -143,19 +146,20 @@ class NotificationViewSet(
         return queryset.distinct()
 
     def get_serializer_class(self) -> Type[Serializer]:
-        """
-        Get the appropriate serializer class based on the user's role and configuration.
+        """Get the appropriate serializer class based on the user's role and
+        configuration.
 
         Returns:
             Type[Serializer]: The serializer class to use for the current request.
+
         """
         if self.request.user.is_staff or config.include_serializer_full_details:
             return NotificationSerializer
         return SimpleNotificationSerializer
 
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
-        """
-        Retrieve a single notification, mark it as seen, and return the notification data.
+        """Retrieve a single notification, mark it as seen, and return the
+        notification data.
 
         Args:
             request: The current request object.
@@ -164,6 +168,7 @@ class NotificationViewSet(
 
         Returns:
             Response: A Response object containing the serialized notification data.
+
         """
         queryset = self.filter_queryset(self.get_queryset(display_detail=True))
         notification = get_object_or_404(queryset, pk=self.kwargs["pk"])
@@ -173,14 +178,14 @@ class NotificationViewSet(
 
     @action(detail=False, methods=["get"])
     def mark_all_as_seen(self, request: Request) -> Response:
-        """
-        Mark all unseen notifications for the current user as seen.
+        """Mark all unseen notifications for the current user as seen.
 
         Args:
             request: The current request object.
 
         Returns:
             Response: A Response object indicating how many notifications were marked as seen.
+
         """
         queryset = self.filter_queryset(self.get_queryset(display_detail=True))
         count = queryset.mark_all_as_seen(request.user)

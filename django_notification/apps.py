@@ -8,8 +8,7 @@ class DjangoNotificationConfig(AppConfig):
     verbose_name = _("Django Notification")
 
     def ready(self) -> None:
-        """
-        This method is called when the application is fully loaded.
+        """This method is called when the application is fully loaded.
 
         Its main purpose is to perform startup tasks, such as importing
         and registering system checks for validating the configuration
@@ -20,5 +19,6 @@ class DjangoNotificationConfig(AppConfig):
         In this case, it imports the settings checks from the
         `django_notification.settings` module to validate the configuration
         settings for notifications.
+
         """
         from django_notification.settings import checks
