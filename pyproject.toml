@@ -1,15 +1,325 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [ "poetry-core" ]
+
 [tool.poetry]
 name = "dj-notification-api"
-version = "0.1.0"
-description = "dj-notification-api is a Django package developed by Lazarus for efficiently handling notifications through various APIs"
-authors = ["ARYAN-NIKNEZHAD <aryan513966@gmail.com>", "MEHRSHAD-MIRSHEKARY <mehrshad_mirshekary@email.com>"]
+version = "1.0.0"
+description = "A Django package developed by Lazarus for efficiently handling notifications through various APIs"
+authors = [ "ARYAN-NIKNEZHAD <aryan513966@gmail.com>", "MEHRSHAD-MIRSHEKARY <mehrshad_mirshekary@email.com>" ]
 license = "MIT"
 readme = "README.md"
+keywords = [ "django_notification", "django", "notification", "django-notification" ]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Framework :: Django",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.0",
+  "Framework :: Django :: 5.1",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+packages = [
+  { include = "django_notification" },
+]
+
+[tool.poetry.urls]
+"Documentation" = "https://django-notification.readthedocs.io"
+"Source Code" = "https://github.com/Lazarus-org/dj-notification-api"
+"Changelog" = "https://github.com/lazarus-org/dj-notification-api/blob/main/CHANGELOG.md"
+"Issues" = "https://github.com/lazarus-org/dj-notification-api/issues"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
+django = [
+  { version = ">=4.2,<5.0", python = ">=3.8,<3.10" },
+  { version = ">=4.2,<5.3", python = ">=3.10" },      # Django 4.2 and 5.x for Python 3.10+
+]
+djangorestframework = "^3.15.2"
+django-filter = "^24.3"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-django = "^4.8.0"
+pytest-cov = "^5.0.0"
+pylint = "^3.2.6"
+pylint-django = "^2.5.5"
+mypy = "^1.11.1"
+isort = "^5.13.2"
+black = "^24.4.2"
+commitizen = "^3.28.0"
+pre-commit = "^3.5.0"
+bandit = { extras = [ "toml" ], version = "^1.7.9" }
+tox = "^4.16.0"
+django-stubs = "^5.0.4"
+sphinx = "^6.2.1"
+sphinx-rtd-theme = "^2.0.0"
+docformatter = "^1.7.5"
+codecov = "^2.1.13"
+python-semantic-release = "^9.8.8"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | \.tox
+  | build
+  | dist
+  | migrations
+  | venv
+  | env
+  | __pycache__
+  | node_modules
+  | env
+  | kernel
+  | \.mypy_cache
+  | \.pytest_cache
+  | .*\.egg-info
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = [
+  "venv",
+  ".venv",
+  ".tox",
+  "build",
+  "dist",
+  ".git",
+  "__pycache__",
+  "*.egg-info",
+  ".mypy_cache",
+  ".pytest_cache",
+  "migrations",
+  "node_modules",
+  "env",
+  "kernel",
+]
+
+[tool.pylint]
+disable = [
+  "C0103", # Invalid constant name
+  "C0114", # Missing module docstring
+  "C0115", # Missing class docstring
+  "C0116", # Missing function or method docstring
+  "E1101", # Instance of 'Foo' has no 'bar' member
+  "W0212", # Access to a protected member
+  "C0301", # Line too long
+  "C0411", # Wrong import order
+  "W0611", # Unused imports
+  "W0613", # Unused arguments
+  "W0622", # Redefining built-in names
+  "R0903", # Too few public methods
+  "R0801", # Duplicate code
+  "W0621",
+  "C0415",
+  "R1719", # The if expression can be replaced with 'bool(test)'
+  "R1705", # Unnecessary "elif" after "return"
+  "R0401",
+]
+max-line-length = 88
+ignore = [
+  "tests",
+  "migrations/*",
+  "venv/*",
+  "build/*",
+  "dist/*",
+  ".git/*",
+  ".tox/*",
+  "__pycache__/*",
+  "*.egg-info/*",
+  ".mypy_cache/*",
+  ".pytest_cache/*",
+]
+django-settings-module = "kernel.settings"
+load-plugins = [
+  "pylint_django",
+  "pylint.extensions.docparams",
+]
+
+suggestion-mode = true
+const-rgx = "([A-Z_][A-Z0-9_]*)|(__.*__)"
+attr-rgx = "[a-z_][a-z0-9_]{2,30}$"
+variable-rgx = "[a-z_][a-z0-9_]{2,30}$"
+argument-rgx = "[a-z_][a-z0-9_]{2,30}$"
+method-rgx = "[a-z_][a-z0-9_]{2,30}$"
+function-rgx = "[a-z_][a-z0-9_]{2,30}$"
+class-rgx = "[A-Z_][a-zA-Z0-9]+$"
+module-rgx = "(([a-z_][a-z0-9_]*)|(__.*__))$"
+
+[tool.pytest.ini_options]
+python_files = [ "tests.py", "test_*.py" ]
+testpaths = [ "django_notification/tests" ]
+addopts = "--cov --cov-report=term-missing --cov-report=html --cov-fail-under=90"
+markers = [
+  "models: Marks tests related to all database models in the project.",
+  "models_notification: Marks tests for the Notification model, including creation and model-specific methods.",
+  "models_notification_recipient: Marks tests related to the NotificationRecipient model.",
+  "models_notification_seen: Marks tests for the NotificationSeen model, which track when notifications have been seen.",
+  "models_deleted_notification: Marks tests for handling deleted notifications, including soft logic.",
+  "admin: Marks tests for Django admin functionalities, including access, rendering, and configurations.",
+  "admin_notification: Marks tests for managing notifications in the Django admin, such as listing, filtering, and bulk actions.",
+  "admin_deleted_notification: Marks tests for managing deleted notifications in the Django admin, including visibility and actions.",
+  "api: Marks tests related to the Django REST Framework (DRF) API as a whole.",
+  "api_views: Marks tests for DRF views, covering endpoints, request handling, and response generation.",
+  "api_views_notification: Marks tests for views handling notification-related API operations, such as listing or managing notifications.",
+  "api_views_activity: Marks tests for views related to activity-related operations in the API.",
+  "api_paginations: Marks tests for pagination in the API, ensuring correct behavior of paginated responses across various endpoints.",
+  "api_serializers: Marks tests for DRF serializers, including validation, data transformation, and response formatting.",
+  "api_serializers_simple_notification: Marks tests for the SimpleNotificationSerializer, focusing on how notification data is serialized.",
+  "api_serializers_group: Marks tests for serializers that handle group-related data, focusing on serialization.",
+  "api_throttlings: Marks tests for DRF throttling mechanisms, ensuring the correct limiting of API requests.",
+  "utils: Marks tests for general utility functions used across the project.",
+  "utils_title_generator: Marks tests for the title generation utility, whichformats titles based on notification content.",
+  "settings: Marks tests for settings and configurations in the project.",
+  "settings_conf: Marks tests related to loading project-specific settings and configurations.",
+  "settings_checks: Marks tests for settings validation, ensuring that required settings are correctly configured.",
+  "validators: Marks tests for custom validators used throughout the project.",
+  "config_validators: Marks tests for configuration validators that validate the config values in project settings.",
+  "queryset: Marks tests for custom queryset methods, ensuring they perform for filtering and querying the database.",
+  "decorators: Marks tests for custom Python decorators used in the project.",
+  "decorators_action: Marks tests for action-related decorators.",
+]
+
+norecursedirs = [
+  "migrations",
+  "env",
+  "venv",
+  ".venv",
+  "dist",
+  "build",
+  "kernel",
+]
+
+[tool.coverage.run]
+source = [ "django_notification" ]
+omit = [
+  "*/tests/*",
+  "*/migrations/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self\\.debug",
+  "raise AssertionError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+]
+
+[tool.mypy]
+mypy_path = "stubs"
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+explicit_package_bases = true
+exclude = """
+^docs/source/conf.py|
+^build/|
+^tests/|
+^stubs/|
+^kernel/
+"""
+
+[tool.bandit]
+targets = [ "./django_notification" ]
+exclude_dirs = [
+  "tests",
+  "migrations",
+]
+severity = "medium"
+confidence = "medium"
+max_lines = 500
+progress = true
+reports = true
+output_format = "screen"
+output_file = "bandit_report.txt"
+include = [ "B101", "B102" ]
+exclude_tests = [ "B301", "B302" ]
+
+[tool.bandit.plugins]
+B104 = { check_typed_list = true }
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.0.0"
+tag_format = "v$version"
+
+[tool.commitizen.settings]
+increment_types = [ "feat", "fix" ]
+
+[tool.semantic_release]
+assets = [  ]
+build_command_env = [  ]
+commit_message = "{version}\n\nAutomatically generated by python-semantic-release"
+commit_parser = "emoji"
+logging_use_named_masks = false
+major_on_zero = true
+allow_zero_version = true
+no_git_verify = false
+tag_format = "v{version}"
+#version_variables = [ "django_notification/version.py:__version__" ]
+
+[tool.semantic_release.branches.main]
+match = "(main|master)"
+prerelease_token = "rc"
+prerelease = false
+
+[tool.semantic_release.changelog]
+template_dir = "templates"
+changelog_file = "CHANGELOG.md"
+exclude_commit_patterns = [  ]
+
+[tool.semantic_release.changelog.environment]
+block_start_string = "{%"
+block_end_string = "%}"
+variable_start_string = "{{"
+variable_end_string = "}}"
+comment_start_string = "{#"
+comment_end_string = "#}"
+trim_blocks = false
+lstrip_blocks = false
+newline_sequence = "\n"
+keep_trailing_newline = false
+extensions = [  ]
+autoescape = true
+
+[tool.semantic_release.commit_author]
+env = "GIT_COMMIT_AUTHOR"
+default = "semantic-release <semantic-release>"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [ "build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test" ]
+minor_tags = [ "feat" ]
+patch_tags = [ "fix", "perf" ]
+default_bump_level = 0
+parse_emoji = true
+
+[tool.semantic_release.remote]
+name = "origin"
+token = ""
+type = "github"
+ignore_token_for_push = false
+insecure = false
+
+[tool.semantic_release.publish]
+dist_glob_patterns = [ "dist/*" ]
+upload_to_vcs_release = true
