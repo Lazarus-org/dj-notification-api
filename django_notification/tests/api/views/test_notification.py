@@ -36,7 +36,9 @@ class TestNotificationViewSet:
         """
         self.client = APIClient()
 
-    def test_get_queryset_for_staff(self, admin_user: Type[User], notification: Notification) -> None:
+    def test_get_queryset_for_staff(
+        self, admin_user: Type[User], notification: Notification
+    ) -> None:
         """
         Test that staff users retrieve all unseen notifications.
 
@@ -62,7 +64,9 @@ class TestNotificationViewSet:
             == Notification.queryset.unseen(unseen_by=admin_user).count()
         )
 
-    def test_get_queryset_for_non_staff(self, user: Type[User], notification: Notification) -> None:
+    def test_get_queryset_for_non_staff(
+        self, user: Type[User], notification: Notification
+    ) -> None:
         """
         Test that non-staff users retrieve unseen notifications based on their group memberships.
 
@@ -85,7 +89,9 @@ class TestNotificationViewSet:
             == Notification.queryset.unseen(unseen_by=user).count()
         )
 
-    def test_retrieve_notification(self, user: Type[User], notification: Notification) -> None:
+    def test_retrieve_notification(
+        self, user: Type[User], notification: Notification
+    ) -> None:
         """
         Test the retrieve functionality to get a specific notification and mark it as seen.
 
@@ -106,7 +112,9 @@ class TestNotificationViewSet:
         assert response.status_code == 200
         assert Notification.queryset.seen(seen_by=user).exists()
 
-    def test_mark_all_as_seen(self, user: Type[User], notification: Notification) -> None:
+    def test_mark_all_as_seen(
+        self, user: Type[User], notification: Notification
+    ) -> None:
         """
         Test the mark_all_as_seen action to mark all notifications as seen for the user.
 
@@ -145,7 +153,9 @@ class TestNotificationViewSet:
         assert response.status_code == 405  # Method Not Allowed
 
     @patch.object(config, "api_allow_retrieve", False)
-    def test_retrieve_method_disabled(self, user: Type[User], notification: Notification) -> None:
+    def test_retrieve_method_disabled(
+        self, user: Type[User], notification: Notification
+    ) -> None:
         """
         Test that the retrieve method is disabled when `api_allow_retrieve` is False in the config.
 
@@ -165,7 +175,9 @@ class TestNotificationViewSet:
         assert response.status_code == 405  # Method Not Allowed
 
     @patch.object(config, "include_serializer_full_details", True)
-    def test_full_details_serializer_used(self, user: Type[User], notification: Notification) -> None:
+    def test_full_details_serializer_used(
+        self, user: Type[User], notification: Notification
+    ) -> None:
         """
         Test that the full details serializer is used when `include_serializer_full_details` is True in the config.
 

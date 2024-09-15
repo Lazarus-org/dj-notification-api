@@ -6,7 +6,9 @@ import pytest
 from django_notification.api.serializers.simple_notification import (
     SimpleNotificationSerializer,
 )
-from django_notification.utils.serialization.field_filters import filter_non_empty_fields
+from django_notification.utils.serialization.field_filters import (
+    filter_non_empty_fields,
+)
 from django_notification.utils.serialization.notif_title_generator import generate_title
 from pytest import mark
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
