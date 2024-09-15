@@ -146,7 +146,9 @@ def notifications(db, user: User, qs_user: User, qs_group: Group) -> List[Notifi
             timestamp=now(),
         ),
     ]
-    notifications = Notification.objects.bulk_create(notifications)
+    for notification in notifications:
+        notification.save()
+
     notifications[0].recipient.add(qs_user)
     notifications[1].recipient.add(qs_user)
     notifications[2].recipient.add(qs_user)

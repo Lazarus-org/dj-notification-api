@@ -14,5 +14,5 @@ from django_notification.tests.fixtures import (
     notification_recipient,
     notification_seen,
     deleted_notification,
-    admin_user
+    admin_user,
 )

@@ -89,7 +89,9 @@ class TestNotification:
 
         assert title == f"{user} liked {user}"
 
-    def test_title_generator_with_no_target_or_action_object(self, notification: Notification, user: User) -> None:
+    def test_title_generator_with_no_target_or_action_object(
+        self, notification: Notification, user: User
+    ) -> None:
         """
         Test the title generator when neither target nor action object are present.
 
@@ -113,7 +115,9 @@ class TestNotification:
 
         assert notification.seen_by.filter(id=user.id).exists()
 
-    def test_mark_as_seen_with_group(self, notification: Notification, user: User, group: Group) -> None:
+    def test_mark_as_seen_with_group(
+        self, notification: Notification, user: User, group: Group
+    ) -> None:
         """
         Test the `mark_as_seen` method when the user belongs to a group that is a recipient.
 
@@ -149,7 +153,9 @@ class TestNotification:
         expected_str = f"{notification.description} now"
         assert str(notification) == expected_str
 
-    def test_add_recipients_to_notification(self, notification: Notification, user: User) -> None:
+    def test_add_recipients_to_notification(
+        self, notification: Notification, user: User
+    ) -> None:
         """
         Test adding recipients to the notification.
 
@@ -160,7 +166,9 @@ class TestNotification:
         notification.recipient.add(user)
         assert notification.recipient.filter(id=user.id).exists()
 
-    def test_add_groups_to_notification(self, notification: Notification, group: Group) -> None:
+    def test_add_groups_to_notification(
+        self, notification: Notification, group: Group
+    ) -> None:
         """
         Test adding groups to the notification.
 

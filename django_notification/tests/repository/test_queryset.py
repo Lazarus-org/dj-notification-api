@@ -18,6 +18,7 @@ class TestNotificationQuerySet:
     """
     Test suite for the `NotificationQuerySet`.
     """
+
     def test_all_notifications_with_recipients(
         self, notifications: List[Notification], qs_user: List[User]
     ) -> None:

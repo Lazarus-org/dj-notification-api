@@ -36,7 +36,9 @@ class TestDeletedNotification:
         )
         assert str(deleted_notification) == expected_str
 
-    def test_unique_together_constraint(self, notification: Notification, user: User) -> None:
+    def test_unique_together_constraint(
+        self, notification: Notification, user: User
+    ) -> None:
         """
         Test that the combination of user and notification is unique.
 
@@ -56,7 +58,9 @@ class TestDeletedNotification:
                 notification=notification, user=user, deleted_at=now()
             )
 
-    def test_save_method_with_valid_user(self, notification: Notification, user: User) -> None:
+    def test_save_method_with_valid_user(
+        self, notification: Notification, user: User
+    ) -> None:
         """
         Test the save method when the user is a recipient or group member of the notification.
 
@@ -78,7 +82,9 @@ class TestDeletedNotification:
             notification=notification, user=user
         ).exists()
 
-    def test_save_method_with_invalid_user(self, notification: Notification, another_user: User) -> None:
+    def test_save_method_with_invalid_user(
+        self, notification: Notification, another_user: User
+    ) -> None:
         """
         Test that a `PermissionError` is raised when the user is not a recipient or group member.
 
@@ -96,7 +102,9 @@ class TestDeletedNotification:
             )
             deleted_notification.save()
 
-    def test_save_method_for_staff_user(self, notification: Notification, user: User) -> None:
+    def test_save_method_for_staff_user(
+        self, notification: Notification, user: User
+    ) -> None:
         """
         Test that a staff user can save `DeletedNotification` even if they are not a recipient or group member.
 

@@ -8,7 +8,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.cache import cache
 
-from django_notification.api.throttlings.role_base_throttle import RoleBasedUserRateThrottle
+from django_notification.api.throttlings.role_base_throttle import (
+    RoleBasedUserRateThrottle,
+)
 from django_notification.settings.conf import config
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 

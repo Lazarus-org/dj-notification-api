@@ -35,7 +35,9 @@ class TestActivityViewSet:
         """
         self.client = APIClient()
 
-    def test_get_queryset_for_staff(self, admin_user: User, notification: Notification) -> None:
+    def test_get_queryset_for_staff(
+        self, admin_user: User, notification: Notification
+    ) -> None:
         """
         Test that staff users can retrieve all seen notifications.
 
@@ -58,7 +60,9 @@ class TestActivityViewSet:
             == Notification.queryset.seen(seen_by=admin_user).count()
         )
 
-    def test_get_queryset_for_non_staff(self, user: User, notification: Notification) -> None:
+    def test_get_queryset_for_non_staff(
+        self, user: User, notification: Notification
+    ) -> None:
         """
         Test that non-staff users retrieve notifications based on their group memberships.
 
@@ -100,7 +104,9 @@ class TestActivityViewSet:
         assert response.status_code == 405  # Method Not Allowed
 
     @patch.object(config, "api_allow_retrieve", False)
-    def test_retrieve_method_disabled(self, user: User, notification: Notification) -> None:
+    def test_retrieve_method_disabled(
+        self, user: User, notification: Notification
+    ) -> None:
         """
         Test that the retrieve method is disabled when `api_allow_retrieve` is False in the config.
 
@@ -119,7 +125,9 @@ class TestActivityViewSet:
         assert response.status_code == 405  # Method Not Allowed
 
     @patch.object(config, "include_serializer_full_details", True)
-    def test_full_details_serializer_used(self, user: User, notification: Notification) -> None:
+    def test_full_details_serializer_used(
+        self, user: User, notification: Notification
+    ) -> None:
         """
         Test that the full details serializer is used when `include_serializer_full_details` is True.
 
@@ -169,7 +177,9 @@ class TestActivityViewSet:
             Notification.queryset.sent().count() == DeletedNotification.objects.count()
         )
 
-    def test_clear_notification(self, admin_user: User, notification: Notification) -> None:
+    def test_clear_notification(
+        self, admin_user: User, notification: Notification
+    ) -> None:
         """
         Test the clear_notification action to soft delete a specific notification.
 
@@ -192,7 +202,9 @@ class TestActivityViewSet:
         assert DeletedNotification.objects.filter(notification=notification).exists()
 
     @patch.object(config, "include_hard_delete", True)
-    def test_delete_activities(self, admin_user: User, notification: Notification) -> None:
+    def test_delete_activities(
+        self, admin_user: User, notification: Notification
+    ) -> None:
         """
         Test the delete_activities action to hard delete all notifications.
 
@@ -218,7 +230,9 @@ class TestActivityViewSet:
         assert not Notification.queryset.all_notifications()
 
     @patch.object(config, "include_hard_delete", True)
-    def test_delete_notification(self, admin_user: User, notification: Notification) -> None:
+    def test_delete_notification(
+        self, admin_user: User, notification: Notification
+    ) -> None:
         """
         Test the delete_notification action to hard delete a specific notification.
 
