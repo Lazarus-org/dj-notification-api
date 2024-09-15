@@ -1,7 +1,7 @@
-from typing import Any, Tuple, List
+from typing import Any, List, Tuple
 
 from django.conf import settings
-from django.db.models import Model, ForeignKey, CASCADE, DateTimeField, Index
+from django.db.models import CASCADE, DateTimeField, ForeignKey, Index, Model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -12,8 +12,7 @@ from django_notification.utils.user_model import get_username
 
 
 class DeletedNotification(Model):
-    """
-    A model to track notifications that have been soft-deleted by users.
+    """A model to track notifications that have been soft-deleted by users.
 
     This model is used to record when a notification was marked as deleted by a user.
     It provides a way to keep track of soft-deleted notifications for auditing or restoration purposes.
@@ -34,6 +33,7 @@ class DeletedNotification(Model):
             Returns a string representation of the deleted notification including details of the notification and the user who deleted it.
         save(*args: Any, **kwargs: Any) -> None:
             Saves the object to the database after checking if the user has permission to delete the notification.
+
     """
 
     notification = ForeignKey(
@@ -69,18 +69,17 @@ class DeletedNotification(Model):
         ]
 
     def __str__(self) -> str:
-        """
-        Return a string representation of the deleted notification.
+        """Return a string representation of the deleted notification.
 
         Returns:
             str: A string representation of the deleted notification including the notification and the user.
+
         """
         username = get_username(self.user)
         return f"{self.notification} deleted by {username} (ID: {self.user.pk})"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Save the object to the database.
+        """Save the object to the database.
 
         This method first validates if the user has the necessary permission to delete the notification.
         If the user does not have permission, a PermissionError is raised.
@@ -88,6 +87,7 @@ class DeletedNotification(Model):
 
         Raises:
             PermissionError: If the user does not have permission to delete the notification.
+
         """
 
         permission_class = NotificationPermission(self.notification)

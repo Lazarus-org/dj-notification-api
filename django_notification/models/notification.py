@@ -1,32 +1,30 @@
-import logging
 from typing import Tuple
 
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.exceptions import ValidationError
 from django.db.models import (
-    Model,
-    ManyToManyField,
-    ForeignKey,
+    CASCADE,
+    BooleanField,
     CharField,
     DateTimeField,
-    BooleanField,
-    PositiveIntegerField,
-    CASCADE,
-    URLField,
+    ForeignKey,
     JSONField,
     Manager,
+    ManyToManyField,
+    Model,
+    PositiveIntegerField,
     TextField,
+    URLField,
 )
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from django_notification.models.helper.enums.status_choices import NotificationStatus
 from django_notification.models.notification_recipient import NotificationRecipient
 from django_notification.models.notification_seen import NotificationSeen
-from django_notification.models.helper.enums.status_choices import NotificationStatus
 from django_notification.models.permissions.notification_permission import (
     NotificationPermission,
 )
@@ -34,8 +32,7 @@ from django_notification.repository.queryset.notification import NotificationQue
 
 
 class Notification(Model):
-    """
-    A model representing notifications sent to users and groups.
+    """A model representing notifications sent to users and groups.
 
     This model supports associating any type of object with a notification through the use of
     generic foreign keys. It stores notification recipients, groups, status, and related objects
@@ -62,6 +59,7 @@ class Notification(Model):
         public (BooleanField): Indicates if the notification is public.
         data (JSONField): Additional metadata or attributes associated with the notification.
         timestamp (DateTimeField): Time when the notification was created.
+
     """
 
     recipient = ManyToManyField(
@@ -110,9 +108,7 @@ class Notification(Model):
         verbose_name=_("Actor object ID"),
         help_text=_("The ID of the actor object."),
     )
-    actor = GenericForeignKey(
-        "actor_content_type", "actor_object_id"
-    )
+    actor = GenericForeignKey("actor_content_type", "actor_object_id")
     target_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Target ContentType"),
@@ -128,9 +124,7 @@ class Notification(Model):
         blank=True,
         null=True,
     )
-    target = GenericForeignKey(
-        "target_content_type", "target_object_id"
-    )
+    target = GenericForeignKey("target_content_type", "target_object_id")
     action_object_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Action object ContentType"),
@@ -193,21 +187,21 @@ class Notification(Model):
         ordering: Tuple[str] = ("-timestamp",)
 
     def __str__(self) -> str:
-        """
-        Return a string representation of the notification including its description
-        and the natural time since its timestamp.
+        """Return a string representation of the notification including its
+        description and the natural time since its timestamp.
 
         Returns:
             str: The string representation of the notification.
+
         """
         return f"{self.description} {naturaltime(self.timestamp)}"
 
     def _title_generator(self) -> str:
-        """
-        Generate the title for the notification based on its attributes.
+        """Generate the title for the notification based on its attributes.
 
         Returns:
             str: The generated title for the notification.
+
         """
 
         if self.target:
@@ -234,28 +228,28 @@ class Notification(Model):
             verb=self.verb,
         )
 
-    def mark_as_seen(self, user: User) -> None:
-        """
-        Mark the notification as seen by a specific user.
+    def mark_as_seen(self, user: settings.AUTH_USER_MODEL) -> None:
+        """Mark the notification as seen by a specific user.
 
         Args:
             user (User): The user who has seen the notification.
 
         Raises:
             PermissionError: If the user does not have permission to mark the notification as seen.
+
         """
         permission_class = NotificationPermission(self)
         permission_class.validate_permission(user, "mark as seen")
         self.seen_by.add(user)
 
     def save(self, *args, **kwargs) -> None:
-        """
-        Save the notification instance, automatically generating the description
-        if it is not provided.
+        """Save the notification instance, automatically generating the
+        description if it is not provided.
 
         Args:
             *args: Additional arguments for the save method.
             **kwargs: Additional keyword arguments for the save method.
+
         """
         if not self.pk and not self.description:
             self.description = self._title_generator()
