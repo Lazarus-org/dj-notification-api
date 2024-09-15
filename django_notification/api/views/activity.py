@@ -1,26 +1,28 @@
-from typing import List, Type, Optional
+from typing import List, Optional, Type
 
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import GenericViewSet
 
-from django_notification.api.serializers.simple_notification import (
-    SimpleNotificationSerializer,
-)
-from django_notification.api.serializers.notification import NotificationSerializer
-from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
-from django_notification.settings.conf import config
-from django_notification.models.notification import Notification
+from django_notification.api.serializers.notification import \
+    NotificationSerializer
+from django_notification.api.serializers.simple_notification import \
+    SimpleNotificationSerializer
 from django_notification.decorators.action import conditional_action
+from django_notification.mixins import (ConfigurableAttrsMixin,
+                                        DisableMethodsMixin)
+from django_notification.models.notification import Notification
+from django_notification.settings.conf import config
 
 
+# pylint: disable=too-many-ancestors
 class ActivityViewSet(
     GenericViewSet,
     ListModelMixin,
@@ -28,8 +30,8 @@ class ActivityViewSet(
     DisableMethodsMixin,
     ConfigurableAttrsMixin,
 ):
-    """
-    API ViewSet for managing and interacting with user activities (notifications).
+    """API ViewSet for managing and interacting with user activities
+    (notifications).
 
     This viewset allows users to view, clear, and delete their seen activities.
     The functionality provided depends on user roles and configuration settings,
@@ -79,16 +81,17 @@ class ActivityViewSet(
 
     This viewset provides a flexible and configurable API for managing notification activities,
     with dynamic behavior driven by user roles and project settings.
+
     """
 
     filter_backends: List = [DjangoFilterBackend, OrderingFilter, SearchFilter]
 
     def __init__(self, *args, **kwargs) -> None:
-        """
-        Initialize the viewset and configure attributes based on settings.
+        """Initialize the viewset and configure attributes based on settings.
 
         Disables the 'list' and 'retrieve' methods if their corresponding settings
         (`api_allow_list` and `api_allow_retrieve`) are set to `False`.
+
         """
         super().__init__(*args, **kwargs)
         self.configure_attrs()
@@ -102,29 +105,28 @@ class ActivityViewSet(
             self.disable_methods(["RETRIEVE"])
 
     def get_user_groups(self) -> List:
-        """
-        Retrieve the list of groups the current user belongs to.
+        """Retrieve the list of groups the current user belongs to.
 
         Returns:
             List: A list of the user's groups.
+
         """
         return self.request.user.groups.all()
 
     def get_staff_queryset(self) -> QuerySet:
-        """
-        Get the queryset for staff users. Staff users can view all seen notifications
-        with full details.
+        """Get the queryset for staff users. Staff users can view all seen
+        notifications with full details.
 
         Returns:
             QuerySet: A queryset of seen notifications for staff users.
+
         """
         return Notification.queryset.seen(
             seen_by=self.request.user, display_detail=True
         )
 
     def get_queryset(self, display_detail: bool = False) -> QuerySet:
-        """
-        Retrieve the queryset of seen notifications for the user.
+        """Retrieve the queryset of seen notifications for the user.
 
         If the user is a staff member, all seen notifications are returned. For non-staff users,
         the level of detail returned depends on the `include_serializer_full_details` setting.
@@ -134,6 +136,7 @@ class ActivityViewSet(
 
         Returns:
             QuerySet: A queryset of seen notifications, filtered by user and groups.
+
         """
         if self.request.user.is_staff:
             return self.get_staff_queryset()
@@ -151,12 +154,13 @@ class ActivityViewSet(
         return queryset.distinct()
 
     def get_serializer_class(self) -> Type[Serializer]:
-        """
-        Determine the appropriate serializer class based on the user's role and settings.
+        """Determine the appropriate serializer class based on the user's role
+        and settings.
 
         Returns:
             Serializer: Either `NotificationSerializer` for detailed responses
             or `SimpleNotificationSerializer` for minimal responses.
+
         """
         if self.request.user.is_staff or config.include_serializer_full_details:
             return NotificationSerializer
@@ -164,8 +168,7 @@ class ActivityViewSet(
 
     @conditional_action(condition=config.include_soft_delete, detail=False)
     def clear_activities(self, request: Request) -> Response:
-        """
-        Soft-delete or clear all activities for the user.
+        """Soft-delete or clear all activities for the user.
 
         This method is conditionally enabled based on the `include_soft_delete` setting.
 
@@ -174,6 +177,7 @@ class ActivityViewSet(
 
         Returns:
             Response: A response indicating that all activities have been cleared.
+
         """
         Notification.queryset.clear_all(request.user)
         return Response(
@@ -184,8 +188,7 @@ class ActivityViewSet(
     def clear_notification(
         self, request: Request, pk: Optional[str] = None
     ) -> Response:
-        """
-        Soft-delete a specific notification for the user.
+        """Soft-delete a specific notification for the user.
 
         This method is conditionally enabled based on the `include_soft_delete` setting.
 
@@ -195,6 +198,7 @@ class ActivityViewSet(
 
         Returns:
             Response: A response indicating that the notification has been cleared.
+
         """
         Notification.queryset.delete_notification(
             notification_id=pk, recipient=request.user, soft_delete=True
@@ -209,8 +213,7 @@ class ActivityViewSet(
         detail=False,
     )
     def delete_activities(self, request: Request) -> Response:
-        """
-        Permanently delete all activities for the user.
+        """Permanently delete all activities for the user.
 
         This method is conditionally enabled based on the `include_hard_delete` setting
         and restricted to admin users.
@@ -220,6 +223,7 @@ class ActivityViewSet(
 
         Returns:
             Response: A response indicating that all activities have been permanently deleted.
+
         """
         queryset = self.filter_queryset(self.get_queryset(display_detail=True))
         queryset.delete()
@@ -235,8 +239,7 @@ class ActivityViewSet(
     def delete_notification(
         self, request: Request, pk: Optional[str] = None
     ) -> Response:
-        """
-        Permanently delete a specific notification for the user.
+        """Permanently delete a specific notification for the user.
 
         This method is conditionally enabled based on the `include_hard_delete` setting
         and restricted to admin users.
@@ -247,6 +250,7 @@ class ActivityViewSet(
 
         Returns:
             Response: A response indicating that the notification has been permanently deleted.
+
         """
         Notification.queryset.delete_notification(notification_id=pk, soft_delete=False)
         return Response(

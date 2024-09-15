@@ -1,8 +1,8 @@
-from typing import Any, Tuple, List
+from typing import Any, List, Tuple
 
-from django.core.exceptions import ValidationError
-from django.db.models import Model, ForeignKey, DateTimeField, CASCADE, Index
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db.models import CASCADE, DateTimeField, ForeignKey, Index, Model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -13,8 +13,7 @@ from django_notification.utils.user_model import get_username
 
 
 class NotificationSeen(Model):
-    """
-    A model that tracks when a user has seen a specific notification.
+    """A model that tracks when a user has seen a specific notification.
 
     Attributes:
         notification (ForeignKey): A foreign key linking to the Notification model,
@@ -48,6 +47,7 @@ class NotificationSeen(Model):
 
         The `seen_at` field is automatically populated with the current time, and you can query
         when a specific user saw a notification or how many users have seen it.
+
     """
 
     notification = ForeignKey(
@@ -88,8 +88,7 @@ class NotificationSeen(Model):
         return f"{username} (ID: {self.user.pk}) has seen ({self.notification})"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Saves the object to the database.
+        """Saves the object to the database.
 
         This method checks if the user has permission to mark the notification as seen.
 
@@ -100,8 +99,6 @@ class NotificationSeen(Model):
         Raises:
             PermissionError: If the user does not have permission to mark the notification as seen.
 
-        Returns:
-            None
         """
         permission_class = NotificationPermission(self.notification)
         permission_class.validate_permission(self.user, "mark as seen")

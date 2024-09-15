@@ -1,15 +1,14 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 from django.conf import settings
-from django.db.models import Model, ForeignKey, CASCADE, Index
+from django.db.models import CASCADE, ForeignKey, Index, Model
 from django.utils.translation import gettext_lazy as _
 
 from django_notification.utils.user_model import get_username
 
 
 class NotificationRecipient(Model):
-    """
-    A model to represent the recipient of a notification.
+    """A model to represent the recipient of a notification.
 
     Attributes:
         notification (ForeignKey): A foreign key linking to the Notification model.
@@ -24,6 +23,7 @@ class NotificationRecipient(Model):
         __str__() -> str:
             Returns a string representation of the notification recipient,
              including details of the associated notification and the recipient.
+
     """
 
     notification = ForeignKey(
@@ -54,11 +54,11 @@ class NotificationRecipient(Model):
         ]
 
     def __str__(self) -> str:
-        """
-        A string representation of the notification recipient.
+        """A string representation of the notification recipient.
 
         Returns:
             str: A string representation of the associated notification.
+
         """
         username = get_username(self.recipient)
         return f"Notification: {self.notification}, Recipient: {username} (ID: {self.recipient.pk})"

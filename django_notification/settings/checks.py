@@ -6,16 +6,15 @@ from django_notification.settings.conf import config
 from django_notification.validators.config_validators import (
     validate_boolean_setting,
     validate_list_fields,
-    validate_throttle_rate,
     validate_optional_class_setting,
     validate_optional_classes_setting,
+    validate_throttle_rate,
 )
 
 
 @register()
 def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
-    """
-    Check and validate notification settings in the Django configuration.
+    """Check and validate notification settings in the Django configuration.
 
     This function performs validation of various notification-related settings
     defined in the Django settings. It returns a list of errors if any issues are found.
@@ -32,6 +31,7 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
     --------
     List[Error]
         A list of `Error` objects for any detected configuration issues.
+
     """
     errors: List[Error] = []
 

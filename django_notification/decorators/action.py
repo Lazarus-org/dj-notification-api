@@ -1,11 +1,12 @@
 from functools import wraps
+from typing import Any, Callable
+
 from rest_framework.decorators import action
-from typing import Callable, Any
 
 
 def conditional_action(condition: bool, *args: Any, **kwargs: Any) -> Callable:
-    """
-    Conditionally apply the Django REST Framework's `action` decorator based on the given condition.
+    """Conditionally apply the Django REST Framework's `action` decorator based
+    on the given condition.
 
     Args:
         condition (bool): A boolean condition to determine if the `action` decorator should be applied.
@@ -17,6 +18,7 @@ def conditional_action(condition: bool, *args: Any, **kwargs: Any) -> Callable:
 
     Raises:
         TypeError: If `condition` is not a boolean.
+
     """
     if not isinstance(condition, bool):
         raise TypeError("The 'condition' argument must be of type bool.")

@@ -1,21 +1,20 @@
-from typing import Dict, Type
+from typing import Dict
 
-from rest_framework.serializers import (
-    ModelSerializer,
-    SerializerMethodField,
-    BaseSerializer,
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
+
+from django_notification.api.serializers.helper.get_serializer_cls import (
+    group_serializer_class,
+    user_serializer_class,
 )
-from django_notification.api.serializers import GroupSerializer, UserSerializer
 from django_notification.models.notification import Notification
-from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
 
 
 class NotificationSerializer(ModelSerializer):
-    """
-    Serializer for the Notification model, including related Group and User data.
+    """Serializer for the Notification model, including related Group and User
+    data.
 
     Fields:
         id: Unique identifier for the notification.
@@ -33,21 +32,8 @@ class NotificationSerializer(ModelSerializer):
         public: Boolean indicating if the notification is public.
         data: Additional data associated with the notification.
         timestamp: Time when the notification was created.
+
     """
-
-    @staticmethod
-    def group_serializer_class():
-        """
-        Get the serializer class for the group field, either from config or the default.
-        """
-        return config.group_serializer_class or GroupSerializer
-
-    @staticmethod
-    def user_serializer_class() -> Type[BaseSerializer]:
-        """
-        Get the serializer class for the recipient and seen_by fields, either from config or the default.
-        """
-        return config.user_serializer_class or UserSerializer
 
     group = group_serializer_class()(many=True, read_only=True)
     recipient = user_serializer_class()(many=True, read_only=True)
@@ -75,26 +61,26 @@ class NotificationSerializer(ModelSerializer):
         )
 
     def get_title(self, notification: Notification) -> str:
-        """
-        Compute the title of the notification.
+        """Compute the title of the notification.
 
         Args:
             notification: The notification instance.
 
         Returns:
             str: The computed title of the notification.
+
         """
         return str(notification)
 
     def to_representation(self, instance: Notification) -> Dict:
-        """
-        Customize the representation of the serialized data.
+        """Customize the representation of the serialized data.
 
         Args:
             instance: The notification instance being serialized.
 
         Returns:
             dict: The serialized representation of the notification with non-empty fields.
+
         """
         data = super().to_representation(instance)
         return filter_non_empty_fields(data)
