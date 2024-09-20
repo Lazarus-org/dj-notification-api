@@ -30,9 +30,7 @@ class DefaultThrottleSettings:
 @dataclass(frozen=True)
 class DefaultPaginationAndFilteringSettings:
     pagination_class: str = "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
-    filterset_class: str = (
-        "django_notification.api.filters.notification_filter.NotificationFilter"
-    )
+    filterset_class: str = None
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "public"]
     )
