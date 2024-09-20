@@ -12,7 +12,7 @@ Install the package via pip:
 
 .. code-block:: bash
 
-   pip install dj-notification-api
+   $ pip install dj-notification-api
 
 **Option 2: Using `Poetry`**
 
@@ -20,7 +20,7 @@ If you're using Poetry, add the package with:
 
 .. code-block:: bash
 
-   poetry add dj-notification-api
+   $ poetry add dj-notification-api
 
 **Option 3: Using `pipenv`**
 
@@ -28,7 +28,7 @@ If you're using pipenv, install the package with:
 
 .. code-block:: bash
 
-   pipenv install dj-notification-api
+   $ pipenv install dj-notification-api
 
 
 2. Add to Installed Apps
@@ -44,8 +44,33 @@ Once installed, add `django_notification` to the `INSTALLED_APPS` in your Django
        ...
    ]
 
+3. (Optional) Configure API Filters
+-----------------------------------
 
-3. Apply Migrations
+To enable filtering of notifications through the API, include ``django_filters`` in your `INSTALLED_APPS` and configure the filter settings.
+
+Add `django_filters` to your `INSTALLED_APPS`:
+
+.. code-block:: shell
+
+   INSTALLED_APPS = [
+       ...
+       "django_filters",
+       ...
+   ]
+
+Then, set the filter class configuration in your ``settings.py``:
+
+.. code-block:: python
+
+   DJANGO_NOTIFICATION_API_FILTERSET_CLASS = (
+       "django_notification.api.filters.notification_filter.NotificationFilter"
+   )
+
+You can also define your custom `FilterClass` and reference it in here if needed. This allows you to customize the filtering behavior according to your requirements.
+
+
+4. Apply Migrations
 -------------------
 
 Run the following command to apply the necessary migrations:
@@ -55,7 +80,7 @@ Run the following command to apply the necessary migrations:
    python manage.py migrate
 
 
-4. Add Notification API URLs
+5. Add Notification API URLs
 ----------------------------
 
 Include the notification API routes in your project’s `urls.py` file:
@@ -71,7 +96,7 @@ Include the notification API routes in your project’s `urls.py` file:
    ]
 
 
-5. Create Notifications
+6. Create Notifications
 -----------------------
 
 To create notifications and use them in your project, use the `Notification` model from the `django_notification` package. The `create_notification` method allows you to generate notifications dynamically based on various events in your application.
@@ -113,14 +138,14 @@ To create notifications and use them in your project, use the `Notification` mod
 - **action_object** (``Optional[Model]``): Optional object that is the focus of the action.
 - **link** (``Optional[str]``): Optional URL link related to the notification.
 - **is_sent** (``bool``): Marks whether the notification is sent (default is ``False``).
-- **data** (``Optional[Dict]``): Optional additional data in dictionary format.
+- **data** (``Optional[Dict]``): Optional additional data in dictionary format (JSON Field).
 
 **Note**: The ``description`` field is used as the title of the notification, and it will be displayed with a time-relative format, such as: ``User logged in to admin area a minute ago.``
 
 If the ``description`` is not provided, a title will be automatically generated based on several fields like the ``actor``, ``verb``, and other relevant fields (e.g., target or action object).
 
 
-6. Verify Notifications
+7. Verify Notifications
 -----------------------
 
 Once notifications are created, they can be managed through the API endpoints. To test and verify the creation, make a request to the relevant endpoint, for example:
@@ -131,8 +156,7 @@ Once notifications are created, they can be managed through the API endpoints. T
 
 This will return a list of notifications created for the authenticated user.
 
+----
 
-7. Start Using the API
-----------------------
+With the setup complete, the ``django_notification`` is ready for use in your project. For further customizations and settings, refer to the :doc:`API Guide <api_guide>` and :doc:`Settings <settings>` sections.
 
-With the setup complete, the notification API is ready for use in your project. For further customizations and settings, refer to the **API Guide** and **Settings** sections.
