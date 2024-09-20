@@ -97,6 +97,7 @@ def configure_django_settings() -> None:
             DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE=True,
             DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE="20/minute",
             DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE="50/minute",
+            DJANGO_NOTIFICATION_API_FILTERSET_CLASS="django_notification.api.filters.notification_filter.NotificationFilter",
             TEMPLATES=[
                 {
                     "BACKEND": "django.template.backends.django.DjangoTemplates",
