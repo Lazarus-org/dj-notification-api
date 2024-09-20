@@ -378,27 +378,38 @@ class NotificationQuerySet(QuerySet):
     def update_notification(
         self,
         notification_id: int,
-        is_sent: bool = True,
-        public: bool = True,
+        is_sent: Optional[bool] = None,
+        public: Optional[bool] = None,
         data: Optional[JSONField] = None,
     ):
-        """Update the status of a notification.
+        """Update the status of a notification selectively.
 
         Args:
             notification_id: The ID of the notification.
-            is_sent: The send status of the notification.
-            public: The public status of the notification.
-            data: The data of the notification.
+            is_sent: The send status of the notification. If None, the field will not be updated.
+            public: The public status of the notification. If None, the field will not be updated.
+            data: The data of the notification. If None, the field will not be updated.
 
         Returns:
             The updated notification.
 
         """
         notification = get_object_or_404(self, pk=notification_id)
-        notification.is_sent = is_sent
-        notification.public = public
-        notification.data = data
-        notification.save()
+        update_fields: List[str] = []
+
+        if is_sent is not None:
+            notification.is_sent = is_sent
+            update_fields.append("is_sent")
+        if public is not None:
+            notification.public = public
+            update_fields.append("public")
+        if data is not None:
+            notification.data = data
+            update_fields.append("data")
+
+        if update_fields:
+            notification.save(update_fields=update_fields)
+
         return notification
 
     def delete_notification(

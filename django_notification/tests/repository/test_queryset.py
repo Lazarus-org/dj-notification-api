@@ -236,8 +236,11 @@ class TestNotificationQuerySet:
             notification_id=notification.id,
             is_sent=True,
             public=False,
+            data={"key": "value"}
         )
         assert updated_notification.is_sent is True
+        assert updated_notification.public is False
+        assert updated_notification.data is not None
 
     def test_delete_notification_without_recipient(
         self, notifications: List[Notification]
