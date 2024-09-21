@@ -38,34 +38,38 @@ class ActivityViewSet(
 
     Features:
     - List Activities: Lists all seen notifications for the user. The availability of
-      this method is controlled by the `api_allow_list` setting.
+      this method is controlled by settings.
     - Retrieve Activity: Retrieve detailed information about a specific notification
-      by its ID. The availability of this method is controlled by the `api_allow_retrieve` setting.
+      by its ID. The availability of this method is controlled by settings.
     - Clear Activities: Allows users to soft-delete or clear all notifications. This
-      functionality is controlled by the `include_soft_delete` setting.
+      functionality is controlled by settings.
     - Delete Activities: Admin users can permanently delete notifications. This
-      feature is controlled by the `include_hard_delete` setting.
+      feature is controlled by settings.
 
     Customizations:
     - Dynamic Serializer: Based on user role and settings, the appropriate serializer
       is chosen between `NotificationSerializer` (for detailed information) and
       `SimpleNotificationSerializer` (for basic information).
     - Conditional Actions: Soft and hard deletion actions are conditionally enabled
-      based on settings (`include_soft_delete`, `include_hard_delete`) and permissions.
-      Admins have additional capabilities such as hard-deleting notifications.
+      based on settings and permissions.
+      Admins have additional capabilities such as hard-deleting notifications based on settings.
     - Filtering and Searching: This view supports filtering, searching, and ordering
       of notifications via `DjangoFilterBackend`, `SearchFilter`, and `OrderingFilter`.
     - Configuration via Settings: The viewset is dynamically configured using the
       `configure_attrs` method, which adjusts method availability and functionality
       based on project settings.
 
+    Parsers:
+    - Accepts various content types, such as `application/json` and `multipart/form-data`,
+      allowing flexibility in handling requests that include file uploads or JSON payloads.
+
     Methods:
     - `GET /activities/`: List all seen notifications.
     - `GET /activities/<id>/`: Retrieve detailed information about a specific notification.
-    - `POST /activities/clear/`: Soft-delete or clear all activities (conditionally enabled).
-    - `POST /activities/clear/<id>/`: Soft-delete a specific notification (conditionally enabled).
-    - `POST /activities/delete/`: Permanently delete all activities (admin only, conditionally enabled).
-    - `POST /activities/delete/<id>/`: Permanently delete a specific notification (admin only, conditionally enabled).
+    - `GET /activities/clear_activities/`: Soft-delete or clear all activities (conditionally enabled).
+    - `GET /activities/<id>/clear_notification/`: Soft-delete a specific notification (conditionally enabled).
+    - `GET /activities/delete_activities/`: Permanently delete all activities (admin only, conditionally enabled).
+    - `GET /activities/<id>/delete_notification`: Permanently delete a specific notification (admin only, conditionally enabled).
 
     Permissions:
     - Regular Users: Can list, retrieve, and clear their own notifications.
@@ -73,10 +77,12 @@ class ActivityViewSet(
       on the configuration.
 
     Settings:
-    - The availability of list and retrieve methods is controlled by `api_allow_list`
-      and `api_allow_retrieve` settings.
-    - The soft-delete and hard-delete functionalities are controlled by `include_soft_delete`
-      and `include_hard_delete` settings.
+    - The availability of list and retrieve methods is controlled by `DJANGO_NOTIFICATION_API_ALLOW_LIST`
+      and `DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE` settings.
+    - The soft-delete and hard-delete functionalities are controlled by `DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE`
+      and `DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE` settings.
+    - The level of notification details returned is based on the user's role and the setting
+      (`DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`).
 
     This viewset provides a flexible and configurable API for managing notification activities,
     with dynamic behavior driven by user roles and project settings.

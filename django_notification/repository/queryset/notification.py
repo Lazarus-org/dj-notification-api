@@ -2,9 +2,21 @@ from typing import Dict, List, Optional, Union
 
 from django.contrib.auth.models import Group
 from django.db import transaction
-from django.db.models import JSONField, Model, Q, QuerySet, Subquery
+from django.db.models import Model, Q, QuerySet, Subquery
 from rest_framework.generics import get_object_or_404
 
+from django_notification.constants.qs_types import (
+    ActionObject,
+    Actor,
+    Data,
+    Description,
+    Groups,
+    Link,
+    OptConditions,
+    Recipient,
+    Recipients,
+    Target,
+)
 from django_notification.models.deleted_notification import DeletedNotification
 from django_notification.models.notification_seen import NotificationSeen
 from django_notification.utils.user_model import UserModel
@@ -18,9 +30,7 @@ class NotificationQuerySet(QuerySet):
             "recipient", "group", "group__permissions", "seen_by"
         )
 
-    def _get_deleted_notifications(
-        self, deleted_by: Optional[UserModel] = None
-    ) -> QuerySet:
+    def _get_deleted_notifications(self, deleted_by: Recipient = None) -> QuerySet:
         """Retrieve deleted notifications optionally filtered by user who
         delete the notification."""
         queryset = DeletedNotification.objects.values("notification")
@@ -30,9 +40,9 @@ class NotificationQuerySet(QuerySet):
 
     def _get_notifications_queryset(
         self,
-        exclude_deleted_by: Optional[UserModel] = None,
-        display_detail: Optional[bool] = False,
-        conditions: Optional[Q] = None,
+        exclude_deleted_by: Recipient = None,
+        display_detail: bool = False,
+        conditions: OptConditions = None,
     ) -> Union[QuerySet, Dict]:
         """Return a queryset of notifications based on the given conditions.
 
@@ -69,9 +79,9 @@ class NotificationQuerySet(QuerySet):
 
     def all_notifications(
         self,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        display_detail: Optional[bool] = False,
+        recipients: Recipients = None,
+        groups: Groups = None,
+        display_detail: bool = False,
     ) -> QuerySet:
         """Return all notifications excluding those that have been deleted.
 
@@ -104,11 +114,11 @@ class NotificationQuerySet(QuerySet):
 
     def sent(
         self,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        exclude_deleted_by: Optional[UserModel] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        display_detail: Optional[bool] = False,
-        conditions: Optional[Q] = Q(),
+        recipients: Recipients = None,
+        exclude_deleted_by: Recipient = None,
+        groups: Groups = None,
+        display_detail: bool = False,
+        conditions: Q = Q(),
     ) -> QuerySet:
         """Return all sent notifications.
 
@@ -151,11 +161,11 @@ class NotificationQuerySet(QuerySet):
 
     def unsent(
         self,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        exclude_deleted_by: Optional[UserModel] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        display_detail: Optional[bool] = False,
-        conditions: Optional[Q] = Q(),
+        recipients: Recipients = None,
+        exclude_deleted_by: Recipient = None,
+        groups: Groups = None,
+        display_detail: bool = False,
+        conditions: Q = Q(),
     ) -> QuerySet:
         """Return all unsent notifications.
 
@@ -198,10 +208,10 @@ class NotificationQuerySet(QuerySet):
     def seen(
         self,
         seen_by: UserModel,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        display_detail: Optional[bool] = False,
-        conditions: Optional[Q] = Q(),
+        recipients: Recipients = None,
+        groups: Groups = None,
+        display_detail: bool = False,
+        conditions: Q = Q(),
     ) -> QuerySet:
         """Return all seen notifications by the given user."""
         conditions &= Q(seen_by=seen_by)
@@ -216,10 +226,10 @@ class NotificationQuerySet(QuerySet):
     def unseen(
         self,
         unseen_by: UserModel,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        display_detail: Optional[bool] = False,
-        conditions: Optional[Q] = Q(),
+        recipients: Recipients = None,
+        groups: Groups = None,
+        display_detail: bool = False,
+        conditions: Q = Q(),
     ) -> QuerySet:
         """Return notifications that the given user has not seen."""
         return self.sent(
@@ -251,10 +261,10 @@ class NotificationQuerySet(QuerySet):
         NotificationSeen.objects.bulk_create(notifications_to_mark)
         return notifications.count()
 
-    def mark_as_sent(
+    def mark_all_as_sent(
         self,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
+        recipients: Recipients = None,
+        groups: Groups = None,
     ) -> int:
         """Mark notifications as sent.
 
@@ -270,7 +280,7 @@ class NotificationQuerySet(QuerySet):
             recipients=recipients, groups=groups, display_detail=True
         ).update(is_sent=True)
 
-    def deleted(self, deleted_by: Optional[UserModel] = None) -> QuerySet:
+    def deleted(self, deleted_by: Recipient = None) -> QuerySet:
         """Return all deleted notifications optionally filtered by the user who
         delete it."""
 
@@ -304,17 +314,17 @@ class NotificationQuerySet(QuerySet):
     def create_notification(
         self,
         verb: str,
-        actor: Model,
-        description: Optional[str] = None,
-        recipients: Optional[Union[UserModel, QuerySet, List[UserModel]]] = None,
-        groups: Optional[Union[Group, QuerySet, List[Group]]] = None,
-        status: Optional[str] = "INFO",
+        actor: Actor,
+        description: Description = None,
+        recipients: Recipients = None,
+        groups: Groups = None,
+        status: str = "INFO",
         public: bool = True,
-        target: Optional[Model] = None,
-        action_object: Optional[Model] = None,
-        link: Optional[str] = None,
+        target: Target = None,
+        action_object: ActionObject = None,
+        link: Link = None,
         is_sent: bool = False,
-        data: Optional[Dict] = None,
+        data: Data = None,
     ):
         """Create a new notification.
 
@@ -380,7 +390,7 @@ class NotificationQuerySet(QuerySet):
         notification_id: int,
         is_sent: Optional[bool] = None,
         public: Optional[bool] = None,
-        data: Optional[JSONField] = None,
+        data: Data = None,
     ):
         """Update the status of a notification selectively.
 
@@ -415,7 +425,7 @@ class NotificationQuerySet(QuerySet):
     def delete_notification(
         self,
         notification_id: int,
-        recipient: Optional[UserModel] = None,
+        recipient: Recipient = None,
         soft_delete: bool = True,
     ) -> None:
         """Delete a notification.

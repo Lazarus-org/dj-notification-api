@@ -171,7 +171,7 @@ class TestNotificationQuerySet:
         -------
             The `mark_as_sent` method is successfully called. (Placeholder assertion)
         """
-        Notification.queryset.mark_as_sent()
+        Notification.queryset.mark_all_as_sent()
         assert True
 
     def test_deleted(
