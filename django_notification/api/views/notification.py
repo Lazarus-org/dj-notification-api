@@ -33,10 +33,10 @@ class NotificationViewSet(
 
     Features:
     - List Notifications: Retrieves a list of unseen notifications. The availability
-      of this method is controlled by a setting (`api_allow_list`).
+      of this method is controlled by settings.
     - Retrieve Notification: Fetch detailed information about a specific notification
       by its ID. Mark the notification as seen upon retrieval. The availability of this
-      method is controlled by a setting (`api_allow_retrieve`).
+      method is controlled by settings.
     - Mark All as Seen: Marks all unseen notifications for the user as seen.
 
     Customizations:
@@ -64,9 +64,9 @@ class NotificationViewSet(
 
     Settings:
     - The availability of list and retrieve methods is determined by the configuration
-      (`api_allow_list`, `api_allow_retrieve`).
+      (`DJANGO_NOTIFICATION_API_ALLOW_LIST`, `DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE`).
     - The level of notification details returned is based on the user's role and the setting
-      (`include_serializer_full_details`).
+      (`DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`).
 
     Parsers and filters are automatically applied based on the request's `Content-Type`
     and query parameters, making the viewset flexible and adaptable to various use cases.
