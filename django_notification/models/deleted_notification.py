@@ -40,7 +40,7 @@ class DeletedNotification(Model):
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that was deleted."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the Notification model, representing"
             " the notification that was soft-deleted by the user."
         ),
@@ -51,7 +51,7 @@ class DeletedNotification(Model):
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
         help_text=_("The user who deleted the notification."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the User model (AUTH_USER_MODEL), representing"
             " the user who marked the notification as deleted."
         ),
@@ -61,7 +61,7 @@ class DeletedNotification(Model):
     deleted_at = DateTimeField(
         verbose_name=_("Deleted at"),
         help_text=_("The time when the notification was deleted."),
-        db_comment=_("Timestamp recording when the user deleted the notification."),
+        db_comment="Timestamp recording when the user deleted the notification.",
         default=timezone.now,
     )
 

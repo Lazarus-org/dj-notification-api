@@ -30,7 +30,7 @@ class NotificationRecipient(Model):
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that is being sent."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the Notification model, representing the notification"
             " that is being sent to the recipient."
         ),
@@ -41,7 +41,7 @@ class NotificationRecipient(Model):
         settings.AUTH_USER_MODEL,
         verbose_name=_("Recipient"),
         help_text=_("The user who will receive the notification."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the User model (AUTH_USER_MODEL),"
             " representing the recipient of the notification."
         ),
