@@ -6,10 +6,11 @@ from django.http import HttpRequest
 
 from django_notification.mixins import ReadOnlyAdminMixin
 from django_notification.models.deleted_notification import DeletedNotification
+from django_notification.settings.conf import config
 from django_notification.utils.user_model import USERNAME_FIELD
 
 
-@admin.register(DeletedNotification)
+@admin.register(DeletedNotification, site=config.admin_site_class)
 class DeletedNotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     """Admin interface for managing DeletedNotification model.
 

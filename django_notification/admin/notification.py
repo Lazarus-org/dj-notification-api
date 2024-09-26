@@ -10,6 +10,7 @@ from django_notification.models.notification import (
     NotificationRecipient,
     NotificationSeen,
 )
+from django_notification.settings.conf import config
 from django_notification.utils.user_model import USERNAME_FIELD
 
 
@@ -65,7 +66,7 @@ class NotificationSeenInline(admin.TabularInline):
         return super().get_queryset(request).select_related("notification", "user")
 
 
-@admin.register(Notification)
+@admin.register(Notification, site=config.admin_site_class)
 class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
     """Admin interface for managing Notification model.
 
