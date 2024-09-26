@@ -14,7 +14,8 @@ class DefaultSerializerSettings:
 
 
 @dataclass(frozen=True)
-class DefaultAdminPermSettings:
+class DefaultAdminSettings:
+    admin_site_class: Optional[str] = None
     admin_has_add_permission: bool = False
     admin_has_change_permission: bool = False
     admin_has_delete_permission: bool = False
@@ -30,7 +31,7 @@ class DefaultThrottleSettings:
 @dataclass(frozen=True)
 class DefaultPaginationAndFilteringSettings:
     pagination_class: str = "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
-    filterset_class: str = None
+    filterset_class: Optional[str] = None
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "public"]
     )
@@ -44,6 +45,7 @@ class DefaultAPISettings:
     allow_list: bool = True
     allow_retrieve: bool = True
     include_serializer_full_details: bool = False
+    exclude_serializer_none_fields: bool = False
     extra_permission_class: Optional[str] = None
     parser_classes: List[str] = field(
         default_factory=lambda: [
