@@ -126,9 +126,7 @@ class ActivityViewSet(
             QuerySet: A queryset of seen notifications for staff users.
 
         """
-        return Notification.queryset.seen(
-            seen_by=self.request.user, display_detail=True
-        )
+        return Notification.objects.seen(seen_by=self.request.user, display_detail=True)
 
     def get_queryset(self, display_detail: bool = False) -> QuerySet:
         """Retrieve the queryset of seen notifications for the user.
@@ -150,7 +148,7 @@ class ActivityViewSet(
             display_detail = True
 
         user_groups = self.get_user_groups()
-        queryset = Notification.queryset.seen(
+        queryset = Notification.objects.seen(
             recipients=self.request.user,
             seen_by=self.request.user,
             groups=user_groups,
@@ -184,7 +182,7 @@ class ActivityViewSet(
             Response: A response indicating that all activities have been cleared.
 
         """
-        Notification.queryset.clear_all(request.user)
+        Notification.objects.clear_all(request.user)
         return Response(
             {"detail": "all activities cleared."}, status=status.HTTP_204_NO_CONTENT
         )
@@ -205,7 +203,7 @@ class ActivityViewSet(
             Response: A response indicating that the notification has been cleared.
 
         """
-        Notification.queryset.delete_notification(
+        Notification.objects.delete_notification(
             notification_id=pk, recipient=request.user, soft_delete=True
         )
         return Response(
@@ -257,7 +255,7 @@ class ActivityViewSet(
             Response: A response indicating that the notification has been permanently deleted.
 
         """
-        Notification.queryset.delete_notification(notification_id=pk, soft_delete=False)
+        Notification.objects.delete_notification(notification_id=pk, soft_delete=False)
         return Response(
             {"detail": f"notification {pk} deleted."}, status=status.HTTP_204_NO_CONTENT
         )
