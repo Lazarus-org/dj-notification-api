@@ -1,9 +1,11 @@
 import sys
+from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import Group
 from rest_framework.exceptions import ValidationError
 from django_notification.api.serializers.group import GroupSerializer
+from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
@@ -23,6 +25,7 @@ class TestGroupSerializer:
     Test the GroupSerializer and PermissionSerializer functionality.
     """
 
+    @patch.object(config, "exclude_serializer_null_fields", False)
     def test_group_serializer_with_valid_data(self, group_with_perm: Group) -> None:
         """
         Test that the GroupSerializer correctly serializes a group with permissions.

@@ -3,6 +3,7 @@ from typing import Dict, List
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
+from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
@@ -50,7 +51,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Group) -> Dict:
         """Customize the representation of the Group instance by filtering out
-        non-empty fields.
+        non-empty fields, if the exclude_serializer_null_fields flag is True.
 
         Args:
             instance (Group): The group instance being serialized.
@@ -60,4 +61,8 @@ class GroupSerializer(serializers.ModelSerializer):
 
         """
         data = super().to_representation(instance)
-        return filter_non_empty_fields(data)
+
+        if config.exclude_serializer_null_fields:
+            return filter_non_empty_fields(data)
+
+        return data
