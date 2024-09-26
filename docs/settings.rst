@@ -15,7 +15,9 @@ Below is an example configuration with default values:
     DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION = False
     DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION = False
     DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION = False
+    DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = None
     DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS = False
+    DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = False
     DJANGO_NOTIFICATION_API_ALLOW_LIST = True
     DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE = True
     # DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS = [if not provided, gets USERNAME_FIELD and REQUIRED_FIELDS from user model]
@@ -97,6 +99,16 @@ Below is a detailed description of each setting, so you can better understand an
 
 ----
 
+``DJANGO_NOTIFICATION_ADMIN_SITE_CLASS``:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Type**: ``Optional[str]``
+
+**Default**: ``None``
+
+**Description**: Optionally specifies A custom AdminSite class to apply on Admin interface. This allows for more customization on Admin interface, enabling you to apply your AdminSite class into `dj-notification-api` Admin interface.
+
+----
+
 ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Type**: ``bool``
@@ -104,6 +116,16 @@ Below is a detailed description of each setting, so you can better understand an
 **Default**: ``False``
 
 **Description**: When set to ``True``, API responses will include all notification fields. By default, only essential fields are returned.
+
+----
+
+``DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS``:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Type**: ``bool``
+
+**Default**: ``False``
+
+**Description**: When set to ``True``, API responses will exclude any fields that it's value is ``null``.
 
 ----
 
@@ -183,7 +205,7 @@ Below is a detailed description of each setting, so you can better understand an
 
 **Default**: ``"django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"``
 
-**Description**:  Specifies the throttle class used to limit API requests. Customize this or set it to ``None`` if no throttling is needed.
+**Description**:  Specifies the throttle class used to limit API requests. Customize this or set it to ``None`` if no throttling is needed or want to use ``rest_framework`` `DEFAULT_THROTTLE_CLASSES`.
 
 ----
 
@@ -214,7 +236,7 @@ Below is a detailed description of each setting, so you can better understand an
 **Default**:
   .. code-block:: python
 
-    [
+    DJANGO_NOTIFICATION_API_PARSER_CLASSES = [
         "rest_framework.parsers.JSONParser",
         "rest_framework.parsers.MultiPartParser",
         "rest_framework.parsers.FormParser",
@@ -222,6 +244,7 @@ Below is a detailed description of each setting, so you can better understand an
 
 **Description**: Specifies the parsers used to handle API request data formats. You can modify this list to add your parsers or set ``None`` if no parser needed.
 
+----
 
 ``DJANGO_NOTIFICATION_API_FILTERSET_CLASS``:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,14 +256,12 @@ Below is a detailed description of each setting, so you can better understand an
 
 in your settings.py:
 
-.. code-block:: shell
+.. code-block:: python
 
   INSTALLED_APPS = [
-
-  ...
-  "django_filters",
-  ...
-
+      # ...
+      "django_filters",
+      # ...
   ]
 
 and then apply this setting:
