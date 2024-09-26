@@ -81,11 +81,17 @@ class Notification(Model):
         help_text=_(
             "The action verb associated with the notification, e.g., 'liked', 'commented'."
         ),
+        db_comment=_(
+            "A short description of the action that triggered the notification (e.g., 'liked', 'commented')."
+        ),
         max_length=127,
     )
     description = TextField(
         verbose_name=_("Description"),
         help_text=_("The description of the notification."),
+        db_comment=_(
+            "A textual description providing more detail about the notification."
+        ),
         max_length=512,
         blank=True,
         null=True,
@@ -94,6 +100,9 @@ class Notification(Model):
         choices=NotificationStatus.choices,
         verbose_name=_("Status"),
         help_text=_("The current status of the notification."),
+        db_comment=_(
+            "Indicates the notification's current status, such as 'info', 'error', or 'warning'."
+        ),
         max_length=15,
         default=NotificationStatus.INFO,
     )
@@ -101,18 +110,27 @@ class Notification(Model):
         ContentType,
         verbose_name=_("Actor ContentType"),
         help_text=_("The content type of the actor object."),
+        db_comment=_(
+            "The content type of the object representing the actor (i.e., the initiator of the notification)."
+        ),
         on_delete=CASCADE,
         related_name="actor_content_type_notifications",
     )
     actor_object_id = PositiveIntegerField(
         verbose_name=_("Actor object ID"),
         help_text=_("The ID of the actor object."),
+        db_comment=_(
+            "The unique ID of the actor object associated with the notification."
+        ),
     )
     actor = GenericForeignKey("actor_content_type", "actor_object_id")
     target_content_type = ForeignKey(
         ContentType,
         verbose_name=_("Target ContentType"),
         help_text=_("The content type of the target object."),
+        db_comment=_(
+            "The content type of the target object of the notification, if applicable."
+        ),
         on_delete=CASCADE,
         related_name="target_content_type_notifications",
         blank=True,
@@ -121,6 +139,9 @@ class Notification(Model):
     target_object_id = PositiveIntegerField(
         verbose_name=_("Target object ID"),
         help_text=_("The ID of the target object."),
+        db_comment=_(
+            "The unique ID of the target object associated with the notification, if applicable."
+        ),
         blank=True,
         null=True,
     )
@@ -129,6 +150,9 @@ class Notification(Model):
         ContentType,
         verbose_name=_("Action object ContentType"),
         help_text=_("The content type of the action object."),
+        db_comment=_(
+            "The content type of the action object that triggered the notification, if applicable."
+        ),
         on_delete=CASCADE,
         related_name="action_content_type_notifications",
         blank=True,
@@ -137,6 +161,9 @@ class Notification(Model):
     action_object_object_id = PositiveIntegerField(
         verbose_name=_("Action object ID"),
         help_text=_("The ID of the action object."),
+        db_comment=_(
+            "The unique ID of the action object associated with the notification, if applicable."
+        ),
         blank=True,
         null=True,
     )
@@ -146,12 +173,18 @@ class Notification(Model):
     link = URLField(
         verbose_name=_("Link"),
         help_text=_("A URL associated with the action."),
+        db_comment=_(
+            "A URL related to the notification or action, for further details or follow-up."
+        ),
         blank=True,
         null=True,
     )
     is_sent = BooleanField(
         verbose_name=_("Is sent"),
         help_text=_("indicate whether the notification has been sent."),
+        db_comment=_(
+            "A boolean flag indicating whether this notification has already been sent to its recipients."
+        ),
         default=False,
     )
     seen_by = ManyToManyField(
@@ -163,17 +196,24 @@ class Notification(Model):
     public = BooleanField(
         verbose_name=_("Public"),
         help_text=_("Indicate whether the notification is public."),
+        db_comment=_(
+            "A boolean flag indicating if this notification is public or private."
+        ),
         default=True,
     )
     data = JSONField(
         verbose_name=_("data"),
         help_text=_("Additional metadata or custom attributes in JSON format."),
+        db_comment=_(
+            "Stores arbitrary JSON data related to the notification, such as custom attributes or metadata."
+        ),
         blank=True,
         null=True,
     )
     timestamp = DateTimeField(
         verbose_name=_("Timestamp"),
         help_text=_("The time when the notification was created."),
+        db_comment=_("The date and time when this notification was created."),
         default=timezone.now,
         db_index=True,
     )
