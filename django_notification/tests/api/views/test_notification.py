@@ -61,7 +61,7 @@ class TestNotificationViewSet:
         assert response.status_code == 200
         assert (
             len(response.data.get("results", []))
-            == Notification.queryset.unseen(unseen_by=admin_user).count()
+            == Notification.objects.unseen(unseen_by=admin_user).count()
         )
 
     def test_get_queryset_for_non_staff(
@@ -86,7 +86,7 @@ class TestNotificationViewSet:
         assert response.status_code == 200
         assert (
             len(response.data.get("results", []))
-            == Notification.queryset.unseen(unseen_by=user).count()
+            == Notification.objects.unseen(unseen_by=user).count()
         )
 
     def test_retrieve_notification(
@@ -110,7 +110,7 @@ class TestNotificationViewSet:
         url = reverse("notifications-detail", kwargs={"pk": notification.pk})
         response = self.client.get(url)
         assert response.status_code == 200
-        assert Notification.queryset.seen(seen_by=user).exists()
+        assert Notification.objects.seen(seen_by=user).exists()
 
     def test_mark_all_as_seen(
         self, user: Type[User], notification: Notification
