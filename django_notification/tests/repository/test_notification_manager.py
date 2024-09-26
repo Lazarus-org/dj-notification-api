@@ -8,7 +8,7 @@ from django_notification.models import Notification, DeletedNotification
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [
-    pytest.mark.queryset,
+    pytest.mark.managers,
     pytest.mark.skipif(sys.version_info < PYTHON_VERSION, reason=PYTHON_VERSION_REASON),
 ]
 
@@ -16,7 +16,7 @@ pytestmark = [
 @pytest.mark.django_db
 class TestNotificationQuerySet:
     """
-    Test suite for the `NotificationQuerySet`.
+    Test suite for the `NotificationDataAccessLayer`.
     """
 
     def test_all_notifications_with_recipients(
@@ -35,7 +35,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `all_notifications` with the given recipients
             matches the number of provided notifications.
         """
-        queryset = Notification.queryset.all_notifications(recipients=qs_user)
+        queryset = Notification.objects.all_notifications(recipients=qs_user)
         assert queryset.count() == len(notifications)
 
     def test_all_notifications_with_groups(
@@ -54,7 +54,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `all_notifications` with the given groups
             matches the number of provided notifications.
         """
-        queryset = Notification.queryset.all_notifications(groups=qs_group)
+        queryset = Notification.objects.all_notifications(groups=qs_group)
         assert queryset.count() == len(notifications)
 
     def test_all_notifications_with_recipients_and_groups(
@@ -77,7 +77,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `all_notifications` with the given recipients
             and groups matches the number of provided notifications.
         """
-        queryset = Notification.queryset.all_notifications(
+        queryset = Notification.objects.all_notifications(
             recipients=qs_user, groups=qs_group
         )
         assert queryset.count() == len(notifications)
@@ -98,7 +98,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `sent` with the given groups matches the number
             of notifications that have been marked as sent.
         """
-        queryset = Notification.queryset.sent(groups=qs_group)
+        queryset = Notification.objects.sent(groups=qs_group)
         assert queryset.count() == len([n for n in notifications if n.is_sent])
 
     def test_unsent(self, notifications: List[Notification]) -> None:
@@ -114,7 +114,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `unsent` matches the number of notifications
             that have not been marked as sent.
         """
-        queryset = Notification.queryset.unsent()
+        queryset = Notification.objects.unsent()
         assert queryset.count() == len([n for n in notifications if not n.is_sent])
 
     def test_unsent_with_recipients_and_groups(
@@ -137,7 +137,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `unsent` with the given recipients and groups
             matches the number of unsent notifications.
         """
-        queryset = Notification.queryset.unsent(recipients=qs_user, groups=qs_group)
+        queryset = Notification.objects.unsent(recipients=qs_user, groups=qs_group)
         assert queryset.count() == len([n for n in notifications if not n.is_sent])
 
     def test_unsent_exclude_deleted(
@@ -156,7 +156,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `unsent` with excluded deleted notifications
             is greater than 0.
         """
-        queryset = Notification.queryset.unsent(exclude_deleted_by=qs_user)
+        queryset = Notification.objects.unsent(exclude_deleted_by=qs_user)
         assert queryset.count() > 0
 
     def test_mark_as_sent(self, notifications: List[Notification]) -> None:
@@ -171,7 +171,7 @@ class TestNotificationQuerySet:
         -------
             The `mark_as_sent` method is successfully called. (Placeholder assertion)
         """
-        Notification.queryset.mark_all_as_sent()
+        Notification.objects.mark_all_as_sent()
         assert True
 
     def test_deleted(
@@ -190,7 +190,7 @@ class TestNotificationQuerySet:
             The count of notifications returned by `deleted` is 0, indicating no notifications
             are marked as deleted yet.
         """
-        deleted = Notification.queryset.deleted(deleted_by=qs_user)
+        deleted = Notification.objects.deleted(deleted_by=qs_user)
         assert deleted.count() == 0  # Assuming no notifications are deleted yet
 
     def test_create_notification_with_groups(
@@ -209,7 +209,7 @@ class TestNotificationQuerySet:
         -------
             The created notification should have the specified groups.
         """
-        notification = Notification.queryset.create_notification(
+        notification = Notification.objects.create_notification(
             verb="Test",
             actor=another_user,
             recipients=qs_user,
@@ -232,7 +232,7 @@ class TestNotificationQuerySet:
             The updated notification should have the new attributes applied.
         """
         notification = notifications[1]
-        updated_notification = Notification.queryset.update_notification(
+        updated_notification = Notification.objects.update_notification(
             notification_id=notification.id,
             is_sent=True,
             public=False,
@@ -258,7 +258,7 @@ class TestNotificationQuerySet:
         """
         notification = notifications[0]
         with pytest.raises(ValueError):
-            Notification.queryset.delete_notification(
+            Notification.objects.delete_notification(
                 notification_id=notification.id, recipient=None, soft_delete=True
             )
 
@@ -278,7 +278,7 @@ class TestNotificationQuerySet:
             The deleted notification should exist in the DeletedNotification model.
         """
         notification = notifications[2]
-        Notification.queryset.delete_notification(
+        Notification.objects.delete_notification(
             notification_id=notification.id, recipient=qs_user, soft_delete=True
         )
         assert DeletedNotification.objects.filter(

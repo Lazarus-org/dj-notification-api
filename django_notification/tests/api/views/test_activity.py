@@ -57,7 +57,7 @@ class TestActivityViewSet:
         assert response.status_code == 200
         assert (
             len(response.data.get("results"))
-            == Notification.queryset.seen(seen_by=admin_user).count()
+            == Notification.objects.seen(seen_by=admin_user).count()
         )
 
     def test_get_queryset_for_non_staff(
@@ -82,7 +82,7 @@ class TestActivityViewSet:
         assert response.status_code == 200
         assert (
             len(response.data.get("results"))
-            == Notification.queryset.seen(seen_by=user, recipients=user).count()
+            == Notification.objects.seen(seen_by=user, recipients=user).count()
         )
 
     @patch.object(config, "api_allow_list", False)
@@ -174,7 +174,7 @@ class TestActivityViewSet:
         response = self.client.get(url)
         assert response.status_code == 204  # No Content
         assert (
-            Notification.queryset.sent().count() == DeletedNotification.objects.count()
+            Notification.objects.sent().count() == DeletedNotification.objects.count()
         )
 
     def test_clear_notification(
@@ -227,7 +227,7 @@ class TestActivityViewSet:
         url = reverse("activities-delete-activities")
         response = self.client.get(url)
         assert response.status_code == 204  # No Content
-        assert not Notification.queryset.all_notifications()
+        assert not Notification.objects.all_notifications()
 
     @patch.object(config, "include_hard_delete", True)
     def test_delete_notification(
@@ -251,4 +251,4 @@ class TestActivityViewSet:
         url = reverse("activities-delete-notification", kwargs={"pk": notification.pk})
         response = self.client.get(url)
         assert response.status_code == 204  # No Content
-        assert not Notification.queryset.filter(pk=notification.pk).exists()
+        assert not Notification.objects.filter(pk=notification.pk).exists()

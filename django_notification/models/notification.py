@@ -12,7 +12,6 @@ from django.db.models import (
     DateTimeField,
     ForeignKey,
     JSONField,
-    Manager,
     ManyToManyField,
     Model,
     PositiveIntegerField,
@@ -28,7 +27,9 @@ from django_notification.models.notification_seen import NotificationSeen
 from django_notification.models.permissions.notification_permission import (
     NotificationPermission,
 )
-from django_notification.repository.queryset.notification import NotificationQuerySet
+from django_notification.repository.manager.notification import (
+    NotificationDataAccessLayer,
+)
 
 
 class Notification(Model):
@@ -217,8 +218,8 @@ class Notification(Model):
         default=timezone.now,
         db_index=True,
     )
-    objects = Manager()
-    queryset = NotificationQuerySet.as_manager()
+
+    objects = NotificationDataAccessLayer()
 
     class Meta:
         db_table: str = "notification"

@@ -112,7 +112,7 @@ class NotificationViewSet(
             QuerySet: A queryset of unseen notifications for staff users.
 
         """
-        return Notification.queryset.unseen(
+        return Notification.objects.unseen(
             unseen_by=self.request.user,
             display_detail=True,
         )
@@ -136,7 +136,7 @@ class NotificationViewSet(
             display_detail = True
 
         user_groups = self.get_user_groups()
-        queryset = Notification.queryset.unseen(
+        queryset = Notification.objects.unseen(
             unseen_by=self.request.user,
             groups=user_groups,
             display_detail=display_detail,
@@ -186,6 +186,5 @@ class NotificationViewSet(
             Response: A Response object indicating how many notifications were marked as seen.
 
         """
-        queryset = self.filter_queryset(self.get_queryset(display_detail=True))
-        count = queryset.mark_all_as_seen(request.user)
+        count = Notification.objects.mark_all_as_seen(request.user)
         return Response({"detail": f"{count} Notifications marked as seen."})

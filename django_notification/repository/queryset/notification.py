@@ -213,7 +213,22 @@ class NotificationQuerySet(QuerySet):
         display_detail: bool = False,
         conditions: Q = Q(),
     ) -> QuerySet:
-        """Return all seen notifications by the given user."""
+        """Retrieve all notifications that have been seen by the specified
+        user.
+
+        This method filters notifications that have been marked as "seen" by the provided user (`seen_by`). It also supports additional filtering based on recipients, groups, and custom conditions. The method ensures that only sent notifications are retrieved, excluding any that the user has deleted.
+
+        Args:
+            seen_by (UserModel): The user who has seen the notifications.
+            recipients (Optional[Recipients]): Optional filter for the intended recipients of the notifications. Can be a single recipient or multiple.
+            groups (Optional[Groups]): Optional filter for group-based notifications. Can be a single group or multiple.
+            display_detail (bool): If `True`, include detailed information about each notification. Defaults to `False`.
+            conditions (Q): Optional additional query conditions to filter the notifications. Defaults to an empty Q() condition.
+
+        Returns:
+            QuerySet: A queryset of sent notifications that have been seen by the specified user, filtered by recipients and groups if provided.
+
+        """
         conditions &= Q(seen_by=seen_by)
         return self.sent(
             recipients=recipients,
@@ -231,7 +246,22 @@ class NotificationQuerySet(QuerySet):
         display_detail: bool = False,
         conditions: Q = Q(),
     ) -> QuerySet:
-        """Return notifications that the given user has not seen."""
+        """Retrieve all notifications that have not been seen by the specified
+        user.
+
+        This method returns notifications that have been sent but not yet marked as "seen" by the provided user (`unseen_by`). It also supports filtering by recipients, groups, and additional query conditions. Any notifications that have been deleted by the user are excluded from the result.
+
+        Args:
+            unseen_by (UserModel): The user who has not seen the notifications.
+            recipients (Optional[Recipients]): Optional filter for the intended recipients of the notifications. Can be a single recipient or multiple.
+            groups (Optional[Groups]): Optional filter for group-based notifications. Can be a single group or multiple.
+            display_detail (bool): If `True`, include detailed information about each notification. Defaults to `False`.
+            conditions (Q): Optional additional query conditions to filter the notifications. Defaults to an empty Q() condition.
+
+        Returns:
+            QuerySet: A queryset of sent notifications that the specified user has not yet seen, filtered by recipients and groups if provided.
+
+        """
         return self.sent(
             recipients=recipients,
             exclude_deleted_by=unseen_by,
@@ -281,8 +311,16 @@ class NotificationQuerySet(QuerySet):
         ).update(is_sent=True)
 
     def deleted(self, deleted_by: Recipient = None) -> QuerySet:
-        """Return all deleted notifications optionally filtered by the user who
-        delete it."""
+        """Retrieve all notifications that have been deleted, optionally
+        filtered by user.
+
+        Args:
+            deleted_by (Optional[Recipient]): The user to filter deleted notifications by.
+
+        Returns:
+            QuerySet: A queryset of deleted notifications.
+
+        """
 
         deleted_notifications = self._get_deleted_notifications(deleted_by=deleted_by)
         return self.with_related().filter(id__in=Subquery(deleted_notifications))
@@ -316,8 +354,6 @@ class NotificationQuerySet(QuerySet):
         verb: str,
         actor: Actor,
         description: Description = None,
-        recipients: Recipients = None,
-        groups: Groups = None,
         status: str = "INFO",
         public: bool = True,
         target: Target = None,
@@ -332,8 +368,6 @@ class NotificationQuerySet(QuerySet):
             verb (str): The verb of the notification.
             description (Optional[str]): The description of the notification.
             actor (Model): The actor of the notification.
-            recipients (Optional[Union[User, QuerySet, List[User]]], optional): The recipient(s) of the notification. Defaults to None.
-            groups (Optional[Union[Group, QuerySet, List[Group]]], optional): The group(s) of the notification. Defaults to None.
             status (Optional[str], optional): The status of the notification. Defaults to "INFO".
             target (Optional[Model], optional): The target of the notification. Defaults to None.
             action_object (Optional[Model], optional): The action object of the notification. Defaults to None.
@@ -374,15 +408,7 @@ class NotificationQuerySet(QuerySet):
             public=public,
             data=data,
         )
-        if recipients:
-            if isinstance(recipients, UserModel):
-                recipients = [recipients]  # Convert single User object to a list
-            notification.recipient.add(*recipients)  # Use * to unpack the list elements
 
-        if groups:
-            if isinstance(groups, Group):
-                groups = [groups]
-            notification.group.add(*groups)
         return notification
 
     def update_notification(
