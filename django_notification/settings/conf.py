@@ -76,6 +76,10 @@ class NotificationConfig:
             f"{self.prefix}SERIALIZER_INCLUDE_FULL_DETAILS",
             self.default_api_settings.include_serializer_full_details,
         )
+        self.exclude_serializer_null_fields: bool = self.get_setting(
+            f"{self.prefix}SERIALIZER_EXCLUDE_NULL_FIELDS",
+            self.default_api_settings.exclude_serializer_none_fields,
+        )
 
         self.api_allow_list: bool = self.get_setting(
             f"{self.prefix}API_ALLOW_LIST", self.default_api_settings.allow_list
