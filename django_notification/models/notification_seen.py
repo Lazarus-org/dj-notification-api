@@ -54,6 +54,9 @@ class NotificationSeen(Model):
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that was seen."),
+        db_comment=_(
+            "Foreign key linking to the Notification model, representing the notification that was viewed by the user."
+        ),
         on_delete=CASCADE,
         related_name="seen",
     )
@@ -61,12 +64,19 @@ class NotificationSeen(Model):
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
         help_text=_("The recipient or a group member who has seen the notification."),
+        db_comment=_(
+            "Foreign key linking to the User model (AUTH_USER_MODEL),"
+            " representing the user who has viewed the notification."
+        ),
         on_delete=CASCADE,
         related_name="seen_notifications",
     )
     seen_at = DateTimeField(
         verbose_name=_("Seen at"),
         help_text=_("The time that the notification was seen."),
+        db_comment=_(
+            "A timestamp recording when the notification was marked as seen by the user."
+        ),
         default=timezone.now,
     )
 
