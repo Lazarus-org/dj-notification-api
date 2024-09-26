@@ -95,10 +95,13 @@ Here are some examples of responses for each action:
                   "email": "example@domain.com"
               }
           ],
+          "group": [],
           "verb": "Logged in to Admin panel",
           "status": "INFO",
-          "link": "<link>",
           "actor_content_type": 4,
+          "target_content_type": null,
+          "action_object_content_type": null,
+          "link": "<link>",
           "is_sent": true,
           "seen_by": [
               {
@@ -107,6 +110,7 @@ Here are some examples of responses for each action:
               }
           ],
           "public": true,
+          "data": null,
           "timestamp": "2024-09-05T13:34:20.969193Z"
       }
    ]
@@ -196,6 +200,10 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
    "detail": "Notification 3 deleted."
 
+**Note**: you can exclude Any fields with a ``null`` value in the response output by adding this config in your ``settings.py``:
+.. code-block:: python
+
+   DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = True
 
 Throttling
 ----------
@@ -223,7 +231,7 @@ Options include:
 
 - **Filtering**: By default filtering feature is not included, If you want to use this, you need to add ``django_filters`` to your `INSTALLED_APPS` and provide the path to the ``NotificationFilter`` class (``"django_notification.api.filters.notification_filter.NotificationFilter"``). Alternatively, you can use a custom filter class if needed.
 
-  - **Note**: for more clearification, refer to the `DJANGO_NOTIFICATION_API_FILTERSET_CLASS` in :doc:`Settings <settings>` section.
+  - **Note**: for more clarification, refer to the `DJANGO_NOTIFICATION_API_FILTERSET_CLASS` in :doc:`Settings <settings>` section.
 
 - **Ordering**: Results can be ordered by fields such as ``id``, ``timestamp``, or ``public``.
 
