@@ -34,29 +34,30 @@ If you're using pipenv, install the package with:
 2. Add to Installed Apps
 ------------------------
 
-Once installed, add `django_notification` to the `INSTALLED_APPS` in your Django `settings.py` file:
+Once installed,  ensure that both ``rest_framework`` and ``django_notification`` are added to the ``INSTALLED_APPS`` in your Django ``settings.py`` file:
 
-.. code-block:: shell
+.. code-block:: python
 
    INSTALLED_APPS = [
-       ...
+       # ...
+       "rest_framework",  # Required for API support
        "django_notification",
-       ...
+       # ...
    ]
 
 3. (Optional) Configure API Filters
 -----------------------------------
 
-To enable filtering of notifications through the API, include ``django_filters`` in your `INSTALLED_APPS` and configure the filter settings.
+To enable filtering of notifications through the API, include ``django_filters`` in your ``INSTALLED_APPS`` and configure the filter settings.
 
 Add `django_filters` to your `INSTALLED_APPS`:
 
-.. code-block:: shell
+.. code-block:: python
 
    INSTALLED_APPS = [
-       ...
+       # ...
        "django_filters",
-       ...
+       # ...
    ]
 
 Then, set the filter class configuration in your ``settings.py``:
@@ -114,7 +115,7 @@ To create notifications and use them in your project, use the `Notification` mod
    recipient = User.objects.get(username="john_doe")
 
    # Create a new notification
-   Notification.queryset.create_notification(
+   Notification.objects.create_notification(
        verb="Logged in to Admin panel",
        actor=actor,
        recipients=[recipient],

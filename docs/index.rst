@@ -55,7 +55,10 @@ Welcome to dj-notification-api Documentation!
 
 |br|
 
-`dj-notification-api` is a Django package created by Lazarus to streamline the management of notifications via APIs. It provides robust features for creating, retrieving, and organizing notifications, making it easy to integrate notification functionality into your Django applications.
+`dj-notification-api` is a Django package developed by Lazarus designed to simplify and optimize the process of managing notifications through various APIs.
+With this package, you can easily integrate a notification system into your Django project by just installing it. it offers a fully customizable notification API that can be tailored to suit your specific needs.
+
+It also provides an intuitive and powerful admin interface, allowing you to manage, track, and configure notifications effortlessly. Enjoy the flexibility and performance optimizations built into the package.
 
 Supported Versions
 ------------------
