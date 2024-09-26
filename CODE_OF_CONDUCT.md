@@ -51,6 +51,8 @@ we’re thrilled that you want to contribute to `dj-notification-api`! to ensure
 
 10. **Export Dependencies**: Export the project dependencies for development and production:
     ```bash
+    pip install poetry-plugin-export
+
     poetry export -f requirements.txt --output packages/requirements.txt --without-hashes
     poetry export -f requirements.txt --dev --output packages/requirements-dev.txt --without-hashes
     ```
