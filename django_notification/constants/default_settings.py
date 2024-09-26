@@ -38,6 +38,7 @@ class DefaultPaginationAndFilteringSettings:
     search_fields: List[str] = field(default_factory=lambda: ["verb", "description"])
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(frozen=True)
 class DefaultAPISettings:
     include_soft_delete: bool = True

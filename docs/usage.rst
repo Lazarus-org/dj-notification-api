@@ -1,8 +1,48 @@
 Usage
 =====
 
-This section provides a comprehensive guide on how to utilize the package's key features, including the functionality of the Django admin panels for managing notifications and deleted notifications, and queryset methods for handling notifications.
+This section provides a comprehensive guide on how to utilize the package's key features, including the functionality of the Django admin panels for managing notifications and deleted notifications, and Manager methods for handling notifications.
 
+Admin Site
+----------
+
+If you are using a **custom admin site** in your project, you must pass your custom admin site configuration in your Django settings. Otherwise, Django may raise the following error during checks:
+
+.. code-block:: shell
+
+  ERRORS:
+  <class 'django_notification.admin.deleted_notification.DeletedNotificationAdmin'>:
+   (admin.E039) An admin for model "User" has to be registered to be referenced by DeletedNotificationAdmin.autocomplete_fields.
+
+
+To resolve this, In your ``settings.py``, add the following setting to specify the path to your custom admin site class instance
+
+.. code-block:: python
+
+  DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = "path.to.your.custom.site"
+
+example of a custom Admin Site:
+.. code-block:: python
+
+  from django.contrib.admin import AdminSite
+
+
+  class CustomAdminSite(AdminSite):
+      site_header = "Custom Admin"
+      site_title = "Custom Admin Portal"
+      index_title = "Welcome to the Custom Admin Portal"
+
+
+  # Instantiate the custom admin site as example
+  example_admin_site = CustomAdminSite(name="custom_admin")
+
+and then reference the instance like this:
+
+.. code-block:: python
+
+  DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = "path.to.example_admin_site"
+
+This setup allows `dj-notification-api` to use your custom admin site for it's Admin interface, preventing any errors and ensuring a smooth integration with the custom admin interface.
 
 Notifications Admin Panel
 -------------------------
@@ -129,16 +169,16 @@ Users can do the searching based on this functionality:
 
 ----
 
-QuerySet Methods
-----------------
+NotificationDataAccessLayer (Manager)
+-------------------------------------
 
-The ``django_notification`` provides a QuerySet Class with various methods to interact with notifications in different contexts. Users typically use `Notification.queryset.create_notification()` to create notifications, but other methods are available for querying and managing notifications. Below is an overview of the available methods:
+The ``django_notification`` provides a Manager Class with various methods to interact with notifications in different contexts. Users typically use `Notification.objects.create_notification()` to create notifications, but other methods are available for querying and managing notifications. Below is an overview of the available methods:
 
 
 Return All Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `all_notifications` method retrieves all notifications that have not been deleted. It provides filtering options based on recipients and groups, and can return simplified details if specified.
+The ``all_notifications`` method retrieves all notifications that have not been deleted. It provides filtering options based on recipients and groups, and can return simplified details if specified.
 
 **Method Signature**
 
@@ -146,7 +186,7 @@ The `all_notifications` method retrieves all notifications that have not been de
 
     from django_notification.models.notification import Notification
 
-    all_notifications(recipients, groups, display_detail)
+    Notification.objects.all_notifications(recipients, groups, display_detail)
 
 **Arguments:**
 
@@ -186,7 +226,7 @@ To retrieve all notifications for a specific user:
 
     from django_notification.models.notification import Notification
 
-    notifications = Notification.queryset.all_notifications(
+    notifications = Notification.objects.all_notifications(
         recipients=user_instance, display_detail=True
     )
 
@@ -194,7 +234,7 @@ To retrieve all notifications for a specific user:
 Return All Sent Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method retrieves all sent notifications, excluding those that have been soft-deleted by the specified user. It allows filtering based on recipients, groups, and additional conditions.
+The ``sent`` method retrieves all sent notifications, excluding those that have been soft-deleted by the specified user. It allows filtering based on recipients, groups, and additional conditions.
 
 **Method Signature**
 
@@ -202,7 +242,7 @@ This method retrieves all sent notifications, excluding those that have been sof
 
     from django_notification.models.notification import Notification
 
-    sent(
+    Notification.objects.sent(
         recipients,
         exclude_deleted_by,
         groups,
@@ -254,7 +294,7 @@ To retrieve all sent notifications for a specific user, excluding those deleted 
 
     from django_notification.models.notification import Notification
 
-    notifications = Notification.queryset.sent(
+    notifications = Notification.objects.sent(
         recipients=user_instance, exclude_deleted_by=user_instance
     )
 
@@ -262,21 +302,21 @@ To retrieve all sent notifications for a specific user, excluding those deleted 
 Return All Unsent Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method retrieves all unsent notifications, excluding those that have been soft-deleted by the specified user. It allows filtering based on recipients, groups, and additional conditions.
+The ``unsent`` method retrieves all unsent notifications, excluding those that have been soft-deleted by the specified user. It allows filtering based on recipients, groups, and additional conditions.
 
 **Method Signature**
 
 .. code-block:: shell
 
-    from django_notification.models.notification import Notification
+  from django_notification.models.notification import Notification
 
-    unsent(
-        recipients,
-        exclude_deleted_by,
-        groups,
-        display_detail,
-        conditions,
-    ) -> QuerySet
+  Notification.objects.unsent(
+      recipients,
+      exclude_deleted_by,
+      groups,
+      display_detail,
+      conditions,
+  ) -> QuerySet
 
 **Arguments:**
 
@@ -322,7 +362,7 @@ To retrieve all unsent notifications for a specific user, excluding those delete
 
     from django_notification.models.notification import Notification
 
-    unsent_notifications = Notification.queryset.unsent(
+    unsent_notifications = Notification.objects.unsent(
         recipients=user_instance, exclude_deleted_by=user_instance
     )
 
@@ -331,19 +371,21 @@ To retrieve all unsent notifications for a specific user, excluding those delete
 Return All Seen Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method returns all notifications that have been seen by the given user.
+The ``seen`` method returns all notifications that have been seen by the given user.
 
 **Method Signature**
 
 .. code-block:: shell
 
-    seen(
-        seen_by,
-        recipients,
-        groups,
-        display_detail,
-        conditions,
-    ) -> QuerySet
+  from django_notification.models.notification import Notification
+
+  Notification.objects.seen(
+      seen_by,
+      recipients,
+      groups,
+      display_detail,
+      conditions,
+  ) -> QuerySet
 
 **Arguments:**
 
@@ -379,19 +421,21 @@ This method returns all notifications that have been seen by the given user.
 Return All Unseen Notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method returns all notifications that the given user has not seen.
+The ``unseen`` method returns all notifications that the given user has not seen.
 
 **Method Signature**
 
 .. code-block:: shell
 
-    unseen(
-        unseen_by,
-        recipients,
-        groups,
-        display_detail,
-        conditions,
-    ) -> QuerySet
+  from django_notification.models.notification import Notification
+
+  Notification.objects.unseen(
+      unseen_by,
+      recipients,
+      groups,
+      display_detail,
+      conditions,
+  ) -> QuerySet
 
 
 **Arguments:**
@@ -423,15 +467,20 @@ This method returns all notifications that the given user has not seen.
 
 - A `QuerySet` of unseen notifications, or a dictionary of simplified details if `display_detail` is `True`.
 
+----
 
+Mark All as Seen
+------------------------------
 
-This method marks all notifications as seen by the specified user if they are recipients or group members or ADMIN.
+The ``mark_all_as_seen`` method marks all notifications as seen by the specified user if they are recipients or group members or ADMIN.
 
 **Method Signature**
 
 .. code-block:: shell
 
-    mark_all_as_seen(user) -> int
+  from django_notification.models.notification import Notification
+
+  Notification.objects.mark_all_as_seen(user) -> int
 
 **Arguments:**
 
@@ -453,7 +502,9 @@ This method marks notifications as sent for the specified recipients or groups.
 
 .. code-block:: shell
 
-    mark_as_sent(
+    from django_notification.models.notification import Notification
+
+    Notification.objects.mark_as_sent(
     recipients,
     groups,
     ) -> int
@@ -481,9 +532,11 @@ This method returns all deleted (soft deleted) notifications, optionally filtere
 
 .. code-block:: shell
 
-    deleted(
-        deleted_by=None
-    ) -> QuerySet
+  from django_notification.models.notification import Notification
+
+  Notification.objects.deleted(
+      deleted_by=None
+  ) -> QuerySet
 
 **Arguments:**
 
@@ -504,7 +557,9 @@ This method moves notifications for the specified user into a 'deleted' state by
 
 .. code-block:: shell
 
-    clear_all(user) -> None
+  from django_notification.models.notification import Notification
+
+  Notification.objects.clear_all(user) -> None
 
 **Arguments:**
 
@@ -528,7 +583,7 @@ The `create_notification` method provides a convenient way to generate and store
 
     from django_notification.models.notification import Notification
 
-    Notification.queryset.create_notification(
+    Notification.objects.create_notification(
         verb,
         actor,
         description,
@@ -580,7 +635,7 @@ Here's an example of how to use the ``create_notification`` method to generate a
     description = "John Doe logged in to the admin panel."
 
     # Creating a notification
-    notification = Notification.queryset.create_notification(
+    notification = Notification.objects.create_notification(
         verb="Logged in to admin panel",
         actor=actor,
         description=description,
@@ -604,7 +659,11 @@ This method updates some editable fields of a notification by its ID.
 
 .. code-block:: python
 
-    update_notification(notification_id, is_sent=None, public=None, data=None)
+  from django_notification.models.notification import Notification
+
+  Notification.objects.update_notification(
+      notification_id, is_sent=None, public=None, data=None
+  )
 
 **Arguments:**
 
@@ -635,11 +694,13 @@ This method deletes a notification by its ID. If `soft_delete` is `True`, it mov
 
 .. code-block:: shell
 
-    delete_notification(
-        notification_id,
-        recipient=None,
-        soft_delete=True
-    ) -> None
+  from django_notification.models.notification import Notification
+
+  Notification.objects.delete_notification(
+      notification_id,
+      recipient=None,
+      soft_delete=True
+  ) -> None
 
 **Arguments:**
 

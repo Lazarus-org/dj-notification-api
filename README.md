@@ -10,9 +10,12 @@
 [![Open Issues](https://img.shields.io/github/issues/lazarus-org/dj-notification-api)](https://github.com/lazarus-org/dj-notification-api/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/lazarus-org/dj-notification-api)](https://github.com/lazarus-org/dj-notification-api/commits/main)
 [![Languages](https://img.shields.io/github/languages/top/lazarus-org/dj-notification-api)](https://github.com/lazarus-org/dj-notification-api)
-[![Coverage](https://img.shields.io/codecov/c/github/lazarus-org/dj-notification-api/main)](https://codecov.io/gh/lazarus-org/dj-notification-api)
+[![Coverage](https://codecov.io/gh/lazarus-org/dj-notification-api/branch/main/graph/badge.svg)](https://codecov.io/gh/lazarus-org/dj-notification-api)
 
-[`dj-notification-api`](https://github.com/lazarus-org/dj-notification-api/) is a Django package developed by Lazarus for efficiently handling notifications through various APIs.
+[`dj-notification-api`](https://github.com/lazarus-org/dj-notification-api/) is a Django package developed by Lazarus designed to simplify and optimize the process of managing notifications through various APIs.
+With this package, you can easily integrate a notification system into your Django project by just installing it. it offers a fully customizable notification API that can be tailored to suit your specific needs.
+
+It also provides an intuitive and powerful admin interface, allowing you to manage, track, and configure notifications effortlessly. Enjoy the flexibility and performance optimizations built into the package.
 
 ## Project Detail
 
@@ -61,13 +64,15 @@ $ pipenv install dj-notification-api
 
 ## 2. Add to Installed Apps
 
-Once installed, add django_notification to the INSTALLED_APPS in your Django `settings.py` file:
+Once installed,  ensure that both `rest_framework` and `django_notification` are added to the `INSTALLED_APPS` in your Django `settings.py` file::
 
-```shell
+```python
 INSTALLED_APPS = [
-    ...
+    # ...
+    "rest_framework",  # Required for API support
+
     "django_notification",
-    ...
+    # ...
 ]
 ```
 
@@ -77,11 +82,11 @@ To enable filtering of notifications through the API, include `django_filters` i
 
 Add `django_filters` to your `INSTALLED_APPS`:
 
-```shell
+```python
 INSTALLED_APPS = [
-    ...
+    # ...
     "django_filters",
-    ...
+    # ...
 ]
 ```
 
@@ -126,7 +131,7 @@ actor = User.objects.get(username="admin")
 recipient = User.objects.get(username="john_doe")
 
 # Create a new notification
-Notification.queryset.create_notification(
+Notification.objects.create_notification(
     verb="Logged in to Admin panel",
     actor=actor,
     recipients=[recipient],
@@ -250,10 +255,13 @@ Content-Type: application/json
                 "email": "example@domain.com"
             }
         ],
+        "group": [],
         "verb": "Logged in to Admin panel",
         "status": "INFO",
-        "link": "<link>",
         "actor_content_type": 4,
+        "target_content_type": null,
+        "action_object_content_type": null,
+        "link": "<link>",
         "is_sent": true,
         "seen_by": [
             {
@@ -262,6 +270,7 @@ Content-Type: application/json
             }
         ],
         "public": true,
+        "data": null,
         "timestamp": "2024-09-05T13:34:20.969193Z"
     }
 ]
@@ -347,6 +356,10 @@ HTTP/1.1 204 No Content
 "detail": "Notification 3 deleted."
 
 ```
+**Note**: you can exclude Any fields with a `null` value in the response output by adding this config in your `settings.py`:
+```python
+DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = True
+```
 
 ## Throttling
 
@@ -406,6 +419,38 @@ Each feature can be configured through the Django settings file. For further det
 # Usage
 
 This section provides a comprehensive guide on how to utilize the package's key features, including the functionality of the Django admin panels for managing notifications and deleted notifications, and queryset methods for handling notifications.
+
+## Admin Site
+
+If you are using a **custom admin site** in your project, you must pass your custom admin site configuration in your Django settings. Otherwise, Django may raise the following error during checks:
+
+```shell
+ERRORS:
+<class 'django_notification.admin.deleted_notification.DeletedNotificationAdmin'>:
+ (admin.E039) An admin for model "User" has to be registered to be referenced by DeletedNotificationAdmin.autocomplete_fields.
+```
+To resolve this, In your `settings.py`, add the following setting to specify the path to your custom admin site class instance:
+```python
+DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = "path.to.your.custom.site"
+```
+example of a custom Admin Site:
+```python
+from django.contrib.admin import AdminSite
+
+class CustomAdminSite(AdminSite):
+    site_header = "Custom Admin"
+    site_title = "Custom Admin Portal"
+    index_title = "Welcome to the Custom Admin Portal"
+
+# Instantiate the custom admin site as example
+example_admin_site = CustomAdminSite(name='custom_admin')
+```
+and then reference the instance like this:
+
+```python
+DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = "path.to.example_admin_site"
+```
+This setup allows `dj-notification-api` to use your custom admin site for it's Admin interface, preventing any errors and ensuring a smooth integration with the custom admin interface.
 
 ## Notifications Admin Panel
 
@@ -520,9 +565,129 @@ Users can perform searching based on the following functionality:
 
 ---
 
-## QuerySet Methods
+## NotificationDataAccessLayer (Manager)
 
-The `django_notification` package provides a QuerySet class with various methods to interact with notifications in different contexts. Users typically use `Notification.queryset.create_notification()` to create notifications, but other methods are available for querying and managing notifications. Below is an overview of the available methods:
+The `django_notification` package provides a Manager class with various methods to interact with notifications in different contexts. Users typically use `Notification.objects.create_notification()` to create notifications, but other methods are available for querying and managing notifications. Below is an overview of the available methods:
+
+### Return All Notifications
+
+This method retrieves all notifications. It allows filtering based on recipients and groups.
+
+**Method Signature**
+
+```shell
+from django_notification.models.notification import Notification
+
+Notification.objects.all_notifications(
+    recipients,
+    groups,
+    display_detail,
+) -> QuerySet
+```
+**Arguments:**
+
+- **recipients** (`Optional[Union[UserModel, QuerySet, List[UserModel]]]`):
+  Optional filter for notifications based on recipients. Can be:
+  - A single `UserModel` instance.
+  - A `QuerySet` of `UserModel` instances.
+  - A list of `UserModel` instances.
+
+  If provided, the method returns notifications where the recipients are among the specified recipients.
+
+- **groups** (`Optional[Union[Group, QuerySet, List[Group]]]`):
+  Optional filter for notifications based on groups. Can be:
+  - A single `Group` instance.
+  - A `QuerySet` of `Group` instances.
+  - A list of `Group` instances.
+
+  If provided, the method returns notifications where the groups are among the specified groups.
+
+- **display_detail** (`Optional[bool]`):
+  Indicates whether to return simplified details.
+  - If `True`, the method returns a dictionary of simplified details for each notification using `.values()`.
+  - If `False`, the method returns a `QuerySet` of notification instances.
+
+**Returns:**
+
+- A `QuerySet` of all notifications, or a dictionary of simplified details if `display_detail` is `True`.
+
+**Example Usage:**
+
+To retrieve all notifications for a specific user:
+
+```python
+from django_notification.models.notification import Notification
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+user_instance = User.objects.first()
+
+all_notifications = Notification.objects.all_notifications(recipients=user_instance)
+```
+
+### Return All sent Notifications
+
+This method retrieves all sent notifications, excluding those that have been soft-deleted by the specified user. It allows filtering based on recipients, groups, and additional conditions.
+
+**Method Signature**
+
+```shell
+from django_notification.models.notification import Notification
+
+Notification.objects.sent(
+    recipients,
+    exclude_deleted_by,
+    groups,
+    display_detail,
+    conditions,
+) -> QuerySet
+```
+**Arguments:**
+
+- **recipients** (`Optional[Union[UserModel, QuerySet, List[UserModel]]]`):
+  Optional filter for notifications based on recipients. Can be:
+  - A single `UserModel` instance.
+  - A `QuerySet` of `UserModel` instances.
+  - A list of `UserModel` instances.
+
+  If provided, the method returns notifications where the recipients are among the specified recipients.
+
+- **exclude_deleted_by** (`Optional[UserModel]`):
+  Optional filter to exclude notifications that have been soft-deleted by a specific user. If provided, the method excludes all notifications that have been marked as deleted by this user.
+
+- **groups** (`Optional[Union[Group, QuerySet, List[Group]]]`):
+  Optional filter for notifications based on groups. Can be:
+  - A single `Group` instance.
+  - A `QuerySet` of `Group` instances.
+  - A list of `Group` instances.
+
+  If provided, the method returns notifications where the groups are among the specified groups.
+
+- **display_detail** (`Optional[bool]`):
+  Indicates whether to return simplified details.
+  - If `True`, the method returns a dictionary of simplified details for each notification using `.values()`.
+  - If `False`, the method returns a `QuerySet` of notification instances.
+
+- **conditions** (`Optional[Q]`):
+  Additional filter conditions. Accepts a `Q` object from `django.db.models` for specifying extra conditions that may be needed for various contexts. Defaults to `Q()` (no additional conditions).
+
+**Returns:**
+
+- A `QuerySet` of sent notifications, or a dictionary of simplified details if `display_detail` is `True`.
+
+**Example Usage:**
+
+To retrieve all sent notifications for a specific user, excluding those deleted by a user:
+
+```python
+from django_notification.models.notification import Notification
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+user_instance = User.objects.first()
+
+sent_notifications = Notification.objects.sent(recipients=user_instance, exclude_deleted_by=user_instance)
+```
 
 ### Return All Unsent Notifications
 
@@ -533,7 +698,7 @@ This method retrieves all unsent notifications, excluding those that have been s
 ```shell
 from django_notification.models.notification import Notification
 
-unsent(
+Notification.objects.unsent(
     recipients,
     exclude_deleted_by,
     groups,
@@ -576,12 +741,16 @@ unsent(
 
 **Example Usage:**
 
-To retrieve all unsent notifications for a specific user, excluding those deleted by a different user:
+To retrieve all unsent notifications for a specific user, excluding those deleted by a user:
 
 ```python
 from django_notification.models.notification import Notification
+from django.contrib.auth import get_user_model
 
-unsent_notifications = Notification.queryset.unsent(recipients=user_instance, exclude_deleted_by=user_instance)
+User = get_user_model()
+user_instance = User.objects.first()
+
+unsent_notifications = Notification.objects.unsent(recipients=user_instance, exclude_deleted_by=user_instance)
 ```
 
 ### Return All Seen Notifications
@@ -591,7 +760,7 @@ This method returns all notifications that have been seen by the given user.
 **Method Signature**
 
 ```shell
-seen(
+Notification.objects.seen(
     seen_by,
     recipients,
     groups,
@@ -607,7 +776,7 @@ This method returns all notifications that have been seen by the given user.
 **Method Signature**
 
 ```shell
-seen(
+Notification.objects.seen(
     seen_by,
     recipients,
     groups,
@@ -651,7 +820,7 @@ This method returns all notifications that the given user has not seen.
 **Method Signature**
 
 ```shell
-unseen(
+Notification.objects.unseen(
     unseen_by,
     recipients,
     groups,
@@ -693,7 +862,7 @@ This method marks all notifications as seen by the specified user if they are re
 **Method Signature**
 
 ```shell
-mark_all_as_seen(user) -> int
+Notification.objects.mark_all_as_seen(user) -> int
 ```
 
 **Arguments:**
@@ -713,7 +882,7 @@ This method marks notifications as sent for the specified recipients or groups.
 **Method Signature**
 
 ```shell
-mark_as_sent(
+Notification.objects.mark_as_sent(
     recipients,
     groups,
 ) -> int
@@ -739,7 +908,7 @@ This method returns all deleted (soft deleted) notifications, optionally filtere
 **Method Signature**
 
 ```shell
-deleted(
+Notification.objects.deleted(
     deleted_by=None
 ) -> QuerySet
 ```
@@ -761,7 +930,7 @@ This method moves notifications for the specified user into a 'deleted' state by
 **Method Signature**
 
 ```shell
-clear_all(user) -> None
+Notification.objects.clear_all(user) -> None
 ```
 
 **Arguments:**
@@ -783,7 +952,7 @@ The `create_notification` method provides a convenient way to generate and store
 ```shell
 from django_notification.models.notification import Notification
 
-Notification.queryset.create_notification(
+Notification.objects.create_notification(
     verb,
     actor,
     description,
@@ -833,7 +1002,7 @@ recipients = [User.objects.get(username='jane_doe')]
 description = "John Doe logged in to the admin panel."
 
 # Creating a notification
-notification = Notification.queryset.create_notification(
+notification = Notification.objects.create_notification(
     verb="Logged in to admin panel",
     actor=actor,
     description=description,
@@ -855,7 +1024,7 @@ This method updates some editable fields of a notification by its ID.
 **Method Signature**
 
 ```shell
-update_notification(
+Notification.objects.update_notification(
     notification_id,
     is_sent=None,
     public=None,
@@ -869,10 +1038,10 @@ update_notification(
   The ID of the notification to update.
 
 - **is_sent** (`bool`):
-  The updated sent status of the notification. Defaults to `True`.
+  The updated sent status of the notification.
 
 - **public** (`bool`):
-  The updated public status of the notification. Defaults to `True`.
+  The updated public status of the notification.
 
 - **data** (`Optional[JSONField]`):
   Optional additional data to store with the notification.
@@ -889,7 +1058,7 @@ This method deletes a notification by its ID. If `soft_delete` is `True`, it mov
 **Method Signature**
 
 ```shell
-delete_notification(
+Notification.objects.delete_notification(
     notification_id,
     recipient=None,
     soft_delete=True
@@ -927,7 +1096,9 @@ DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE = False
 DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION = False
 DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION = False
 DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION = False
+DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = None
 DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS = False
+DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = False
 DJANGO_NOTIFICATION_API_ALLOW_LIST = True
 DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE = True
 # DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS = [if not provided, gets USERNAME_FIELD and REQUIRED_FIELDS from user model]
@@ -992,11 +1163,27 @@ Below is a detailed description of each setting, so you can better understand an
 
 ----
 
+### `DJANGO_NOTIFICATION_ADMIN_SITE_CLASS`
+
+**Type**: `Optional[str]`
+**Default**: `None`
+**Description**: Optionally specifies A custom AdminSite class to apply on Admin interface. This allows for more customization on Admin interface, enabling you to apply your AdminSite class into `dj-notification-api` Admin interface.
+
+----
+
 ### `DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`
 
 **Type**: `bool`
 **Default**: `False`
 **Description**: When set to `True`, API responses will include all notification fields. By default, only essential fields are returned.
+
+----
+
+### `DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS`
+
+**Type**: `bool`
+**Default**: `False`
+**Description**: When set to `True`, API responses will exclude any fields that it's value is `null`.
 
 ----
 
@@ -1060,7 +1247,7 @@ Below is a detailed description of each setting, so you can better understand an
 
 **Type**: `str`
 **Default**: `"django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"`
-**Description**: Specifies the throttle class used to limit API requests. Customize this or set it to `None` if no throttling is needed.
+**Description**: Specifies the throttle class used to limit API requests. Customize this or set it to `None` if no throttling is needed or want to use rest_framework `DEFAULT_THROTTLE_CLASSES`.
 
 ----
 
@@ -1085,7 +1272,7 @@ Below is a detailed description of each setting, so you can better understand an
 **Type**: `List[str]`
 **Default**:
 ```python
-[
+DJANGO_NOTIFICATION_API_PARSER_CLASSES = [
   "rest_framework.parsers.JSONParser",
   "rest_framework.parsers.MultiPartParser",
   "rest_framework.parsers.FormParser",
@@ -1104,11 +1291,11 @@ Below is a detailed description of each setting, so you can better understand an
 
 In your `settings.py`:
 
-```shell
+```python
 INSTALLED_APPS = [
-    ...
+    # ...
     "django_filters",
-    ...
+    # ...
 ]
 ```
 
