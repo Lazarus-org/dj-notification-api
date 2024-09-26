@@ -14,20 +14,47 @@ class RoleBasedUserRateThrottle(UserRateThrottle):
     - Staff users (users with the 'is_staff' attribute set to True) are allowed a higher
       rate, also defined in the configuration (e.g., 100 requests per minute).
 
-    The rate limits are retrieved from the project's settings to allow for easy
+    The rate limits are retrieved from the project's settings, allowing easy
     configuration adjustments without modifying the code.
 
     """
+
+    def get_rate(self) -> str:
+        """Retrieve the throttle rate based on the user's role.
+
+        This method overrides the default `get_rate` implementation to provide a
+        dynamic rate based on the user's role:
+
+        - Regular authenticated users are assigned the rate defined in the
+          `authenticated_user_throttle_rate` setting.
+        - Staff users (those with `is_staff=True`) are assigned the rate defined in the
+          `staff_user_throttle_rate` setting.
+
+        Note:
+            This method sets the base rate as the default for regular authenticated
+            users. Staff users will have their rate applied in the `allow_request`
+            method.
+
+        Returns:
+            str: The throttle rate for regular authenticated users, as defined in the
+                 project settings.
+
+        """
+        from django_notification.settings.conf import config
+
+        # Set throttle rates from configuration
+        self.base_rate: str = config.authenticated_user_throttle_rate
+        self.staff_rate: str = config.staff_user_throttle_rate
+
+        return self.base_rate
 
     def allow_request(self, request: Request, view: APIView) -> bool:
         """Determine whether the current request is allowed based on the user's
         role and the configured throttle rates.
 
-        For authenticated users, the throttle rate is dynamically set based on their role:
-
-        - Regular authenticated users are throttled according to the 'throttle_authenticated_user_rate'
-          setting.
-        - Staff users are throttled according to the 'staff_user_throttle_rate' setting.
+        - If the user is a staff member (`is_staff=True`), the throttle rate is set
+          to the staff rate from the project configuration.
+        - Otherwise, the regular authenticated user throttle rate is used.
 
         Unauthenticated (anonymous) users are not allowed to proceed if this throttle is applied.
 
@@ -39,15 +66,13 @@ class RoleBasedUserRateThrottle(UserRateThrottle):
             bool: True if the request is allowed based on the user's rate limit; False otherwise.
 
         """
-        from django_notification.settings.conf import config
-
         user = request.user
-        if user.is_authenticated:
-            self.rate = config.authenticated_user_throttle_rate
 
-            if user.is_staff:
-                self.rate = config.staff_user_throttle_rate
+        # Apply staff rate for staff users
+        if user.is_staff:
+            self.rate = self.staff_rate
 
-            self.num_requests, self.duration = self.parse_rate(self.rate)
+        # Parse rate to get number of requests and duration
+        self.num_requests, self.duration = self.parse_rate(self.rate)
 
         return super().allow_request(request, view)
