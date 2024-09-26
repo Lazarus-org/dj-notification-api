@@ -3,6 +3,7 @@ from typing import Any, Dict
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from django_notification.models.notification import Notification
+from django_notification.settings.conf import config
 from django_notification.utils.serialization import (
     filter_non_empty_fields,
     generate_title,
@@ -69,4 +70,8 @@ class SimpleNotificationSerializer(ModelSerializer):
 
         """
         data = super().to_representation(instance)
-        return filter_non_empty_fields(data)
+
+        if config.exclude_serializer_null_fields:
+            return filter_non_empty_fields(data)
+
+        return data
