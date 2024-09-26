@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from django_notification.constants.default_settings import (
-    DefaultAdminPermSettings,
+    DefaultAdminSettings,
     DefaultAPISettings,
     DefaultPaginationAndFilteringSettings,
     DefaultSerializerSettings,
@@ -38,9 +38,11 @@ class NotificationConfig:
 
     """
 
+    prefix = "DJANGO_NOTIFICATION_"
+
     default_api_settings: DefaultAPISettings = DefaultAPISettings()
     default_serializer_settings: DefaultSerializerSettings = DefaultSerializerSettings()
-    default_admin_perm_settings: DefaultAdminPermSettings = DefaultAdminPermSettings()
+    default_admin_settings: DefaultAdminSettings = DefaultAdminSettings()
     default_pagination_and_filter_settings: DefaultPaginationAndFilteringSettings = (
         DefaultPaginationAndFilteringSettings()
     )
@@ -50,87 +52,91 @@ class NotificationConfig:
         """Initialize the NotificationConfig, loading values from Django
         settings or falling back to the default API settings."""
         self.include_soft_delete: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE",
+            f"{self.prefix}API_INCLUDE_SOFT_DELETE",
             self.default_api_settings.include_soft_delete,
         )
         self.include_hard_delete: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE",
+            f"{self.prefix}API_INCLUDE_HARD_DELETE",
             self.default_api_settings.include_hard_delete,
         )
         self.admin_has_add_permission: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION",
-            self.default_admin_perm_settings.admin_has_add_permission,
+            f"{self.prefix}ADMIN_HAS_ADD_PERMISSION",
+            self.default_admin_settings.admin_has_add_permission,
         )
         self.admin_has_change_permission: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION",
-            self.default_admin_perm_settings.admin_has_change_permission,
+            f"{self.prefix}ADMIN_HAS_CHANGE_PERMISSION",
+            self.default_admin_settings.admin_has_change_permission,
         )
         self.admin_has_delete_permission: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION",
-            self.default_admin_perm_settings.admin_has_delete_permission,
+            f"{self.prefix}ADMIN_HAS_DELETE_PERMISSION",
+            self.default_admin_settings.admin_has_delete_permission,
         )
 
         self.include_serializer_full_details: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS",
+            f"{self.prefix}SERIALIZER_INCLUDE_FULL_DETAILS",
             self.default_api_settings.include_serializer_full_details,
         )
 
         self.api_allow_list: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_API_ALLOW_LIST", self.default_api_settings.allow_list
+            f"{self.prefix}API_ALLOW_LIST", self.default_api_settings.allow_list
         )
         self.api_allow_retrieve: bool = self.get_setting(
-            "DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE",
+            f"{self.prefix}API_ALLOW_RETRIEVE",
             self.default_api_settings.allow_retrieve,
         )
         self.user_serializer_fields: List[str] = self.get_setting(
-            "DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS",
+            f"{self.prefix}USER_SERIALIZER_FIELDS",
             self.default_serializer_settings.user_serializer_fields,
         )
         self.user_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS",
+            f"{self.prefix}USER_SERIALIZER_CLASS",
             self.default_serializer_settings.user_serializer_class,
         )
         self.group_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS",
+            f"{self.prefix}GROUP_SERIALIZER_CLASS",
             self.default_serializer_settings.group_serializer_class,
         )
         self.authenticated_user_throttle_rate: str = self.get_setting(
-            "DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE",
+            f"{self.prefix}AUTHENTICATED_USER_THROTTLE_RATE",
             self.default_throttle_settings.authenticated_user_throttle_rate,
         )
         self.staff_user_throttle_rate: str = self.get_setting(
-            "DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE",
+            f"{self.prefix}STAFF_USER_THROTTLE_RATE",
             self.default_throttle_settings.staff_user_throttle_rate,
         )
         self.api_throttle_class: Optional[Type[Any]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_API_THROTTLE_CLASS",
+            f"{self.prefix}API_THROTTLE_CLASS",
             self.default_throttle_settings.throttle_class,
         )
         self.api_pagination_class: Optional[Type[Any]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_API_PAGINATION_CLASS",
+            f"{self.prefix}API_PAGINATION_CLASS",
             self.default_pagination_and_filter_settings.pagination_class,
         )
         self.api_extra_permission_class: Optional[
             Type[Any]
         ] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS",
+            f"{self.prefix}API_EXTRA_PERMISSION_CLASS",
             self.default_api_settings.extra_permission_class,
         )
         self.api_parser_classes: Optional[List[Type[Any]]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_API_PARSER_CLASSES",
+            f"{self.prefix}API_PARSER_CLASSES",
             self.default_api_settings.parser_classes,
         )
         self.api_filterset_class: Optional[Type[Any]] = self.get_optional_classes(
-            "DJANGO_NOTIFICATION_API_FILTERSET_CLASS",
+            f"{self.prefix}API_FILTERSET_CLASS",
             self.default_pagination_and_filter_settings.filterset_class,
         )
         self.api_ordering_fields: List[str] = self.get_setting(
-            "DJANGO_NOTIFICATION_API_ORDERING_FIELDS",
+            f"{self.prefix}API_ORDERING_FIELDS",
             self.default_pagination_and_filter_settings.ordering_fields,
         )
         self.api_search_fields: List[str] = self.get_setting(
-            "DJANGO_NOTIFICATION_API_SEARCH_FIELDS",
+            f"{self.prefix}API_SEARCH_FIELDS",
             self.default_pagination_and_filter_settings.search_fields,
+        )
+        self.admin_site_class: Optional[Type[Any]] = self.get_optional_classes(
+            f"{self.prefix}ADMIN_SITE_CLASS",
+            self.default_admin_settings.admin_site_class,
         )
 
     def get_setting(self, setting_name: str, default_value: Any) -> Any:

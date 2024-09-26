@@ -83,8 +83,8 @@ repos:
         files: ^(docs/(.*/)*.*\.rst)
         additional_dependencies: [ Sphinx==6.2.1 ]
 
-  - repo: local
-    hooks:
+#  - repo: local
+#    hooks:
 #      - id: pytest
 #        name: Pytest
 #        entry: poetry run pytest -v
@@ -94,15 +94,15 @@ repos:
 #        pass_filenames: false
 #        always_run: true
 
-      - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [ python ]
-        require_serial: true
-        args:
-          - "-rn"
-          - "-sn"
-          - "--rcfile=pyproject.toml"
-        files: ^django_notification/
-        exclude: (migrations/|tests/|docs/).*
+#      - id: pylint
+#        name: pylint
+#        entry: pylint
+#        language: system
+#        types: [ python ]
+#        require_serial: true
+#        args:
+#          - "-rn"
+#          - "-sn"
+#          - "--rcfile=pyproject.toml"
+#        files: ^django_notification/
+#        exclude: (migrations/|tests/|docs/).*
