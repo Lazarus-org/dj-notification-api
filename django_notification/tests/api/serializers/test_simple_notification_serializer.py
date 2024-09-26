@@ -1,11 +1,13 @@
 import sys
 from typing import Dict, Any
+from unittest.mock import patch
 
 import pytest
 
 from django_notification.api.serializers.simple_notification import (
     SimpleNotificationSerializer,
 )
+from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
@@ -52,6 +54,7 @@ class TestSimpleNotificationSerializer:
         serializer = SimpleNotificationSerializer(notification_dict)
         assert set(serializer.data.keys()) == set(expected_fields)
 
+    @patch.object(config, "exclude_serializer_null_fields", False)
     @mark.django_db
     def test_title_generation(self, notification_dict: Dict[str, Any]) -> None:
         """

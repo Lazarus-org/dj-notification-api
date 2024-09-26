@@ -36,6 +36,7 @@ class TestNotificationViewSet:
         """
         self.client = APIClient()
 
+    @patch.object(config, "exclude_serializer_null_fields", False)
     def test_get_queryset_for_staff(
         self, admin_user: Type[User], notification: Notification
     ) -> None:
