@@ -1,7 +1,6 @@
 from typing import Any, List, Tuple
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db.models import CASCADE, DateTimeField, ForeignKey, Index, Model
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -54,7 +53,7 @@ class NotificationSeen(Model):
         "Notification",
         verbose_name=_("Notification"),
         help_text=_("The notification that was seen."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the Notification model, representing the notification that was viewed by the user."
         ),
         on_delete=CASCADE,
@@ -64,7 +63,7 @@ class NotificationSeen(Model):
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
         help_text=_("The recipient or a group member who has seen the notification."),
-        db_comment=_(
+        db_comment=(
             "Foreign key linking to the User model (AUTH_USER_MODEL),"
             " representing the user who has viewed the notification."
         ),
@@ -74,9 +73,7 @@ class NotificationSeen(Model):
     seen_at = DateTimeField(
         verbose_name=_("Seen at"),
         help_text=_("The time that the notification was seen."),
-        db_comment=_(
-            "A timestamp recording when the notification was marked as seen by the user."
-        ),
+        db_comment="A timestamp recording when the notification was marked as seen by the user.",
         default=timezone.now,
     )
 

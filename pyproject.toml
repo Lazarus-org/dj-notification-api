@@ -48,7 +48,7 @@ django = [
   { version = ">=4.2,<5.0", python = ">=3.8,<3.10" },
   { version = ">=4.2,<5.3", python = ">=3.10" },      # Django 4.2 and 5.x for Python 3.10+
 ]
-djangorestframework = "^3.12.0"
+djangorestframework = "^3.14.0"
 django-filter = "^24.3"
 
 [tool.poetry.group.dev.dependencies]
@@ -70,6 +70,7 @@ sphinx-rtd-theme = "^2.0.0"
 docformatter = "^1.7.5"
 codecov = "^2.1.13"
 python-semantic-release = "^9.8.8"
+django-migration-linter = "^5.1.0"
 
 [tool.black]
 line-length = 88
@@ -323,3 +324,7 @@ insecure = false
 [tool.semantic_release.publish]
 dist_glob_patterns = [ "dist/*" ]
 upload_to_vcs_release = true
+
+[tool.django_migration_linter]
+exclude_migration_tests = [ "NOT_NULL", "ADD_UNIQUE" ]
+no_cache = true

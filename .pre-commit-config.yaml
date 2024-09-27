@@ -106,3 +106,10 @@ repos:
           - "--rcfile=pyproject.toml"
         files: ^django_notification/
         exclude: (migrations/|tests/|docs/).*
+
+      - id: pre-commit-django-migration-lint
+        name: Lint Django migrations
+        entry: ./manage.py lintmigrations
+        language: system
+        types: [python]
+        pass_filenames: false

@@ -92,7 +92,21 @@ Pre-commit hooks are used to automatically check and format code before you make
 
        poetry run pre-commit install
 
-3. **Manual Hook Execution (Optional):**
+3. **Set Up django_migration_linter:**
+
+    To ensure that ``django_migration_linter`` functions properly, add it to the INSTALLED_APPS section in your ``settings.py`` file:
+
+    .. code-block:: python
+
+        INSTALLED_APPS = [
+            # ...
+            "django_migration_linter"
+            # ...
+        ]
+
+This step integrates the migration linter into your Django project, allowing it to monitor migrations effectively.
+
+4. **Manual Hook Execution (Optional):**
 
    To run all hooks manually on your codebase:
 
