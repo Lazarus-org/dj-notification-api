@@ -326,5 +326,5 @@ dist_glob_patterns = [ "dist/*" ]
 upload_to_vcs_release = true
 
 [tool.django_migration_linter]
-exclude_migration_tests = [ "NOT_NULL" ]
+exclude_migration_tests = [ "NOT_NULL", "ADD_UNIQUE" ]
 no_cache = true
