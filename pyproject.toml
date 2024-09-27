@@ -70,6 +70,7 @@ sphinx-rtd-theme = "^2.0.0"
 docformatter = "^1.7.5"
 codecov = "^2.1.13"
 python-semantic-release = "^9.8.8"
+django-migration-linter = "^5.1.0"
 
 [tool.black]
 line-length = 88
@@ -323,3 +324,7 @@ insecure = false
 [tool.semantic_release.publish]
 dist_glob_patterns = [ "dist/*" ]
 upload_to_vcs_release = true
+
+[tool.django_migration_linter]
+exclude_migration_tests = [ "NOT_NULL" ]
+no_cache = true

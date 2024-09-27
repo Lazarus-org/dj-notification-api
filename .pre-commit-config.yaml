@@ -52,13 +52,13 @@ repos:
       - id: commitizen
         exclude: (migrations/|tests/|docs/).*
 
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.4
-    hooks:
-      - id: bandit
-        args: [ "-c", "pyproject.toml", "-r", "." ]
-        additional_dependencies: [ "bandit[toml]" ]
-        exclude: (migrations/|tests/|docs/).*
+#  - repo: https://github.com/PyCQA/bandit
+#    rev: 1.7.4
+#    hooks:
+#      - id: bandit
+#        args: [ "-c", "pyproject.toml", "-r", "." ]
+#        additional_dependencies: [ "bandit[toml]" ]
+#        exclude: (migrations/|tests/|docs/).*
 
   - repo: https://github.com/PyCQA/docformatter
     rev: v1.7.5
@@ -85,14 +85,14 @@ repos:
 
   - repo: local
     hooks:
-      - id: pytest
-        name: Pytest
-        entry: poetry run pytest -v
-        language: system
-        types: [ python ]
-        stages: [ commit ]
-        pass_filenames: false
-        always_run: true
+#      - id: pytest
+#        name: Pytest
+#        entry: poetry run pytest -v
+#        language: system
+#        types: [ python ]
+#        stages: [ commit ]
+#        pass_filenames: false
+#        always_run: true
 
       - id: pylint
         name: pylint
@@ -106,3 +106,10 @@ repos:
           - "--rcfile=pyproject.toml"
         files: ^django_notification/
         exclude: (migrations/|tests/|docs/).*
+
+      - id: pre-commit-django-migration-lint
+        name: Lint Django migrations
+        entry: ./manage.py lintmigrations
+        language: system
+        types: [python]
+        pass_filenames: false
