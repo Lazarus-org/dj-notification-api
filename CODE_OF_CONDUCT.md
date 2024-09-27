@@ -54,7 +54,7 @@ we’re thrilled that you want to contribute to `dj-notification-api`! to ensure
     pip install poetry-plugin-export
 
     poetry export -f requirements.txt --output packages/requirements.txt --without-hashes
-    poetry export -f requirements.txt --dev --output packages/requirements-dev.txt --without-hashes
+    poetry export -f requirements.txt --with dev --output packages/requirements-dev.txt --without-hashes
     ```
 
 ## Commitizen Message Rule
