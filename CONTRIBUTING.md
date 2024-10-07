@@ -1,5 +1,3 @@
-from typing import List
-
 # Contributing to dj-notification-api
 
 
