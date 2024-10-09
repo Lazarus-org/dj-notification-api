@@ -63,15 +63,15 @@ It also provides an intuitive and powerful admin interface, allowing you to mana
 Supported Versions
 ------------------
 
-`dj-notification-api` supports the following combinations of Django and Python versions:
+`dj-notification-api` supports the following combinations of Django, REST Framework and Python versions:
 
-==========  =======================
-  Django      Python
-==========  =======================
-4.2         3.9, 3.10, 3.11, 3.12
-5.0         3.10, 3.11, 3.12
-5.1         3.10, 3.11, 3.12
-==========  =======================
+==========  ==============  ===========================
+  Django    REST Framework  Python
+==========  ==============  ===========================
+4.2         3.14, 3.15      3.9, 3.10, 3.11, 3.12, 3.13
+5.0         3.14, 3.15      3.10, 3.11, 3.12, 3.13
+5.1         3.14, 3.15      3.10, 3.11, 3.12, 3.13
+==========  ==============  ===========================
 
 Documentation
 -------------
