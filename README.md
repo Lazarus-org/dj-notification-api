@@ -19,8 +19,9 @@ It also provides an intuitive and powerful admin interface, allowing you to mana
 
 ## Project Detail
 
-- Language: Python > 3.9
-- Framework: Django > 4.2
+- Language: Python >= 3.9
+- Framework: Django >= 4.2
+- Django REST Framework >= 3.14
 
 ## Documentation Overview
 
