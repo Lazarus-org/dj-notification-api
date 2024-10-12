@@ -77,7 +77,7 @@ Here are some examples of responses for each action:
 
 **List notifications with full details**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/notifications/
 
@@ -119,7 +119,7 @@ If the ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` setting is ``True
 
 **List notifications with simplified data**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/notifications/
 
@@ -143,7 +143,7 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
 **Mark all as seen**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/notifications/mark_all_as_seen/
 
@@ -155,7 +155,7 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
 **Clear activities (soft delete)**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/activities/clear_activities/
 
@@ -167,7 +167,7 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
 **Clear a single notification (soft delete)**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/activities/1/clear_notification/
 
@@ -179,7 +179,7 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
 **Delete all activities (hard delete)**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/activities/delete_activities/
 
@@ -191,7 +191,7 @@ This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DET
 
 **Delete a single notification (hard delete)**:
 
-.. code-block:: http
+.. code-block:: text
 
    GET /notification/activities/3/delete_notification/
 
