@@ -1,3 +1,30 @@
+## v1.2.0 (2024-10-13)
+
+### 🛠️ Refactoring
+- **refactor(docs)**: Improve settings and API guide structure. ([3f90aa3](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/3f90aa3))
+  - Enhanced the structure of the settings and API guide documentation for better clarity and usability.
+
+- **refactor(README)**: Improve settings section structure. ([583d733](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/583d733))
+  - Reorganized the README settings section for a more intuitive flow and easier configuration understanding.
+
+### 🔧 Chores
+- **chore**: Update CI configuration for Python 3.13 support. ([c6d2bca](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/c6d2bca))
+  - Updated CI pipeline configuration to add support for Python 3.13 and ensure compatibility.
+
+- **chore**: Add support for Python 3.13 and drop support for Python 3.8. ([1516559](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/1516559))
+  - Officially added support for Python 3.13 while discontinuing support for Python 3.8.
+
+- **chore**: Update project details and required Python version. ([6904a08](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/6904a08))
+  - Updated project documentation with the latest required Python version details.
+
+### 📚 Documentation
+- **docs(contributing)**: Fix typo in contributing.md. ([3efec98](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/3efec98))
+  - Corrected minor typos in the contributing guide to enhance readability and accuracy.
+
+### 🐛 Bug Fixes
+- **fix**: Fix missing throttle rate for user scope in API throttling. ([43f0639](https://github.com/MEHRSHAD-MIRSHEKARY/dj-notification-api/commit/43f0639))
+  - Resolved an issue where throttle rates were incorrectly applied or missing for the 'user' scope.
+
 ## v1.1.0 (2024-09-29)
 
 ### ✨ Features
