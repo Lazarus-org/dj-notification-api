@@ -1,7 +1,6 @@
 from typing import List, Type
 
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import get_object_or_404
@@ -18,6 +17,13 @@ from django_notification.api.serializers.notification import NotificationSeriali
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
+
+try:
+    from django_filters.rest_framework import DjangoFilterBackend
+
+    django_filter_installed = True
+except ImportError:  # pragma: no cover
+    django_filter_installed = False
 
 
 # pylint: disable=too-many-ancestors
@@ -73,7 +79,11 @@ class NotificationViewSet(
 
     """
 
-    filter_backends: List = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filter_backends: List = [
+        *([DjangoFilterBackend] if django_filter_installed else []),
+        OrderingFilter,
+        SearchFilter,
+    ]
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the NotificationViewSet, configure dynamic attributes,
