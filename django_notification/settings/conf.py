@@ -24,6 +24,8 @@ class NotificationConfig:
         include_serializer_full_details (bool): Whether full details are included in the serializer.
         api_allow_list (bool): Whether the API allows listing notifications.
         api_allow_retrieve (bool): Whether the API allows retrieving single notifications.
+        notification_serializer_fields (List[str]): Fields included in the notification serializer.
+        notification_serializer_class (Optional[Type[Any]]): The class used for Notification serialization.
         user_serializer_fields (List[str]): Fields included in the user serializer.
         user_serializer_class (Optional[Type[Any]]): The class used for User serialization.
         group_serializer_class (Optional[Type[Any]]): The class used for Group serialization.
@@ -87,6 +89,14 @@ class NotificationConfig:
         self.api_allow_retrieve: bool = self.get_setting(
             f"{self.prefix}API_ALLOW_RETRIEVE",
             self.default_api_settings.allow_retrieve,
+        )
+        self.notification_serializer_fields: List[str] = self.get_setting(
+            f"{self.prefix}SERIALIZER_FIELDS",
+            self.default_serializer_settings.notification_serializer_fields,
+        )
+        self.notification_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
+            f"{self.prefix}SERIALIZER_CLASS",
+            self.default_serializer_settings.notification_serializer_class,
         )
         self.user_serializer_fields: List[str] = self.get_setting(
             f"{self.prefix}USER_SERIALIZER_FIELDS",
