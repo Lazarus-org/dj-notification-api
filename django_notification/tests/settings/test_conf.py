@@ -1,7 +1,8 @@
 import sys
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
+
 from django_notification.settings.conf import NotificationConfig
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 

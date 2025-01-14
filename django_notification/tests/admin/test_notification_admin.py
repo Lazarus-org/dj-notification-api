@@ -3,19 +3,20 @@ from typing import List
 from unittest.mock import Mock
 
 import pytest
-from django.contrib.auth.models import User
-from django.urls import reverse
-from django.test import Client
 from django.contrib import admin
-from django_notification.models import (
-    Notification,
-    NotificationRecipient,
-    NotificationSeen,
-)
+from django.contrib.auth.models import User
+from django.test import Client
+from django.urls import reverse
+
 from django_notification.admin.notification import (
     NotificationAdmin,
     NotificationRecipientInline,
     NotificationSeenInline,
+)
+from django_notification.models import (
+    Notification,
+    NotificationRecipient,
+    NotificationSeen,
 )
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 

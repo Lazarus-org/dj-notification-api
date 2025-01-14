@@ -11,10 +11,10 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import GenericViewSet
 
-from django_notification.api.serializers.notification import NotificationSerializer
-from django_notification.api.serializers.simple_notification import (
-    SimpleNotificationSerializer,
+from django_notification.api.serializers.dynamic_notification import (
+    NotificationDynamicSerializer,
 )
+from django_notification.api.serializers.notification import NotificationSerializer
 from django_notification.decorators.action import conditional_action
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.models.notification import Notification
@@ -109,11 +109,11 @@ class ActivityViewSet(
         if not config.api_allow_retrieve:
             self.disable_methods(["RETRIEVE"])
 
-    def get_user_groups(self) -> List:
+    def get_user_groups(self) -> QuerySet:
         """Retrieve the list of groups the current user belongs to.
 
         Returns:
-            List: A list of the user's groups.
+            QuerySet: A Queryset of the user's groups.
 
         """
         return self.request.user.groups.all()
@@ -144,8 +144,12 @@ class ActivityViewSet(
         if self.request.user.is_staff:
             return self.get_staff_queryset()
 
-        if config.include_serializer_full_details:
-            display_detail = True
+        display_detail = bool(
+            display_detail
+            or config.include_serializer_full_details
+            or config.notification_serializer_fields
+            or config.notification_serializer_class
+        )
 
         user_groups = self.get_user_groups()
         queryset = Notification.objects.seen(
@@ -167,7 +171,8 @@ class ActivityViewSet(
         """
         if self.request.user.is_staff or config.include_serializer_full_details:
             return NotificationSerializer
-        return SimpleNotificationSerializer
+
+        return config.notification_serializer_class or NotificationDynamicSerializer
 
     @conditional_action(condition=config.include_soft_delete, detail=False)
     def clear_activities(self, request: Request) -> Response:

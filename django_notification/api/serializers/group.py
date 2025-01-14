@@ -3,7 +3,6 @@ from typing import Dict, List
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
-from django_notification.settings.conf import config
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
@@ -60,6 +59,8 @@ class GroupSerializer(serializers.ModelSerializer):
             dict: The serialized and filtered representation of the group.
 
         """
+        from django_notification.settings.conf import config
+
         data = super().to_representation(instance)
 
         if config.exclude_serializer_null_fields:

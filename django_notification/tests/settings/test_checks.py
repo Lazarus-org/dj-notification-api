@@ -1,7 +1,8 @@
 import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import patch, MagicMock
+
 from django_notification.settings.checks import check_notification_settings
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
@@ -36,6 +37,7 @@ class TestCheckNotificationSettings:
         mock_config.exclude_serializer_null_fields = True
         mock_config.api_allow_list = True
         mock_config.api_allow_retrieve = False
+        mock_config.notification_serializer_fields = ["title", "timestamp"]
         mock_config.user_serializer_fields = ["id", "username"]
         mock_config.api_ordering_fields = ["created_at"]
         mock_config.api_search_fields = ["title"]
@@ -69,6 +71,7 @@ class TestCheckNotificationSettings:
         mock_config.admin_has_delete_permission = "not_boolean"
         mock_config.include_serializer_full_details = "not_bool"
         mock_config.exclude_serializer_null_fields = "not_boolean"
+        mock_config.notification_serializer_fields = ["title", "timestamp"]
         mock_config.user_serializer_fields = ["id", "username"]
         mock_config.api_ordering_fields = ["created_at"]
         mock_config.api_search_fields = ["title"]
@@ -103,12 +106,12 @@ class TestCheckNotificationSettings:
             == f"django_notification.E001_{mock_config.prefix}ADMIN_HAS_DELETE_PERMISSION"
         )
         assert (
-                errors[5].id
-                == f"django_notification.E001_{mock_config.prefix}SERIALIZER_INCLUDE_FULL_DETAILS"
+            errors[5].id
+            == f"django_notification.E001_{mock_config.prefix}SERIALIZER_INCLUDE_FULL_DETAILS"
         )
         assert (
-                errors[6].id
-                == f"django_notification.E001_{mock_config.prefix}SERIALIZER_EXCLUDE_NULL_FIELDS"
+            errors[6].id
+            == f"django_notification.E001_{mock_config.prefix}SERIALIZER_EXCLUDE_NULL_FIELDS"
         )
         assert (
             errors[7].id
@@ -138,6 +141,7 @@ class TestCheckNotificationSettings:
         mock_config.exclude_serializer_null_fields = True
         mock_config.api_allow_list = True
         mock_config.api_allow_retrieve = False
+        mock_config.notification_serializer_fields = ["invalid_field"]
         mock_config.user_serializer_fields = []
         mock_config.api_ordering_fields = []
         mock_config.staff_user_throttle_rate = "10/minute"
@@ -147,18 +151,22 @@ class TestCheckNotificationSettings:
 
         errors = check_notification_settings(None)
 
-        # Expect 3 errors for invalid list settings
-        assert len(errors) == 3
+        # Expect 4 errors for invalid list settings
+        assert len(errors) == 4
         assert (
             errors[0].id
-            == f"django_notification.E003_{mock_config.prefix}USER_SERIALIZER_FIELDS"
+            == f"django_notification.E014_{mock_config.prefix}SERIALIZER_FIELDS"
         )
         assert (
             errors[1].id
-            == f"django_notification.E003_{mock_config.prefix}API_ORDERING_FIELDS"
+            == f"django_notification.E003_{mock_config.prefix}USER_SERIALIZER_FIELDS"
         )
         assert (
             errors[2].id
+            == f"django_notification.E003_{mock_config.prefix}API_ORDERING_FIELDS"
+        )
+        assert (
+            errors[3].id
             == f"django_notification.E004_{mock_config.prefix}API_SEARCH_FIELDS"
         )
 
@@ -185,6 +193,7 @@ class TestCheckNotificationSettings:
         mock_config.exclude_serializer_null_fields = True
         mock_config.api_allow_list = True
         mock_config.api_allow_retrieve = False
+        mock_config.notification_serializer_fields = None
         mock_config.user_serializer_fields = ["id", "username"]
         mock_config.api_ordering_fields = ["created_at"]
         mock_config.api_search_fields = ["title"]
@@ -222,6 +231,7 @@ class TestCheckNotificationSettings:
         mock_config.exclude_serializer_null_fields = True
         mock_config.api_allow_list = True
         mock_config.api_allow_retrieve = False
+        mock_config.notification_serializer_fields = ["title", "timestamp"]
         mock_config.user_serializer_fields = ["id", "username"]
         mock_config.api_ordering_fields = ["created_at"]
         mock_config.api_search_fields = ["title"]
@@ -233,37 +243,41 @@ class TestCheckNotificationSettings:
 
         errors = check_notification_settings(None)
 
-        # Expect 8 errors for invalid class imports
-        assert len(errors) == 8
+        # Expect 9 errors for invalid class imports
+        assert len(errors) == 9
         assert (
             errors[0].id
-            == f"django_notification.E010_{mock_config.prefix}USER_SERIALIZER_CLASS"
+            == f"django_notification.E010_{mock_config.prefix}SERIALIZER_CLASS"
         )
         assert (
             errors[1].id
-            == f"django_notification.E010_{mock_config.prefix}GROUP_SERIALIZER_CLASS"
+            == f"django_notification.E010_{mock_config.prefix}USER_SERIALIZER_CLASS"
         )
         assert (
             errors[2].id
-            == f"django_notification.E010_{mock_config.prefix}API_THROTTLE_CLASS"
+            == f"django_notification.E010_{mock_config.prefix}GROUP_SERIALIZER_CLASS"
         )
         assert (
             errors[3].id
-            == f"django_notification.E010_{mock_config.prefix}API_PAGINATION_CLASS"
+            == f"django_notification.E010_{mock_config.prefix}API_THROTTLE_CLASS"
         )
         assert (
             errors[4].id
-            == f"django_notification.E011_{mock_config.prefix}API_PARSER_CLASSES"
+            == f"django_notification.E010_{mock_config.prefix}API_PAGINATION_CLASS"
         )
         assert (
             errors[5].id
-            == f"django_notification.E010_{mock_config.prefix}API_FILTERSET_CLASS"
+            == f"django_notification.E011_{mock_config.prefix}API_PARSER_CLASSES"
         )
         assert (
             errors[6].id
+            == f"django_notification.E010_{mock_config.prefix}API_FILTERSET_CLASS"
+        )
+        assert (
+            errors[7].id
             == f"django_notification.E010_{mock_config.prefix}API_EXTRA_PERMISSION_CLASS"
         )
         assert (
-                errors[7].id
-                == f"django_notification.E010_{mock_config.prefix}ADMIN_SITE_CLASS"
+            errors[8].id
+            == f"django_notification.E010_{mock_config.prefix}ADMIN_SITE_CLASS"
         )

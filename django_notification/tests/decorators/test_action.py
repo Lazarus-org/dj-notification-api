@@ -2,6 +2,7 @@ import sys
 
 import pytest
 from rest_framework.response import Response
+
 from django_notification.decorators.action import conditional_action
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 

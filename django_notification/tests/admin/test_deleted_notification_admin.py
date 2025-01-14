@@ -1,12 +1,14 @@
 import sys
 from unittest.mock import Mock
+
 import pytest
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
-from django_notification.models import DeletedNotification
+
 from django_notification.admin import DeletedNotificationAdmin
+from django_notification.models import DeletedNotification
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [

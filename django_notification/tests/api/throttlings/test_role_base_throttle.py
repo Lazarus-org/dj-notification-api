@@ -2,11 +2,11 @@ import sys
 
 import pytest
 from django.contrib.auth.models import User
-from rest_framework.request import Request
-from rest_framework.test import APIRequestFactory, force_authenticate, APIClient
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from django.core.cache import cache
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
+from rest_framework.views import APIView
 
 from django_notification.api.throttlings.role_base_throttle import (
     RoleBasedUserRateThrottle,

@@ -11,10 +11,10 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.viewsets import GenericViewSet
 
-from django_notification.api.serializers.notification import NotificationSerializer
-from django_notification.api.serializers.simple_notification import (
-    SimpleNotificationSerializer,
+from django_notification.api.serializers.dynamic_notification import (
+    NotificationDynamicSerializer,
 )
+from django_notification.api.serializers.notification import NotificationSerializer
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
@@ -132,8 +132,12 @@ class NotificationViewSet(
         if self.request.user.is_staff:
             return self.get_staff_queryset()
 
-        if config.include_serializer_full_details:
-            display_detail = True
+        display_detail = bool(
+            display_detail
+            or config.include_serializer_full_details
+            or config.notification_serializer_fields
+            or config.notification_serializer_class
+        )
 
         user_groups = self.get_user_groups()
         queryset = Notification.objects.unseen(
@@ -154,7 +158,8 @@ class NotificationViewSet(
         """
         if self.request.user.is_staff or config.include_serializer_full_details:
             return NotificationSerializer
-        return SimpleNotificationSerializer
+
+        return config.notification_serializer_class or NotificationDynamicSerializer
 
     def retrieve(self, request: Request, *args, **kwargs) -> Response:
         """Retrieve a single notification, mark it as seen, and return the

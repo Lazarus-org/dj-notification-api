@@ -2,9 +2,9 @@ import sys
 from typing import List
 
 import pytest
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 
-from django_notification.models import Notification, DeletedNotification
+from django_notification.models import DeletedNotification, Notification
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [
@@ -236,7 +236,7 @@ class TestNotificationQuerySet:
             notification_id=notification.id,
             is_sent=True,
             public=False,
-            data={"key": "value"}
+            data={"key": "value"},
         )
         assert updated_notification.is_sent is True
         assert updated_notification.public is False

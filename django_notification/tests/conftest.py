@@ -1,18 +1,18 @@
-from django_notification.tests.setup import configure_django_settings
+from django_notification.tests import setup
 from django_notification.tests.fixtures import (
-    user_content_type,
-    user,
+    admin_user,
     another_user,
-    qs_user,
+    deleted_notification,
     group,
-    qs_group,
     group_with_perm,
-    permission,
     notification,
     notification_dict,
-    notifications,
     notification_recipient,
     notification_seen,
-    deleted_notification,
-    admin_user,
+    notifications,
+    permission,
+    qs_group,
+    qs_user,
+    user,
+    user_content_type,
 )
