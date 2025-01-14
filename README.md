@@ -72,7 +72,7 @@ The package requires ``djangorestframework`` for API support. If it's not alread
 $ pip install djangorestframework
 ```
 
-### 2. Add to Installed Apps
+## 2. Add to Installed Apps
 
 After installing the necessary packages, ensure that both `rest_framework` and `django_notification` are added to the `INSTALLED_APPS` in your Django ``settings.py`` file:
 
@@ -86,7 +86,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-### 3. (Optional) Configure API Filters
+## 3. (Optional) Configure API Filters
 
 To enable filtering of notifications through the API, install ``django-filter``, include ``django_filters`` in your ``INSTALLED_APPS`` and configure the filter settings.
 
