@@ -1,7 +1,7 @@
 import sys
+from typing import Any, Dict
 
 import pytest
-from typing import Dict, Any
 from django.utils.timezone import now, timedelta
 
 from django_notification.models import Notification

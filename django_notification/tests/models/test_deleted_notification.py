@@ -2,8 +2,9 @@ import sys
 
 import pytest
 from django.contrib.auth.models import User
-from django.utils.timezone import now
 from django.db import IntegrityError
+from django.utils.timezone import now
+
 from django_notification.models import DeletedNotification, Notification
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 

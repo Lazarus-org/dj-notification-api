@@ -1,14 +1,16 @@
 import sys
 from unittest.mock import patch
+
+import pytest
+
+from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 from django_notification.validators.config_validators import (
     validate_boolean_setting,
     validate_list_fields,
-    validate_throttle_rate,
     validate_optional_class_setting,
     validate_optional_classes_setting,
+    validate_throttle_rate,
 )
-import pytest
-from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [
     pytest.mark.validators,

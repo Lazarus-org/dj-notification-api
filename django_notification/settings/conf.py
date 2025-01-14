@@ -94,7 +94,9 @@ class NotificationConfig:
             f"{self.prefix}SERIALIZER_FIELDS",
             self.default_serializer_settings.notification_serializer_fields,
         )
-        self.notification_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.notification_serializer_class: Optional[
+            Type[Any]
+        ] = self.get_optional_classes(
             f"{self.prefix}SERIALIZER_CLASS",
             self.default_serializer_settings.notification_serializer_class,
         )

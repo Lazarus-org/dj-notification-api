@@ -23,7 +23,7 @@ def validate_list_fields(
     fields: List[str],
     config_name: str,
     available_fields: Optional[List] = None,
-    allow_none: bool = False
+    allow_none: bool = False,
 ) -> List[Error]:
     errors = []
     if allow_none and fields is None:

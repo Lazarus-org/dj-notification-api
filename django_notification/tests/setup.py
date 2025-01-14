@@ -1,7 +1,8 @@
-from django.conf import settings
-import django
-import string
 import random
+import string
+
+import django
+from django.conf import settings
 
 
 def generate_secret_key(length: int = 50) -> str:

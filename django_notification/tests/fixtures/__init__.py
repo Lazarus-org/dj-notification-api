@@ -1,19 +1,19 @@
 from .notification import (
+    deleted_notification,
     notification,
     notification_dict,
-    notifications,
-    notification_seen,
     notification_recipient,
-    deleted_notification,
+    notification_seen,
+    notifications,
 )
 from .user import (
     admin_user,
-    qs_user,
+    another_user,
     group,
-    qs_group,
     group_with_perm,
     permission,
-    user_content_type,
-    another_user,
+    qs_group,
+    qs_user,
     user,
+    user_content_type,
 )

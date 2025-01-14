@@ -27,16 +27,12 @@ class DefaultAdminSettings:
 class DefaultThrottleSettings:
     authenticated_user_throttle_rate: str = "30/minute"
     staff_user_throttle_rate: str = "100/minute"
-    throttle_class: str = (
-        "django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"
-    )
+    throttle_class: str = "django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"
 
 
 @dataclass(frozen=True)
 class DefaultPaginationAndFilteringSettings:
-    pagination_class: str = (
-        "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
-    )
+    pagination_class: str = "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
     filterset_class: Optional[str] = None
     ordering_fields: List[str] = field(
         default_factory=lambda: ["id", "timestamp", "public"]

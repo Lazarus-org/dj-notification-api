@@ -11,8 +11,8 @@ from django_notification.utils.serialization import (
 
 
 class NotificationDynamicSerializer(ModelSerializer):
-    """Serializer for Notification model that dynamically selects fields based on settings
-    or predefined fields.
+    """Serializer for Notification model that dynamically selects fields based
+    on settings or predefined fields.
 
     If `config.notification_serializer_fields` is defined and includes 'title',
     the 'title' field will be serialized using a SerializerMethodField. Otherwise,

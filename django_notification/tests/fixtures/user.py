@@ -1,5 +1,5 @@
 import pytest
-from django.contrib.auth.models import User, Group, ContentType, Permission
+from django.contrib.auth.models import ContentType, Group, Permission, User
 
 
 @pytest.fixture

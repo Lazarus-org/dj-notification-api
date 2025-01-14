@@ -1,18 +1,17 @@
-import pytest
-from django.contrib.auth.models import User, Group
-from django.contrib.contenttypes.models import ContentType
+from typing import Any, Dict, List
 
+import pytest
+from django.contrib.auth.models import Group, User
+from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
+
 from django_notification.models import (
-    Notification,
-    NotificationSeen,
-    NotificationRecipient,
     DeletedNotification,
+    Notification,
+    NotificationRecipient,
+    NotificationSeen,
 )
 from django_notification.models.helper.enums.status_choices import NotificationStatus
-
-
-from typing import Dict, Any, List
 
 
 @pytest.fixture

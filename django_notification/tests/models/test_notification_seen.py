@@ -1,11 +1,11 @@
 import sys
-import pytest
 
-from django.db import IntegrityError
+import pytest
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.utils.timezone import now
 
-from django_notification.models import NotificationSeen, Notification
+from django_notification.models import Notification, NotificationSeen
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [

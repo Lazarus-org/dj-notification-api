@@ -1,8 +1,10 @@
 import sys
+
 import pytest
-from django.db import IntegrityError
 from django.contrib.auth.models import User
-from django_notification.models import NotificationRecipient, Notification
+from django.db import IntegrityError
+
+from django_notification.models import Notification, NotificationRecipient
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [
