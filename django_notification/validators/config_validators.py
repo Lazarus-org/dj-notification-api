@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from django.core.checks import Error
 from django.utils.module_loading import import_string
@@ -22,8 +22,13 @@ def validate_boolean_setting(value: bool, config_name: str) -> List[Error]:
 def validate_list_fields(
     fields: List[str],
     config_name: str,
+    available_fields: Optional[List] = None,
+    allow_none: bool = False
 ) -> List[Error]:
     errors = []
+    if allow_none and fields is None:
+        return errors
+
     if not isinstance(fields, list):
         errors.append(
             Error(
@@ -48,6 +53,14 @@ def validate_list_fields(
                         f"Invalid type in {config_name}: {field} is not a string.",
                         hint=f"Ensure all elements in {config_name} are strings.",
                         id=f"django_notification.E004_{config_name}",
+                    )
+                )
+            if available_fields and field not in available_fields:
+                errors.append(
+                    Error(
+                        f"The field '{field}' in '{config_name}' is invalid.",
+                        hint=f"Valid fields for '{config_name}' are: {', '.join(available_fields)}.",
+                        id=f"django_notification.E014_{config_name}",
                     )
                 )
 

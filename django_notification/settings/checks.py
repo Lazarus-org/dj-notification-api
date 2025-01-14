@@ -2,7 +2,9 @@ from typing import Any, List
 
 from django.core.checks import Error, register
 
+from django_notification.models import Notification
 from django_notification.settings.conf import config
+from django_notification.utils.get_model_fields import get_model_fields
 from django_notification.validators.config_validators import (
     validate_boolean_setting,
     validate_list_fields,
@@ -89,6 +91,15 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
 
     errors.extend(
         validate_list_fields(
+            config.notification_serializer_fields,
+            f"{config.prefix}SERIALIZER_FIELDS",
+            available_fields=["title"] + get_model_fields(Notification),
+            allow_none=True,
+        )
+    )
+
+    errors.extend(
+        validate_list_fields(
             config.user_serializer_fields, f"{config.prefix}USER_SERIALIZER_FIELDS"
         )
     )
@@ -115,6 +126,12 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
         validate_throttle_rate(
             config.authenticated_user_throttle_rate,
             f"{config.prefix}AUTHENTICATED_USER_THROTTLE_RATE",
+        )
+    )
+    errors.extend(
+        validate_optional_class_setting(
+            config.get_setting(f"{config.prefix}SERIALIZER_CLASS", None),
+            f"{config.prefix}SERIALIZER_CLASS",
         )
     )
     errors.extend(
