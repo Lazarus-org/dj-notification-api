@@ -6,7 +6,9 @@ from django_notification.utils.user_model import REQUIRED_FIELDS, USERNAME_FIELD
 
 @dataclass(frozen=True)
 class DefaultSerializerSettings:
-    notification_serializer_fields: Optional[List[str]] = None
+    notification_serializer_fields: Optional[List[str]] = field(
+        default_factory=lambda: ["id", "description", "status", "link", "timestamp"]
+    )
     notification_serializer_class: Optional[str] = None
     user_serializer_fields: List[str] = field(
         default_factory=lambda: [USERNAME_FIELD] + list(REQUIRED_FIELDS)
@@ -57,3 +59,12 @@ class DefaultAPISettings:
             "rest_framework.parsers.FormParser",
         ]
     )
+
+
+default_api_settings: DefaultAPISettings = DefaultAPISettings()
+default_serializer_settings: DefaultSerializerSettings = DefaultSerializerSettings()
+default_admin_settings: DefaultAdminSettings = DefaultAdminSettings()
+default_pagination_and_filter_settings: DefaultPaginationAndFilteringSettings = (
+    DefaultPaginationAndFilteringSettings()
+)
+default_throttle_settings: DefaultThrottleSettings = DefaultThrottleSettings()

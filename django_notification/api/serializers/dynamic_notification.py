@@ -2,6 +2,7 @@ from typing import Any, Dict, Union
 
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
+from django_notification.constants.default_settings import default_serializer_settings
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
 from django_notification.utils.serialization import (
@@ -42,13 +43,10 @@ class NotificationDynamicSerializer(ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = config.notification_serializer_fields or (
-            "id",
+        fields = config.notification_serializer_fields or [
             "title",
-            "status",
-            "link",
-            "timestamp",
-        )
+            *default_serializer_settings.notification_serializer_fields,
+        ]
 
     def get_title(self, notification: Union[Notification, Dict[str, Any]]) -> str:
         """Generate and return the title for a notification.

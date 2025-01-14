@@ -136,6 +136,7 @@ disable = [
   "R0401",
 ]
 max-line-length = 88
+max-positional-arguments = 15
 ignore = [
   "tests",
   "migrations/*",
@@ -184,7 +185,7 @@ markers = [
   "api_views_activity: Marks tests for views related to activity-related operations in the API.",
   "api_paginations: Marks tests for pagination in the API, ensuring correct behavior of paginated responses across various endpoints.",
   "api_serializers: Marks tests for DRF serializers, including validation, data transformation, and response formatting.",
-  "api_serializers_simple_notification: Marks tests for the SimpleNotificationSerializer, focusing on how notification data is serialized.",
+  "api_serializers_dynamic_notification: Marks tests for the NotificationDynamicSerializer, focusing on how notification data is serialized.",
   "api_serializers_group: Marks tests for serializers that handle group-related data, focusing on serialization.",
   "api_throttlings: Marks tests for DRF throttling mechanisms, ensuring the correct limiting of API requests.",
   "utils: Marks tests for general utility functions used across the project.",
@@ -265,7 +266,7 @@ version = "1.1.0"
 tag_format = "v$version"
 
 [tool.commitizen.settings]
-increment_types = [ "feat", "fix" ]
+increment_types = [ "feat", "fix", "refactor" ]
 
 [tool.semantic_release]
 assets = [  ]

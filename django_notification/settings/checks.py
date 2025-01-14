@@ -4,7 +4,7 @@ from django.core.checks import Error, register
 
 from django_notification.models import Notification
 from django_notification.settings.conf import config
-from django_notification.utils.get_model_fields import get_model_fields
+from django_notification.utils.get_model_fields import get_serializable_model_fields
 from django_notification.validators.config_validators import (
     validate_boolean_setting,
     validate_list_fields,
@@ -93,7 +93,7 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
         validate_list_fields(
             config.notification_serializer_fields,
             f"{config.prefix}SERIALIZER_FIELDS",
-            available_fields=["title"] + get_model_fields(Notification),
+            available_fields=["title"] + get_serializable_model_fields(Notification),
             allow_none=True,
         )
     )

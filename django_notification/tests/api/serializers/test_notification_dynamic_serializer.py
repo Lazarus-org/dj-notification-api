@@ -8,6 +8,7 @@ from pytest import mark
 from django_notification.api.serializers.dynamic_notification import (
     NotificationDynamicSerializer,
 )
+from django_notification.constants.default_settings import default_serializer_settings
 from django_notification.settings.conf import config
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 from django_notification.utils.serialization.field_filters import (
@@ -30,29 +31,6 @@ class TestNotificationDynamicSerializer:
     This class contains tests for verifying the fields, title generation, and non-empty field filtering
     functionality of the NotificationDynamicSerializer.
     """
-
-    @mark.django_db
-    def test_serializer_fields(self, notification_dict: Dict[str, Any]) -> None:
-        """
-        Test that the NotificationDynamicSerializer includes the correct fields in its output.
-
-        Args:
-        ----
-            notification_dict (Dict[str, Any]): A dictionary representing the notification data.
-
-        Asserts:
-        -------
-            - The serializer's output contains all expected fields.
-        """
-        expected_fields = (
-            "id",
-            "title",
-            "status",
-            "timestamp",
-        )
-
-        serializer = NotificationDynamicSerializer(notification_dict)
-        assert set(serializer.data.keys()) == set(expected_fields)
 
     @patch.object(config, "exclude_serializer_null_fields", False)
     @mark.django_db

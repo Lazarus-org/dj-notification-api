@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Model, Q, QuerySet, Subquery
 from rest_framework.generics import get_object_or_404
 
+from django_notification.constants.default_settings import default_serializer_settings
 from django_notification.constants.qs_types import (
     ActionObject,
     Actor,
@@ -72,7 +73,7 @@ class NotificationQuerySet(QuerySet):
             queryset = queryset.filter(conditions)
         if not display_detail:
             queryset = queryset.values(
-                "id", "description", "status", "link", "timestamp"
+                *default_serializer_settings.notification_serializer_fields
             )
 
         return queryset
