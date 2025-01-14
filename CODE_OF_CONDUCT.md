@@ -39,20 +39,41 @@ we’re thrilled that you want to contribute to `dj-notification-api`! to ensure
     git push origin feature/your-feature-name
     ```
 
-8. **Bump Version**: Use Commitizen to update the version.
+8. **Bump Version**: Use Commitizen to automatically update the version number based on commit messages.
+
+   First, confirm the current version in the Commitizen configuration (`pyproject.toml`) under `[tool.commitizen]`. For instance:
+   ```text
+   [tool.commitizen]
+   version = "1.1.0"
+   ```
+   Next, run the following command to bump the version:
     ```bash
     cz bump
     ```
+   Commitizen will analyze your commit messages and increment the version (major, minor, or patch) according to the Conventional Commits specification.
 
-9. **Generate Changelog**: Create a changelog with Commitizen:
+9. **Generate Changelog**: Create a changelog with Commitizen(only for the new version tag):
     ```bash
-    cz changelog
+    cz changelog --incremental
     ```
+    the `--incremental` option limits changelog updates to only the new version tag, leaving previous entries unchanged. After generating the changelog, add it to the staging area and commit it manually:
 
-10. **Export Dependencies**: Export the project dependencies for development and production:
     ```bash
-    pip install poetry-plugin-export
+    git add CHANGELOG.md
+    git commit -m "docs: update changelog for new version"
+    ```
+   This separate commit avoids including the changelog entry in the release notes, keeping them focused on code changes.
 
+10. **Push Code and Tag**: Push the updated code and new version tag to GitHub.
+
+   ```shell
+   git push origin feature/your-feature-name
+   git push origin tag <tag-name>
+   ```
+   The first command pushes your code changes, and the second command pushes the new version tag created by Commitizen. This ensures that the tag is available on GitHub, which is useful for creating releases and tracking versioned changes.
+
+11. **Export Dependencies**: Export the project dependencies for development and production:
+    ```bash
     poetry export -f requirements.txt --output packages/requirements.txt --without-hashes
     poetry export -f requirements.txt --with dev --output packages/requirements-dev.txt --without-hashes
     ```
