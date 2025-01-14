@@ -4,12 +4,13 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import Group
 from rest_framework.exceptions import ValidationError
+
 from django_notification.api.serializers.group import GroupSerializer
 from django_notification.settings.conf import config
+from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 from django_notification.utils.serialization.field_filters import (
     filter_non_empty_fields,
 )
-from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 
 pytestmark = [
     pytest.mark.api,
