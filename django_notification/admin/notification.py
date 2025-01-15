@@ -1,7 +1,8 @@
-from typing import List
+from typing import Any, List
 
 from django.contrib import admin
-from django.db.models import QuerySet
+from django.db.models import Field, QuerySet, URLField
+from django.forms import Field as FormField
 from django.http import HttpRequest
 
 from django_notification.mixins import ReadOnlyAdminMixin
@@ -137,3 +138,29 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         self.message_user(
             request, f"{updated} notification(s) successfully marked as sent."
         )
+
+    def formfield_for_dbfield(
+        self, db_field: Field, request: HttpRequest, **kwargs: Any
+    ) -> FormField:
+        """Customize the form field for database fields in the admin interface.
+
+        This method ensures that URLFields default to the HTTPS scheme when
+        a scheme is not provided.
+
+        Args:
+            db_field: The model field to create a form field for.
+            request: The current HTTP request object.
+            **kwargs: Additional keyword arguments for form field configuration.
+
+        Returns:
+            The form field instance configured for the specified database field.
+
+        """
+        import django
+
+        if isinstance(db_field, URLField) and django.VERSION >= (
+            5,
+            0,
+        ):  # pragma: no cover
+            kwargs["assume_scheme"] = "https"
+        return super().formfield_for_dbfield(db_field, request, **kwargs)

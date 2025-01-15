@@ -86,11 +86,11 @@ class NotificationConfig:
             f"{self.prefix}SERIALIZER_FIELDS",
             None,
         )
-        self.notification_serializer_class: Optional[
-            Type[Any]
-        ] = self.get_optional_classes(
-            f"{self.prefix}SERIALIZER_CLASS",
-            default_serializer_settings.notification_serializer_class,
+        self.notification_serializer_class: Optional[Type[Any]] = (
+            self.get_optional_classes(
+                f"{self.prefix}SERIALIZER_CLASS",
+                default_serializer_settings.notification_serializer_class,
+            )
         )
         self.user_serializer_fields: List[str] = self.get_setting(
             f"{self.prefix}USER_SERIALIZER_FIELDS",
@@ -120,11 +120,11 @@ class NotificationConfig:
             f"{self.prefix}API_PAGINATION_CLASS",
             default_pagination_and_filter_settings.pagination_class,
         )
-        self.api_extra_permission_class: Optional[
-            Type[Any]
-        ] = self.get_optional_classes(
-            f"{self.prefix}API_EXTRA_PERMISSION_CLASS",
-            default_api_settings.extra_permission_class,
+        self.api_extra_permission_class: Optional[Type[Any]] = (
+            self.get_optional_classes(
+                f"{self.prefix}API_EXTRA_PERMISSION_CLASS",
+                default_api_settings.extra_permission_class,
+            )
         )
         self.api_parser_classes: Optional[List[Type[Any]]] = self.get_optional_classes(
             f"{self.prefix}API_PARSER_CLASSES",

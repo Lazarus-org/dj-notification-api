@@ -1,7 +1,6 @@
 from typing import List, Optional, Type
 
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
@@ -19,6 +18,13 @@ from django_notification.decorators.action import conditional_action
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
+
+try:
+    from django_filters.rest_framework import DjangoFilterBackend
+
+    django_filter_installed = True
+except ImportError:  # pragma: no cover
+    django_filter_installed = False
 
 
 # pylint: disable=too-many-ancestors
@@ -89,7 +95,11 @@ class ActivityViewSet(
 
     """
 
-    filter_backends: List = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filter_backends: List = [
+        *([DjangoFilterBackend] if django_filter_installed else []),
+        OrderingFilter,
+        SearchFilter,
+    ]
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the viewset and configure attributes based on settings.
