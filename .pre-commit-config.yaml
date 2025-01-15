@@ -90,7 +90,7 @@ repos:
         entry: poetry run pytest -v
         language: system
         types: [ python ]
-        stages: [ commit ]
+        stages: [ pre-commit ]
         pass_filenames: false
         always_run: true
 
