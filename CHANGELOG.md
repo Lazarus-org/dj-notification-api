@@ -1,3 +1,10 @@
+## v1.2.1 (2025-01-15)
+
+### Refactor
+
+- **serializers**: Improve notification serializer to support dynamic fields
+- **settings**: Add dynamic serialization for Notification
+
 ## v1.2.0 (2024-10-13)
 
 ### 🛠️ Refactoring

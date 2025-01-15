@@ -263,7 +263,7 @@ B104 = { check_typed_list = true }
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "1.2.1"
-version_files = ["pyproject.toml"]
+version_files = [ "pyproject.toml" ]
 tag_format = "v$version"
 
 [tool.commitizen.settings]
