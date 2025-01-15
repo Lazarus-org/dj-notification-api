@@ -30,11 +30,18 @@ If you're using pipenv, install the package with:
 
    $ pipenv install dj-notification-api
 
+The package requires ``djangorestframework`` for API support. If it's not already installed in your project, you can install it using one of the above methods:
+
+**Using pip:**
+
+.. code-block:: bash
+
+  $ pip install djangorestframework
 
 2. Add to Installed Apps
 ------------------------
 
-Once installed,  ensure that both ``rest_framework`` and ``django_notification`` are added to the ``INSTALLED_APPS`` in your Django ``settings.py`` file:
+After installing the necessary packages, ensure that both ``rest_framework`` and ``django_notification`` are added to the ``INSTALLED_APPS`` in your Django ``settings.py`` file:
 
 .. code-block:: python
 
@@ -48,7 +55,16 @@ Once installed,  ensure that both ``rest_framework`` and ``django_notification``
 3. (Optional) Configure API Filters
 -----------------------------------
 
-To enable filtering of notifications through the API, include ``django_filters`` in your ``INSTALLED_APPS`` and configure the filter settings.
+To enable filtering of notifications through the API, install ``django-filter``, include ``django_filters`` in your ``INSTALLED_APPS`` and configure the filter settings.
+
+Install ``django-filter`` using one of the above methods:
+
+**Using pip:**
+
+.. code-block:: bash
+
+   $ pip install django-filter
+
 
 Add `django_filters` to your `INSTALLED_APPS`:
 

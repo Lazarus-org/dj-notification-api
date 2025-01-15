@@ -117,7 +117,7 @@ Here are some examples of responses for each action:
 
 If the ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` setting is ``True``, this detailed response will be returned for all users.
 
-**List notifications with simplified data**:
+**List notifications with simplified data (with default serializer fields)**:
 
 .. code-block:: text
 
@@ -139,7 +139,7 @@ If the ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` setting is ``True
       ...
    ]
 
-This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` is set to ``False``. Admins always see full details.
+This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` is set to ``False``. Admins always see full details. you can change the serializer fields using ``DJANGO_NOTIFICATION_SERIALIZER_FIELDS`` in settings.
 
 **Mark all as seen**:
 
@@ -229,7 +229,7 @@ The API supports filtering, ordering, and searching of notifications. Filter Cla
 
 Options include:
 
-- **Filtering**: By default filtering feature is not included, If you want to use this, you need to add ``django_filters`` to your `INSTALLED_APPS` and provide the path to the ``NotificationFilter`` class (``"django_notification.api.filters.notification_filter.NotificationFilter"``). Alternatively, you can use a custom filter class if needed.
+- **Filtering**: By default, the filtering feature is not included. If you want to use this, you need to install ``django-filter`` first, then add ``django_filters`` to your ``INSTALLED_APPS`` and provide the path to the ``NotificationFilter`` class (`"django_notification.api.filters.notification_filter.NotificationFilter"`). Alternatively, you can use a custom filter class if needed.
 
   - **Note**: for more clarification, refer to the `DJANGO_NOTIFICATION_API_FILTERSET_CLASS` in :doc:`Settings <settings>` section.
 
