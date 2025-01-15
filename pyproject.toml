@@ -4,7 +4,7 @@ requires = [ "poetry-core" ]
 
 [tool.poetry]
 name = "dj-notification-api"
-version = "1.2.0"
+version = "1.2.1"
 description = "A Django package developed by Lazarus for efficiently handling notifications through various APIs"
 authors = [ "ARYAN-NIKNEZHAD <aryan513966@gmail.com>", "MEHRSHAD-MIRSHEKARY <mehrshad_mirshekary@email.com>" ]
 license = "MIT"
@@ -262,7 +262,8 @@ B104 = { check_typed_list = true }
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.2.0"
+version = "1.2.1"
+version_files = ["pyproject.toml"]
 tag_format = "v$version"
 
 [tool.commitizen.settings]
