@@ -69,7 +69,7 @@ The package requires ``djangorestframework`` for API support. If it's not alread
 **Using pip:**
 
 ```bash
-$ pip install djangorestframework
+$ pip install dj-notification-api
 ```
 
 ## 2. Add to Installed Apps
