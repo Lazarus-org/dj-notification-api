@@ -1,4 +1,4 @@
-alabaster==0.7.16 ; python_version >= "3.9" and python_version < "4.0"
+alabaster==1.0.0 ; python_version >= "3.9" and python_version < "4.0"
 annotated-types==0.7.0 ; python_version >= "3.9" and python_version < "4.0"
 appdirs==1.4.4 ; python_version >= "3.9" and python_version < "4.0"
 argcomplete==3.5.3 ; python_version >= "3.9" and python_version < "4.0"
