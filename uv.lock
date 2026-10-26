@@ -1301,14 +1301,14 @@ provides-extras = ["channels", "redis"]
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", extras = ["toml"], specifier = ">=1.8,<2" },
-    { name = "black", specifier = "==25.1.0" },
+    { name = "black", specifier = "==25.1" },
     { name = "blacken-docs", specifier = "==1.19.1" },
     { name = "build", specifier = ">=1.2,<2" },
     { name = "channels", extras = ["daphne"], specifier = ">=4.3,<5" },
     { name = "commitizen", specifier = ">=4,<5" },
     { name = "django-migration-linter", specifier = ">=5.1,<7" },
     { name = "django-stubs", specifier = ">=5.2,<7" },
-    { name = "docformatter", specifier = "==1.7.5" },
+    { name = "docformatter", specifier = "==1.7.8" },
     { name = "isort", specifier = "==5.13.2" },
     { name = "mypy", specifier = ">=1.15,<2" },
     { name = "pre-commit", specifier = ">=4,<5" },
@@ -1326,7 +1326,7 @@ dev = [
     { name = "sphinx-rtd-theme", specifier = ">=3,<4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2,<3" },
     { name = "tox", specifier = ">=4.20,<5" },
-    { name = "tox-ini-fmt", specifier = "==1.5.0" },
+    { name = "tox-ini-fmt", specifier = "==1.5" },
     { name = "tox-uv", specifier = ">=1.20,<2" },
     { name = "twine", specifier = ">=6,<8" },
 ]
@@ -1526,15 +1526,14 @@ wheels = [
 
 [[package]]
 name = "docformatter"
-version = "1.7.5"
+version = "1.7.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "charset-normalizer" },
-    { name = "untokenize" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f4/44/aba2c40cf796121b35835ea8c00bc5d93f2f70730eca53b36b8bbbfaefe1/docformatter-1.7.5.tar.gz", hash = "sha256:ffed3da0daffa2e77f80ccba4f0e50bfa2755e1c10e130102571c890a61b246e", size = 25893, upload-time = "2023-07-12T01:45:43.959Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/e1/f6fb315205e0a8f62ddbd52029b3d39cb5bada768af317193460f0454f6b/docformatter-1.7.8.tar.gz", hash = "sha256:6589b62a8f38c62c4c8c84cb1afa296af007c88c959e4c9d25c74c1f933c4dbf", size = 37754, upload-time = "2026-04-28T20:34:49.39Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/95/568a2fca29df365b82012b09b64964a05f4f20ac83c2137b262f3fa3188f/docformatter-1.7.5-py3-none-any.whl", hash = "sha256:a24f5545ed1f30af00d106f5d85dc2fce4959295687c24c8f39f5263afaf9186", size = 32798, upload-time = "2023-07-12T01:45:42.458Z" },
+    { url = "https://files.pythonhosted.org/packages/09/9b/9d2f60e967243aa0d1c6366f4f5feb0740393b5da7dbc66802034afc6331/docformatter-1.7.8-py3-none-any.whl", hash = "sha256:8e518948bacb8d8df5d5f625060e214a200f0a908d8e6797c9ebbdd2cdd17467", size = 59445, upload-time = "2026-04-28T20:34:50.393Z" },
 ]
 
 [[package]]
@@ -4033,12 +4032,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/da/cae247036886535a5e43945f3ffd414b9fab92f54706ad40d7304c7630c1/ujson-6.0.0-pp311-pypy311_pp73-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c5d13a4ccf3fc9a00fb4e8cae818ad7ecf33f210d8098fecbfc087ff43573544", size = 50739, upload-time = "2026-09-04T03:55:34.213Z" },
     { url = "https://files.pythonhosted.org/packages/23/d7/c2c025b9e5e41fbfc7ad8382175adaccb6047500de16c16dee44e738d1db/ujson-6.0.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:e9f1625d047d011804a3dde0b8c5099ca2230224ca6b17f13a97b5531799c3aa", size = 243745, upload-time = "2026-09-04T03:55:35.693Z" },
 ]
-
-[[package]]
-name = "untokenize"
-version = "0.1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f7/46/e7cea8159199096e1df52da20a57a6665da80c37fb8aeb848a3e47442c32/untokenize-0.1.1.tar.gz", hash = "sha256:3865dbbbb8efb4bb5eaa72f1be7f3e0be00ea8b7f125c69cbd1f5fda926f37a2", size = 3099, upload-time = "2014-02-08T16:30:40.631Z" }
 
 [[package]]
 name = "urllib3"
