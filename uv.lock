@@ -1301,7 +1301,7 @@ provides-extras = ["channels", "redis"]
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", extras = ["toml"], specifier = ">=1.8,<2" },
-    { name = "black", specifier = "==25.1.0" },
+    { name = "black", specifier = "==25.1" },
     { name = "blacken-docs", specifier = "==1.19.1" },
     { name = "build", specifier = ">=1.2,<2" },
     { name = "channels", extras = ["daphne"], specifier = ">=4.3,<5" },
@@ -1320,13 +1320,13 @@ dev = [
     { name = "pytest-cov", specifier = ">=6,<8" },
     { name = "pytest-django", specifier = ">=4.11,<5" },
     { name = "pyupgrade", specifier = "==3.19.1" },
-    { name = "rstcheck", extras = ["sphinx"], specifier = "==6.2.4" },
+    { name = "rstcheck", extras = ["sphinx"], specifier = "==6.3.0" },
     { name = "ruff", specifier = ">=0.14,<1" },
     { name = "sphinx", specifier = ">=8,<10" },
     { name = "sphinx-rtd-theme", specifier = ">=3,<4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2,<3" },
     { name = "tox", specifier = ">=4.20,<5" },
-    { name = "tox-ini-fmt", specifier = "==1.5.0" },
+    { name = "tox-ini-fmt", specifier = "==1.5" },
     { name = "tox-uv", specifier = ">=1.20,<2" },
     { name = "twine", specifier = ">=6,<8" },
 ]
@@ -3125,15 +3125,15 @@ wheels = [
 
 [[package]]
 name = "rstcheck"
-version = "6.2.4"
+version = "6.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "rstcheck-core" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/13/fe/000cc83279123cf21f68d28b8bcd76849acf8e2a9bb75cc834d4a3212a33/rstcheck-6.2.4.tar.gz", hash = "sha256:384942563dfbfcc85903a587ecf050447217c46b51e266ed3fe51371bc599015", size = 24520, upload-time = "2024-07-07T16:16:57.885Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/3e/54182f5a310e0e2eb287170eb590bb93011161e28e51aa499120ab5c9318/rstcheck-6.3.0.tar.gz", hash = "sha256:583072b43939627b1b0f4492e8af2587092efc1fb5e9f0228fa2df9ea3b44873", size = 30887, upload-time = "2026-07-28T19:49:07.054Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/49/e55ba65b9e805cc97a1115ba51bbec346013814b6d6ded216bb4e97cf3a1/rstcheck-6.2.4-py3-none-any.whl", hash = "sha256:23de2575ba0af1adcddea87a20d69187f0fb9dd8270f59eb98d63461c95375a7", size = 8533, upload-time = "2024-07-07T16:16:55.386Z" },
+    { url = "https://files.pythonhosted.org/packages/44/13/8bdf4e9f028e147ebabd8e093d30b0bc6e70ebbcfa9dbd9b93861e7315cd/rstcheck-6.3.0-py3-none-any.whl", hash = "sha256:3c1d8753b5dc01c33d114711552b2c4855fde00e0713f5a8341d7aaab2777058", size = 8999, upload-time = "2026-07-28T19:49:05.664Z" },
 ]
 
 [package.optional-dependencies]
