@@ -53,7 +53,7 @@ jobs:
           "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only
           "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only --user-model CustomUser
           "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only --user-model BareUser
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: python-distributions
           path: dist/*
