@@ -1,35 +1,64 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: read
+
 jobs:
-  release:
-    name: Build and Release
+  verify-and-build:
+    name: Validate tag and build distributions
     runs-on: ubuntu-latest
-
-
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-
-      - name: Build package
-        run: |
-          poetry build
-
-      - name: Publish to PyPI
-        run: |
-          poetry publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+          version: "0.13.5"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
         env:
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python scripts/check_packaging.py --tag "$RELEASE_TAG"
+      - name: Validate distribution metadata
+        run: python scripts/check_packaging.py
+      - name: Build package
+        run: uv build
+      - name: Verify package files
+        run: |
+          uv sync --locked --all-extras
+          uv run --locked twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/*
+          if-no-files-found: error
+
+  test-release:
+    name: Full release validation
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to PyPI (approval required)
+    if: startsWith(github.ref, 'refs/tags/') && vars.PYPI_PUBLISH_ENABLED == 'true'
+    needs: [verify-and-build, test-release]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist
+      - name: Publish using PyPI Trusted Publisher
+        uses: pypa/gh-action-pypi-publish@release/v1

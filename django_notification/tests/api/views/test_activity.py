@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from django_notification.models import DeletedNotification
+from django_notification.models import DeletedNotification, NotificationSeen
 from django_notification.models.notification import Notification
 from django_notification.settings.conf import config
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
@@ -35,55 +35,168 @@ class TestActivityViewSet:
         """
         self.client = APIClient()
 
-    def test_get_queryset_for_staff(
+    def test_staff_activity_list_is_scoped_to_direct_recipients(
+        self, admin_user: User, user: User, notification: Notification
+    ) -> None:
+        """Staff status must not expose another user's seen notification."""
+        notification.recipient.add(user)
+        notification.seen_by.add(user)
+        self.client.force_authenticate(user=admin_user)
+
+        response = self.client.get(reverse("activities-list"))
+
+        assert response.status_code == 200
+        assert notification.pk not in {
+            item["id"] for item in response.data.get("results", [])
+        }
+
+    def test_staff_can_list_own_seen_notification(
         self, admin_user: User, notification: Notification
     ) -> None:
-        """
-        Test that staff users can retrieve all seen notifications.
-
-        Args:
-        ----
-            admin_user (User): An admin user instance.
-            notification (Notification): A notification instance.
-
-        Asserts:
-        -------
-            - The response status code is 200.
-            - The number of notifications returned matches the number of seen notifications for the admin user.
-        """
+        notification.recipient.add(admin_user)
+        notification.seen_by.add(admin_user)
         self.client.force_authenticate(user=admin_user)
-        url = reverse("activities-list")
-        response = self.client.get(url)
-        assert response.status_code == 200
-        assert (
-            len(response.data.get("results"))
-            == Notification.objects.seen(seen_by=admin_user).count()
-        )
 
-    def test_get_queryset_for_non_staff(
+        response = self.client.get(reverse("activities-list"))
+
+        assert response.status_code == 200
+        assert notification.pk in {
+            item["id"] for item in response.data.get("results", [])
+        }
+
+    def test_activity_list_contains_directly_addressed_seen_notifications(
         self, user: User, notification: Notification
     ) -> None:
-        """
-        Test that non-staff users retrieve notifications based on their group memberships.
-
-        Args:
-        ----
-            user (User): A regular user instance.
-            notification (Notification): A notification instance.
-
-        Asserts:
-        -------
-            - The response status code is 200.
-            - The number of notifications returned matches the number of seen notifications for the user.
-        """
+        notification.recipient.add(user)
+        notification.seen_by.add(user)
         self.client.force_authenticate(user=user)
-        url = reverse("activities-list")
-        response = self.client.get(url)
+
+        response = self.client.get(reverse("activities-list"))
+
         assert response.status_code == 200
-        assert (
-            len(response.data.get("results"))
-            == Notification.objects.seen(seen_by=user, recipients=user).count()
+        assert notification.pk in {
+            item["id"] for item in response.data.get("results", [])
+        }
+
+    def test_group_only_seen_record_is_visible_to_member(
+        self, user: User, group
+    ) -> None:
+        """A group member can see their own group-notification activity."""
+        user.groups.add(group)
+        notification = Notification.objects.create_notification(
+            verb="group notice",
+            actor=user,
+            description="A group-only notification",
+            is_sent=True,
         )
+        notification.group.add(group)
+        # Simulate a read-state row created before the authorization hardening.
+        NotificationSeen.objects.bulk_create(
+            [NotificationSeen(notification=notification, user=user)]
+        )
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(reverse("activities-list"))
+
+        assert response.status_code == 200
+        assert notification.pk in {
+            item["id"] for item in response.data.get("results", [])
+        }
+
+    def test_group_member_can_view_and_clear_own_activity(
+        self,
+        user: User,
+        another_user: User,
+        group,
+        notification: Notification,
+    ) -> None:
+        """One member's read/clear state does not change other members' feeds."""
+        user.groups.add(group)
+        another_user.groups.add(group)
+        notification.group.add(group)
+        notification.mark_as_seen(user)
+        self.client.force_authenticate(user=user)
+
+        listing = self.client.get(reverse("activities-list"))
+        detail = self.client.get(
+            reverse("activities-detail", kwargs={"pk": notification.pk})
+        )
+        cleared = self.client.get(
+            reverse("activities-clear-notification", kwargs={"pk": notification.pk})
+        )
+
+        assert listing.status_code == 200
+        assert notification.pk in {
+            item["id"] for item in listing.data.get("results", [])
+        }
+        assert detail.status_code == 200
+        assert cleared.status_code == 204
+        assert DeletedNotification.objects.filter(
+            notification=notification, user=user
+        ).exists()
+        assert not DeletedNotification.objects.filter(
+            notification=notification, user=another_user
+        ).exists()
+        assert notification.pk not in {
+            item["id"]
+            for item in self.client.get(reverse("activities-list")).data.get(
+                "results", []
+            )
+        }
+        # The second member can still see their group-only unread notification.
+        self.client.force_authenticate(user=another_user)
+        assert notification.pk in {
+            item["id"]
+            for item in self.client.get(reverse("notifications-list")).data.get(
+                "results", []
+            )
+        }
+
+    def test_group_only_bulk_clear_is_scoped_and_deduplicated(
+        self,
+        user: User,
+        another_user: User,
+        group,
+        notification: Notification,
+    ) -> None:
+        """Bulk clear respects group visibility without affecting other users."""
+        extra_group = type(group).objects.create(name="bulk_clear_extra_group")
+        user.groups.add(group, extra_group)
+        another_user.groups.add(group)
+        notification.recipient.add(user)
+        notification.group.add(group, extra_group)
+        notification.mark_as_seen(user)
+        group_only = Notification.objects.create_notification(
+            verb="group only",
+            actor=user,
+            is_sent=True,
+            groups=group,
+        )
+        group_only.mark_as_seen(user)
+        self.client.force_authenticate(user=user)
+
+        response = self.client.get(reverse("activities-clear-activities"))
+
+        assert response.status_code == 204
+        assert DeletedNotification.objects.filter(user=user).count() == 2
+        assert DeletedNotification.objects.filter(user=another_user).count() == 0
+        assert self.client.get(reverse("activities-list")).data["count"] == 0
+
+    def test_nonmember_staff_cannot_soft_delete_group_notification(
+        self, admin_user: User, group, notification: Notification
+    ) -> None:
+        """Superuser status alone cannot clear a group-targeted notice."""
+        notification.group.add(group)
+        self.client.force_authenticate(user=admin_user)
+
+        response = self.client.get(
+            reverse("activities-clear-notification", kwargs={"pk": notification.pk})
+        )
+
+        assert response.status_code == 404
+        assert not DeletedNotification.objects.filter(
+            user=admin_user, notification=notification
+        ).exists()
 
     @patch.object(config, "api_allow_list", False)
     def test_list_method_disabled(self, user: User) -> None:
@@ -129,7 +242,7 @@ class TestActivityViewSet:
         self, user: User, notification: Notification
     ) -> None:
         """
-        Test that the full details serializer is used when `include_serializer_full_details` is True.
+        Test that the safe full details serializer is used when configured.
 
         Args:
         ----
@@ -139,7 +252,7 @@ class TestActivityViewSet:
         Asserts:
         -------
             - The response status code is 200.
-            - The response data includes 'recipient' and 'seen_by' fields.
+            - The response data does not expose other users' recipient/read-state fields.
         """
         self.client.force_authenticate(user=user)
         notification.recipient.add(user)
@@ -148,7 +261,10 @@ class TestActivityViewSet:
         url = reverse("activities-detail", kwargs={"pk": notification.pk})
         response = self.client.get(url)
         assert response.status_code == 200
-        assert "recipient", "seen_by" in response.data
+        assert "recipient" not in response.data
+        assert "seen_by" not in response.data
+        assert "group" not in response.data
+        assert "data" not in response.data
 
     def test_clear_activities(self, user: User, notification: Notification) -> None:
         """
@@ -194,12 +310,43 @@ class TestActivityViewSet:
             - The specific notification is found in DeletedNotification.
         """
         self.client.force_authenticate(user=admin_user)
+        notification.recipient.add(admin_user)
         notification.seen_by.add(admin_user)
 
         url = reverse("activities-clear-notification", kwargs={"pk": notification.pk})
         response = self.client.get(url)
         assert response.status_code == 204  # No Content
         assert DeletedNotification.objects.filter(notification=notification).exists()
+
+    def test_staff_clear_all_does_not_clear_another_users_notification(
+        self, admin_user: User, user: User, notification: Notification
+    ) -> None:
+        notification.recipient.add(user)
+        notification.seen_by.add(user)
+        self.client.force_authenticate(user=admin_user)
+
+        response = self.client.get(reverse("activities-clear-activities"))
+
+        assert response.status_code == 204
+        assert not DeletedNotification.objects.filter(
+            notification=notification, user=admin_user
+        ).exists()
+
+    def test_staff_cannot_soft_delete_another_users_notification(
+        self, admin_user: User, user: User, notification: Notification
+    ) -> None:
+        notification.recipient.add(user)
+        notification.seen_by.add(user)
+        self.client.force_authenticate(user=admin_user)
+
+        response = self.client.get(
+            reverse("activities-clear-notification", kwargs={"pk": notification.pk})
+        )
+
+        assert response.status_code == 404
+        assert not DeletedNotification.objects.filter(
+            notification=notification, user=admin_user
+        ).exists()
 
     @patch.object(config, "include_hard_delete", True)
     def test_delete_activities(
@@ -219,6 +366,7 @@ class TestActivityViewSet:
             - No notifications remain in the database.
         """
 
+        notification.recipient.add(admin_user)
         self.client.force_authenticate(user=admin_user)
         # First, mark all notifications as seen
         url = reverse("notifications-mark-all-as-seen")
@@ -246,6 +394,7 @@ class TestActivityViewSet:
             - The response status code is 204 (No Content).
             - The specific notification does not exist in the database.
         """
+        notification.recipient.add(admin_user)
         notification.seen_by.add(admin_user)
         self.client.force_authenticate(user=admin_user)
         url = reverse("activities-delete-notification", kwargs={"pk": notification.pk})

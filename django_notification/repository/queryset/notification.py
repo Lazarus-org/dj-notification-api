@@ -1,11 +1,13 @@
-from typing import Dict, List, Optional, Union
+"""Composable query operations for notification targeting and user state."""
+
+import warnings
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import Group
-from django.db import transaction
-from django.db.models import Model, Q, QuerySet, Subquery
-from rest_framework.generics import get_object_or_404
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import Exists, ManyToManyField, Model, OuterRef, Q, QuerySet
+from django.utils import timezone
 
-from django_notification.constants.default_settings import default_serializer_settings
 from django_notification.constants.qs_types import (
     ActionObject,
     Actor,
@@ -19,64 +21,204 @@ from django_notification.constants.qs_types import (
     Target,
 )
 from django_notification.models.deleted_notification import DeletedNotification
+from django_notification.models.helper.enums.group_audience_mode import (
+    GroupAudienceMode,
+)
+from django_notification.models.notification_preference import NotificationPreference
+from django_notification.models.notification_recipient import NotificationRecipient
 from django_notification.models.notification_seen import NotificationSeen
+from django_notification.repository.legacy_projection import (
+    legacy_notification_projection,
+)
 from django_notification.utils.user_model import UserModel
+
+_GROUPS_FIELD_NAME = "groups"
+
+if TYPE_CHECKING:
+    # Explicit re-export preserves this annotation import through unused-import checks.
+    # pylint: disable-next=useless-import-alias
+    from django_notification.models.notification import Notification as Notification
 
 
 # pylint: disable=too-many-arguments
-class NotificationQuerySet(QuerySet):
-    def with_related(self) -> QuerySet:
-        """Prefetch related fields for notifications."""
+# Retain legacy selectors/mutation shims alongside the composable public API.
+# pylint: disable-next=too-many-public-methods
+class NotificationQuerySet(QuerySet["Notification"]):
+    """Build unique notification selections without multi-valued joins.
+
+    Chainable selectors return model instances. Deprecated public selectors still
+    delegate to a separate legacy projection adapter for compatibility.
+
+    """
+
+    def with_related(self) -> "NotificationQuerySet":
+        """Prefetch associations needed by the full-detail serializer."""
         return self.prefetch_related(
             "recipient", "group", "group__permissions", "seen_by"
         )
 
-    def _get_deleted_notifications(self, deleted_by: Recipient = None) -> QuerySet:
-        """Retrieve deleted notifications optionally filtered by user who
-        delete the notification."""
-        queryset = DeletedNotification.objects.values("notification")
-        if deleted_by:
-            queryset = queryset.filter(user=deleted_by)
-        return queryset
+    @staticmethod
+    def _valid_user(user: UserModel | None) -> bool:
+        """Reject anonymous, unsaved and inactive users for personal feeds."""
+        return bool(
+            user is not None
+            and getattr(user, "pk", None) is not None
+            and getattr(user, "is_authenticated", False)
+            and getattr(user, "is_active", True)
+        )
 
-    def _get_notifications_queryset(
-        self,
-        exclude_deleted_by: Recipient = None,
-        display_detail: bool = False,
-        conditions: OptConditions = None,
-    ) -> Union[QuerySet, Dict]:
-        """Return a queryset of notifications based on the given conditions.
+    @staticmethod
+    def _identities(items):
+        """Normalize one model or a collection to IDs without evaluating a QuerySet."""
+        if isinstance(items, Model):
+            return [items.pk]
+        if isinstance(items, QuerySet):
+            return items.values_list("pk", flat=True)
+        return [item.pk if isinstance(item, Model) else item for item in items]
 
-        This method retrieves a queryset of notifications based on the given conditions
-        and excludes those that have corresponding entries in the DeletedNotification table,
-        indicating that they have been deleted.
+    def targeted_to(
+        self, recipients: Recipients = None, groups: Groups = None
+    ) -> "NotificationQuerySet":
+        """Match direct recipients OR targeted groups without duplicate rows.
 
-        Args:
-            display_detail (bool, optional): Whether the queryset will be displayed with all fields. Defaults to False.
-            conditions (Q, optional): The query conditions to apply to the queryset. Defaults to None.
-
-        Returns:
-            QuerySet: A queryset of notifications that match the given conditions.
+        ``None`` means no constraint for that dimension. Explicit empty inputs
+        do not widen the queryset; if both are empty, the result is empty.
+        If both are None, this acts as an unfiltered selection for admin code.
 
         """
-        queryset = self.with_related()
-
-        if exclude_deleted_by:
-            deleted_notifications = self._get_deleted_notifications(
-                deleted_by=exclude_deleted_by
+        matches = []
+        if recipients is not None:
+            recipients_qs = NotificationRecipient.objects.using(self.db).filter(
+                notification_id=OuterRef("pk"),
+                recipient_id__in=self._identities(recipients),
             )
-            queryset = self.with_related().exclude(
-                id__in=Subquery(deleted_notifications)
+            matches.append(Exists(recipients_qs))
+        if groups is not None:
+            groups_qs = self.model.group.through.objects.using(self.db).filter(
+                notification_id=OuterRef("pk"),
+                group_id__in=self._identities(groups),
             )
+            matches.append(Exists(groups_qs))
 
-        if conditions:
-            queryset = queryset.filter(conditions)
-        if not display_detail:
-            queryset = queryset.values(
-                *default_serializer_settings.notification_serializer_fields
+        if not matches:
+            return self.all()
+        predicate = Q(matches[0])
+        for other in matches[1:]:
+            predicate |= Q(other)
+        return self.filter(predicate)
+
+    def visible_to(self, user: UserModel) -> "NotificationQuerySet":
+        """Limit records to a direct recipient or member of a targeted group.
+
+        Dynamic groups use current membership; snapshot groups are resolved
+        through persisted direct-recipient rows. Staff never bypass this rule.
+        Users without ``groups`` can still receive direct notifications.
+
+        """
+        if not self._valid_user(user):
+            return self.none()
+
+        recipient = NotificationRecipient.objects.using(self.db).filter(
+            notification_id=OuterRef("pk"), recipient_id=user.pk
+        )
+        visibility = Q(Exists(recipient))
+        membership = getattr(user, _GROUPS_FIELD_NAME, None)
+        groups_field = None
+        if membership is not None:
+            try:
+                groups_field = user._meta.get_field(_GROUPS_FIELD_NAME)
+            except FieldDoesNotExist:
+                pass
+        if (
+            membership is not None
+            and isinstance(groups_field, ManyToManyField)
+            and groups_field.remote_field.model is Group
+        ):
+            targeted_group = self.model.group.through.objects.using(self.db).filter(
+                notification_id=OuterRef("pk"),
+                group_id__in=membership.values_list("pk", flat=True).using(self.db),
             )
+            # Snapshot recipients are persisted as direct recipient rows.
+            # Group membership must never widen a frozen notification.
+            dynamic_groups = Q(group_audience_mode=GroupAudienceMode.DYNAMIC)
+            visibility |= dynamic_groups & Q(Exists(targeted_group))
+        # User preferences control only personal visibility, never the
+        # recipient/group records. Mandatory categories bypass legacy opt-outs.
+        disabled = NotificationPreference.objects.using(self.db).filter(
+            user_id=user.pk,
+            category_id=OuterRef("category_id"),
+            category__is_mandatory=False,
+            enabled=False,
+        )
+        return self.filter(visibility).filter(~Exists(disabled))
 
-        return queryset
+    def in_category(self, slug: str) -> "NotificationQuerySet":
+        """Select one managed category; does not affect recipient visibility."""
+        return self.filter(category_id=slug)
+
+    def with_priority(self, priority: str) -> "NotificationQuerySet":
+        """Select one independent notification priority level."""
+        return self.filter(priority=priority)
+
+    def active_at(self, when=None) -> "NotificationQuerySet":
+        """Notifications whose expiration has not yet elapsed.
+
+        A null expiry means no expiration. At the exact expiry instant, the
+        record is expired. Supplying ``when`` lets applications use a stable
+        reference time throughout multi-query reporting.
+
+        """
+        when = timezone.now() if when is None else when
+        return self.filter(Q(expires_at__isnull=True) | Q(expires_at__gt=when))
+
+    def expired_at(self, when=None) -> "NotificationQuerySet":
+        """Select expired records for administrator-led retention workflows."""
+        when = timezone.now() if when is None else when
+        return self.filter(expires_at__lte=when)
+
+    def sent_only(self) -> "NotificationQuerySet":
+        """Return sent notifications as model instances."""
+        return self.filter(is_sent=True)
+
+    def unsent_only(self) -> "NotificationQuerySet":
+        """Return unsent notifications as model instances."""
+        return self.filter(is_sent=False)
+
+    def seen_by(self, user: UserModel) -> "NotificationQuerySet":
+        """Filter by the specified user's independent read state."""
+        if not self._valid_user(user):
+            return self.none()
+        rows = NotificationSeen.objects.using(self.db).filter(
+            notification_id=OuterRef("pk"), user_id=user.pk
+        )
+        return self.filter(Exists(rows))
+
+    def unseen_by(self, user: UserModel) -> "NotificationQuerySet":
+        """Exclude notifications marked as seen by this user."""
+        if not self._valid_user(user):
+            return self.none()
+        rows = NotificationSeen.objects.using(self.db).filter(
+            notification_id=OuterRef("pk"), user_id=user.pk
+        )
+        return self.filter(~Exists(rows))
+
+    def not_deleted_by(self, user: UserModel) -> "NotificationQuerySet":
+        """Exclude only this user's soft-deleted notifications."""
+        if not self._valid_user(user):
+            return self.none()
+        rows = DeletedNotification.objects.using(self.db).filter(
+            notification_id=OuterRef("pk"), user_id=user.pk
+        )
+        return self.filter(~Exists(rows))
+
+    def deleted_by(self, user: UserModel) -> "NotificationQuerySet":
+        """Select notifications that this user soft-deleted."""
+        if not self._valid_user(user):
+            return self.none()
+        rows = DeletedNotification.objects.using(self.db).filter(
+            notification_id=OuterRef("pk"), user_id=user.pk
+        )
+        return self.filter(Exists(rows))
 
     def all_notifications(
         self,
@@ -84,34 +226,32 @@ class NotificationQuerySet(QuerySet):
         groups: Groups = None,
         display_detail: bool = False,
     ) -> QuerySet:
-        """Return all notifications excluding those that have been deleted.
-
-        This method retrieves all notifications and excludes those that have
-        corresponding entries in the DeletedNotification table, indicating that
-        they have been deleted.
-
-        Args:
-            recipients (User, optional): The recipients of the notifications. Defaults to None.
-            groups (Group, optional): The groups of the notifications. Defaults to None.
-            display_detail (bool, optional): Whether the queryset will be displayed with all fields. Defaults to False.
-
-        Returns:
-            QuerySet: All notifications that have not been deleted.
-
-        """
-
-        conditions = Q()
-        if recipients:
-            if isinstance(recipients, UserModel):
-                recipients = [recipients]
-            conditions = Q(recipient__in=recipients)
-        if groups:
-            if isinstance(groups, Group):
-                groups = [groups]
-            conditions &= Q(group__in=groups)
-        return self._get_notifications_queryset(
-            display_detail=display_detail, conditions=conditions
+        """Legacy selector: all statuses, targeting by recipient OR group."""
+        return legacy_notification_projection(
+            self.targeted_to(recipients, groups), display_detail
         )
+
+    def _legacy_status(
+        self,
+        is_sent: bool,
+        recipients: Recipients,
+        exclude_deleted_by: Recipient,
+        groups: Groups,
+        display_detail: bool,
+        conditions: OptConditions,
+    ) -> QuerySet:
+        """Apply compatibility filters using one consistent target rule."""
+        queryset: NotificationQuerySet = self.filter(is_sent=is_sent)
+        if exclude_deleted_by is not None:
+            # Only the user's own visible records can participate. Passing an
+            # unrelated explicit group must not override this access boundary.
+            queryset = queryset.visible_to(exclude_deleted_by)
+            queryset = queryset.active_at()
+            queryset = queryset.not_deleted_by(exclude_deleted_by)
+        queryset = queryset.targeted_to(recipients, groups)
+        if conditions is not None:
+            queryset = queryset.filter(conditions)
+        return legacy_notification_projection(queryset, display_detail)
 
     def sent(
         self,
@@ -119,45 +259,11 @@ class NotificationQuerySet(QuerySet):
         exclude_deleted_by: Recipient = None,
         groups: Groups = None,
         display_detail: bool = False,
-        conditions: Q = Q(),
+        conditions: OptConditions = None,
     ) -> QuerySet:
-        """Return all sent notifications.
-
-        Args:
-            recipients (User, optional): The recipients of the notifications. Defaults to None.
-            exclude_deleted_by (User, Optional): The user that the deleted notifications will be excluded for.
-             Defaults to None.
-            groups (Group, optional): The groups of the notifications. Defaults to None.
-            display_detail (bool, optional): Whether the queryset will be displayed with sll fields. Defaults to False.
-            conditions (Q, optional): The query conditions to apply to the queryset. Defaults empty Q().
-
-        Returns:
-            QuerySet: All sent notifications.
-
-        """
-        conditions &= Q(is_sent=True)
-        or_conditions = Q()
-
-        if recipients:
-            if isinstance(recipients, UserModel):
-                recipients = [recipients]
-            or_conditions = Q(recipient__in=recipients)
-        elif exclude_deleted_by and not (
-            exclude_deleted_by.is_staff or exclude_deleted_by.is_superuser
-        ):
-            or_conditions |= Q(recipient=exclude_deleted_by)
-
-        if groups:
-            if isinstance(groups, Group):
-                groups = [groups]
-            or_conditions |= Q(group__in=groups)
-
-        conditions &= or_conditions
-
-        return self._get_notifications_queryset(
-            exclude_deleted_by=exclude_deleted_by,
-            display_detail=display_detail,
-            conditions=conditions,
+        """Legacy sent selector; prefer ``sent_only()`` for composition."""
+        return self._legacy_status(
+            True, recipients, exclude_deleted_by, groups, display_detail, conditions
         )
 
     def unsent(
@@ -166,44 +272,11 @@ class NotificationQuerySet(QuerySet):
         exclude_deleted_by: Recipient = None,
         groups: Groups = None,
         display_detail: bool = False,
-        conditions: Q = Q(),
+        conditions: OptConditions = None,
     ) -> QuerySet:
-        """Return all unsent notifications.
-
-        Args:
-            recipients (User, optional): The recipient of the notifications. Defaults to None.
-            exclude_deleted_by (User, Optional): The user that the deleted notifications will be excluded for.
-             Defaults to None.
-            groups (Group, optional): The groups of the notifications. Defaults to None.
-            display_detail (bool, optional): Whether the queryset will be displayed with all fields. Defaults to False.
-            conditions (Q, optional): The query conditions to apply to the queryset. Defaults empty Q().
-
-        Returns:
-            QuerySet: All unsent notifications.
-
-        """
-        conditions &= Q(is_sent=False)
-        or_conditions = Q()
-
-        if recipients:
-            if isinstance(recipients, UserModel):
-                recipients = [recipients]
-            or_conditions = Q(recipient__in=recipients)
-        elif exclude_deleted_by and not (
-            exclude_deleted_by.is_staff or exclude_deleted_by.is_superuser
-        ):
-            or_conditions |= Q(recipient=exclude_deleted_by)
-
-        if groups:
-            if isinstance(groups, Group):
-                groups = [groups]
-            or_conditions |= Q(group__in=groups)
-
-        conditions &= or_conditions
-        return self._get_notifications_queryset(
-            exclude_deleted_by=exclude_deleted_by,
-            display_detail=display_detail,
-            conditions=conditions,
+        """Legacy unsent selector; prefer ``unsent_only()`` for composition."""
+        return self._legacy_status(
+            False, recipients, exclude_deleted_by, groups, display_detail, conditions
         )
 
     def seen(
@@ -212,32 +285,20 @@ class NotificationQuerySet(QuerySet):
         recipients: Recipients = None,
         groups: Groups = None,
         display_detail: bool = False,
-        conditions: Q = Q(),
+        conditions: OptConditions = None,
     ) -> QuerySet:
-        """Retrieve all notifications that have been seen by the specified
-        user.
-
-        This method filters notifications that have been marked as "seen" by the provided user (`seen_by`). It also supports additional filtering based on recipients, groups, and custom conditions. The method ensures that only sent notifications are retrieved, excluding any that the user has deleted.
-
-        Args:
-            seen_by (UserModel): The user who has seen the notifications.
-            recipients (Optional[Recipients]): Optional filter for the intended recipients of the notifications. Can be a single recipient or multiple.
-            groups (Optional[Groups]): Optional filter for group-based notifications. Can be a single group or multiple.
-            display_detail (bool): If `True`, include detailed information about each notification. Defaults to `False`.
-            conditions (Q): Optional additional query conditions to filter the notifications. Defaults to an empty Q() condition.
-
-        Returns:
-            QuerySet: A queryset of sent notifications that have been seen by the specified user, filtered by recipients and groups if provided.
-
-        """
-        conditions &= Q(seen_by=seen_by)
-        return self.sent(
-            recipients=recipients,
-            exclude_deleted_by=seen_by,
-            groups=groups,
-            display_detail=display_detail,
-            conditions=conditions,
+        """Legacy seen feed, including direct and group recipients by default."""
+        queryset = (
+            self.visible_to(seen_by)
+            .active_at()
+            .sent_only()
+            .seen_by(seen_by)
+            .not_deleted_by(seen_by)
+            .targeted_to(recipients, groups)
         )
+        if conditions is not None:
+            queryset = queryset.filter(conditions)
+        return legacy_notification_projection(queryset, display_detail)
 
     def unseen(
         self,
@@ -245,111 +306,48 @@ class NotificationQuerySet(QuerySet):
         recipients: Recipients = None,
         groups: Groups = None,
         display_detail: bool = False,
-        conditions: Q = Q(),
+        conditions: OptConditions = None,
     ) -> QuerySet:
-        """Retrieve all notifications that have not been seen by the specified
-        user.
+        """Legacy unseen feed, including direct and group recipients by default."""
+        queryset = (
+            self.visible_to(unseen_by)
+            .active_at()
+            .sent_only()
+            .unseen_by(unseen_by)
+            .not_deleted_by(unseen_by)
+            .targeted_to(recipients, groups)
+        )
+        if conditions is not None:
+            queryset = queryset.filter(conditions)
+        return legacy_notification_projection(queryset, display_detail)
 
-        This method returns notifications that have been sent but not yet marked as "seen" by the provided user (`unseen_by`). It also supports filtering by recipients, groups, and additional query conditions. Any notifications that have been deleted by the user are excluded from the result.
+    def deleted(self, deleted_by: Recipient = None) -> "NotificationQuerySet":
+        """Select deleted records, optionally scoped to a user's deletion state."""
+        if deleted_by is not None:
+            return self.deleted_by(deleted_by).with_related()
+        deleted_rows = DeletedNotification.objects.using(self.db).filter(
+            notification_id=OuterRef("pk")
+        )
+        return self.filter(Exists(deleted_rows)).with_related()
 
-        Args:
-            unseen_by (UserModel): The user who has not seen the notifications.
-            recipients (Optional[Recipients]): Optional filter for the intended recipients of the notifications. Can be a single recipient or multiple.
-            groups (Optional[Groups]): Optional filter for group-based notifications. Can be a single group or multiple.
-            display_detail (bool): If `True`, include detailed information about each notification. Defaults to `False`.
-            conditions (Q): Optional additional query conditions to filter the notifications. Defaults to an empty Q() condition.
+    # Compatibility layer for applications using queryset mutation methods.
+    # The manager routes directly to the service; these shims are deprecated.
+    def _legacy_lifecycle(self):
+        """Delegate a legacy queryset mutation to the lifecycle service."""
+        from django_notification.services.notification import (
+            NotificationLifecycleService,
+        )
 
-        Returns:
-            QuerySet: A queryset of sent notifications that the specified user has not yet seen, filtered by recipients and groups if provided.
+        warnings.warn(
+            "Calling mutation methods on NotificationQuerySet is deprecated; "
+            "use Notification.objects or NotificationLifecycleService instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return NotificationLifecycleService(self)
 
-        """
-        return self.sent(
-            recipients=recipients,
-            exclude_deleted_by=unseen_by,
-            groups=groups,
-            display_detail=display_detail,
-            conditions=conditions,
-        ).exclude(seen_by=unseen_by)
-
-    @transaction.atomic
-    def mark_all_as_seen(self, user: UserModel) -> int:
-        """Mark all notifications as seen by the given user that is a recipient
-        or a group member.
-
-        Args:
-            user(User): The user to mark notifications as seen for.
-
-        Returns:
-            The number of notifications marked as seen.
-
-        """
-
-        notifications = self.unseen(unseen_by=user, display_detail=True)
-        notifications_to_mark = [
-            NotificationSeen(notification=notification, user=user)
-            for notification in notifications
-        ]
-        NotificationSeen.objects.bulk_create(notifications_to_mark)
-        return notifications.count()
-
-    def mark_all_as_sent(
-        self,
-        recipients: Recipients = None,
-        groups: Groups = None,
-    ) -> int:
-        """Mark notifications as sent.
-
-        Args:
-            recipients: Filter notifications by recipients.
-            groups: Filter notifications by groups.
-
-        Returns:
-            The number of notifications marked as sent.
-
-        """
-        return self.unsent(
-            recipients=recipients, groups=groups, display_detail=True
-        ).update(is_sent=True)
-
-    def deleted(self, deleted_by: Recipient = None) -> QuerySet:
-        """Retrieve all notifications that have been deleted, optionally
-        filtered by user.
-
-        Args:
-            deleted_by (Optional[Recipient]): The user to filter deleted notifications by.
-
-        Returns:
-            QuerySet: A queryset of deleted notifications.
-
-        """
-
-        deleted_notifications = self._get_deleted_notifications(deleted_by=deleted_by)
-        return self.with_related().filter(id__in=Subquery(deleted_notifications))
-
-    @transaction.atomic
-    def clear_all(self, user: UserModel) -> None:
-        """Move notifications to a 'deleted' state for the given recipient.
-
-        This method finds all notifications marked as seen by the recipient
-        and creates corresponding entries in the DeletedNotification table
-        to indicate that these notifications have been deleted.
-
-        Arguments:
-        user (User): The user for whom notifications should be cleared.
-
-        Returns:
-        None
-
-        """
-        # Get notifications seen by the recipient
-        notifications = self.seen(seen_by=user, display_detail=True)
-        # Create DeletedNotification entries for each sent notification
-        deleted_notifications = [
-            DeletedNotification(notification=notification, user=user)
-            for notification in notifications
-        ]
-        DeletedNotification.objects.bulk_create(deleted_notifications)
-
+    # Deprecated facade retains the same named creation parameters.
+    # pylint: disable-next=too-many-locals
     def create_notification(
         self,
         verb: str,
@@ -362,92 +360,51 @@ class NotificationQuerySet(QuerySet):
         link: Link = None,
         is_sent: bool = False,
         data: Data = None,
+        group_audience_mode: str = GroupAudienceMode.DYNAMIC,
+        *,
+        recipients: Recipients = None,
+        groups: Groups = None,
+        idempotency_key: str | None = None,
+        deduplication_key: str | None = None,
+        deduplication_window=None,
+        expires_at=None,
+        category: str = "general",
+        priority: str = "NORMAL",
     ):
-        """Create a new notification.
-
-        Args:
-            verb (str): The verb of the notification.
-            description (Optional[str]): The description of the notification.
-            actor (Model): The actor of the notification.
-            status (Optional[str], optional): The status of the notification. Defaults to "INFO".
-            target (Optional[Model], optional): The target of the notification. Defaults to None.
-            action_object (Optional[Model], optional): The action object of the notification. Defaults to None.
-            link (Optional[str], optional): The link of the notification. Defaults to None.
-            is_sent (bool, optional): The send status of the notification. Defaults to False.
-            public (bool, optional): The public status of the notification. Defaults to True.
-            data (Optional[dict], optional): The data of the notification. Defaults to None.
-
-        Returns:
-            Notification: The created notification.
-
-        Example:
-            queryset.create_notification(
-                verb="liked your post",
-                description="User liked your post",
-                actor=actor,
-                recipients=User.objects.filter(is_staff=True),
-                groups=Group.objects.filter(name__icontains="Admins"),
-                status="INFO",
-                public=False,
-                target=post,
-                link="https://example.com/posts/123",
-                is_sent=True,
-                data={"custom_data": "value"}
-            )
-
-        """
-
-        notification = self.create(
+        """Deprecated queryset entry point for notification creation."""
+        return self._legacy_lifecycle().create_notification(
+            verb,
+            actor,
+            description,
             status=status,
-            verb=verb,
-            description=description,
-            actor=actor,
+            public=public,
             target=target,
             action_object=action_object,
             link=link,
             is_sent=is_sent,
-            public=public,
             data=data,
+            group_audience_mode=group_audience_mode,
+            recipients=recipients,
+            groups=groups,
+            idempotency_key=idempotency_key,
+            deduplication_key=deduplication_key,
+            deduplication_window=deduplication_window,
+            expires_at=expires_at,
+            category=category,
+            priority=priority,
         )
-
-        return notification
 
     def update_notification(
         self,
         notification_id: int,
-        is_sent: Optional[bool] = None,
-        public: Optional[bool] = None,
+        is_sent: bool | None = None,
+        public: bool | None = None,
         data: Data = None,
     ):
-        """Update the status of a notification selectively.
-
-        Args:
-            notification_id: The ID of the notification.
-            is_sent: The send status of the notification. If None, the field will not be updated.
-            public: The public status of the notification. If None, the field will not be updated.
-            data: The data of the notification. If None, the field will not be updated.
-
-        Returns:
-            The updated notification.
-
-        """
-        notification = get_object_or_404(self, pk=notification_id)
-        update_fields: List[str] = []
-
-        if is_sent is not None:
-            notification.is_sent = is_sent
-            update_fields.append("is_sent")
-        if public is not None:
-            notification.public = public
-            update_fields.append("public")
-        if data is not None:
-            notification.data = data
-            update_fields.append("data")
-
-        if update_fields:
-            notification.save(update_fields=update_fields)
-
-        return notification
+        """Deprecated queryset entry point for selective updates."""
+        return self._legacy_lifecycle().update_notification(
+            notification_id, is_sent=is_sent, public=public, data=data
+        )
 
     def delete_notification(
         self,
@@ -455,30 +412,21 @@ class NotificationQuerySet(QuerySet):
         recipient: Recipient = None,
         soft_delete: bool = True,
     ) -> None:
-        """Delete a notification.
+        """Deprecated queryset entry point for soft/hard delete."""
+        self._legacy_lifecycle().delete_notification(
+            notification_id, recipient=recipient, soft_delete=soft_delete
+        )
 
-        Args:
-            notification_id: The ID of the notification.
-            recipient: The recipient of the notification, None as default.
-            soft_delete: Indicate the delete level of the notification.
+    def mark_all_as_sent(
+        self, recipients: Recipients = None, groups: Groups = None
+    ) -> int:
+        """Deprecated queryset entry point for bulk sent-state updates."""
+        return self._legacy_lifecycle().mark_all_as_sent(recipients, groups)
 
-        """
-        queryset = self.sent(display_detail=True)
-        if recipient:
-            queryset = self.sent(exclude_deleted_by=recipient, display_detail=True)
-            if not (recipient.is_superuser or recipient.is_staff):
-                queryset = self.sent(
-                    recipients=recipient,
-                    exclude_deleted_by=recipient,
-                    display_detail=True,
-                )
+    def mark_all_as_seen(self, user: UserModel) -> int:
+        """Deprecated queryset entry point for bulk read-state updates."""
+        return self._legacy_lifecycle().mark_all_as_seen(user)
 
-        instance = get_object_or_404(queryset, pk=notification_id)
-        if soft_delete:
-            if not recipient:
-                raise ValueError("the recipient most be given if it is soft delete")
-
-            DeletedNotification.objects.create(notification=instance, user=recipient)
-            return
-
-        instance.delete()
+    def clear_all(self, user: UserModel) -> None:
+        """Deprecated queryset entry point for bulk soft deletion."""
+        self._legacy_lifecycle().clear_all(user)

@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
@@ -23,9 +21,9 @@ class PermissionSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     """Serializer for the Group model.
 
-    This serializer includes all fields of the Group model and
-    serializes associated permissions using the PermissionSerializer. It
-    also filters out non-empty fields from the representation.
+    This serializer includes all fields of the Group model and serializes associated
+    permissions using the PermissionSerializer. It also filters out non-empty fields
+    from the representation.
 
     """
 
@@ -35,7 +33,7 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = "__all__"
 
-    def get_permissions(self, obj: Group) -> List[Dict]:
+    def get_permissions(self, obj: Group) -> list[dict]:
         """Returns a list of permissions associated with the group.
 
         Args:
@@ -48,9 +46,9 @@ class GroupSerializer(serializers.ModelSerializer):
         serializer = PermissionSerializer(obj.permissions.all(), many=True)
         return serializer.data
 
-    def to_representation(self, instance: Group) -> Dict:
-        """Customize the representation of the Group instance by filtering out
-        non-empty fields, if the exclude_serializer_null_fields flag is True.
+    def to_representation(self, instance: Group) -> dict:
+        """Customize the representation of the Group instance by filtering out non-empty
+        fields, if the exclude_serializer_null_fields flag is True.
 
         Args:
             instance (Group): The group instance being serialized.

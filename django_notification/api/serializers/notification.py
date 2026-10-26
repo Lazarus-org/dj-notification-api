@@ -1,5 +1,3 @@
-from typing import Dict
-
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from django_notification.api.serializers.helper.get_serializer_cls import (
@@ -14,8 +12,7 @@ from django_notification.utils.serialization.field_filters import (
 
 
 class NotificationSerializer(ModelSerializer):
-    """Serializer for the Notification model, including related Group and User
-    data.
+    """Serializer for the Notification model, including related Group and User data.
 
     Fields:
         id: Unique identifier for the notification.
@@ -48,6 +45,9 @@ class NotificationSerializer(ModelSerializer):
             "title",
             "recipient",
             "group",
+            "group_audience_mode",
+            "category",
+            "priority",
             "verb",
             "status",
             "actor_content_type",
@@ -60,6 +60,7 @@ class NotificationSerializer(ModelSerializer):
             "data",
             "timestamp",
         )
+        read_only_fields = ("group_audience_mode",)
 
     def get_title(self, notification: Notification) -> str:
         """Compute the title of the notification.
@@ -73,7 +74,7 @@ class NotificationSerializer(ModelSerializer):
         """
         return str(notification)
 
-    def to_representation(self, instance: Notification) -> Dict:
+    def to_representation(self, instance: Notification) -> dict:
         """Customize the representation of the serialized data.
 
         Args:

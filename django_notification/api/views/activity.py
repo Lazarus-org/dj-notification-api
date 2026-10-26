@@ -1,9 +1,8 @@
-from typing import List, Optional, Type
-
 from django.db.models import QuerySet
 from rest_framework import status
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -13,7 +12,15 @@ from rest_framework.viewsets import GenericViewSet
 from django_notification.api.serializers.dynamic_notification import (
     NotificationDynamicSerializer,
 )
-from django_notification.api.serializers.notification import NotificationSerializer
+from django_notification.api.serializers.self_service_notification import (
+    NotificationSelfServiceSerializer,
+)
+from django_notification.api.views.inbox_actions import (
+    mark_legacy_get_response,
+    require_mutation_method,
+    validated_ids,
+)
+from django_notification.api.views.preferences import filter_personal_notifications
 from django_notification.decorators.action import conditional_action
 from django_notification.mixins import ConfigurableAttrsMixin, DisableMethodsMixin
 from django_notification.models.notification import Notification
@@ -32,15 +39,15 @@ class ActivityViewSet(
     GenericViewSet,
     ListModelMixin,
     RetrieveModelMixin,
+    DestroyModelMixin,
     DisableMethodsMixin,
     ConfigurableAttrsMixin,
 ):
-    """API ViewSet for managing and interacting with user activities
-    (notifications).
+    """API ViewSet for managing and interacting with user activities (notifications).
 
-    This viewset allows users to view, clear, and delete their seen activities.
-    The functionality provided depends on user roles and configuration settings,
-    such as soft and hard deletion of notifications.
+    This viewset allows authenticated users to view and soft-delete their own
+    activities addressed to them directly or through their Django groups.
+    Hard deletion remains an explicitly configured admin action.
 
     Features:
     - List Activities: Lists all seen notifications for the user. The availability of
@@ -53,9 +60,8 @@ class ActivityViewSet(
       feature is controlled by settings.
 
     Customizations:
-    - Dynamic Serializer: Based on user role and settings, the appropriate serializer
-      is chosen between `NotificationSerializer` (for detailed information) and
-      `SimpleNotificationSerializer` (for basic information).
+    - List Serializer: The configured serializer is selected from package settings;
+      staff status does not automatically expose full details in list responses.
     - Conditional Actions: Soft and hard deletion actions are conditionally enabled
       based on settings and permissions.
       Admins have additional capabilities such as hard-deleting notifications based on settings.
@@ -87,15 +93,15 @@ class ActivityViewSet(
       and `DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE` settings.
     - The soft-delete and hard-delete functionalities are controlled by `DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE`
       and `DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE` settings.
-    - The level of notification details returned is based on the user's role and the setting
-      (`DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`).
+    - List response detail level is based on
+      `DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`, not staff status.
 
     This viewset provides a flexible and configurable API for managing notification activities,
-    with dynamic behavior driven by user roles and project settings.
+    with behavior driven by explicit permissions and project settings.
 
     """
 
-    filter_backends: List = [
+    filter_backends: list = [
         *([DjangoFilterBackend] if django_filter_installed else []),
         OrderingFilter,
         SearchFilter,
@@ -119,72 +125,48 @@ class ActivityViewSet(
         if not config.api_allow_retrieve:
             self.disable_methods(["RETRIEVE"])
 
-    def get_user_groups(self) -> QuerySet:
-        """Retrieve the list of groups the current user belongs to.
-
-        Returns:
-            QuerySet: A Queryset of the user's groups.
-
-        """
-        return self.request.user.groups.all()
-
-    def get_staff_queryset(self) -> QuerySet:
-        """Get the queryset for staff users. Staff users can view all seen
-        notifications with full details.
-
-        Returns:
-            QuerySet: A queryset of seen notifications for staff users.
-
-        """
-        return Notification.objects.seen(seen_by=self.request.user, display_detail=True)
-
     def get_queryset(self, display_detail: bool = False) -> QuerySet:
-        """Retrieve the queryset of seen notifications for the user.
+        """Select seen activities visible to the authenticated user.
 
-        If the user is a staff member, all seen notifications are returned. For non-staff users,
-        the level of detail returned depends on the `include_serializer_full_details` setting.
-
-        Args:
-            display_detail (bool): Whether to display full details in the queryset. Defaults to False.
-
-        Returns:
-            QuerySet: A queryset of seen notifications, filtered by user and groups.
+        ``display_detail`` is retained for extension compatibility, but
+        queryset result types are now always model instances. Presentation
+        belongs to the selected serializer.
 
         """
-        if self.request.user.is_staff:
-            return self.get_staff_queryset()
-
-        display_detail = bool(
-            display_detail
-            or config.include_serializer_full_details
-            or config.notification_serializer_fields
+        queryset = (
+            Notification.objects.visible_to(self.request.user)
+            .active_at()
+            .sent_only()
+            .seen_by(self.request.user)
+            .not_deleted_by(self.request.user)
+        )
+        # Built-in personal serializers do not traverse recipient/group
+        # relationships. Custom serializers and explicit field projections may.
+        queryset = filter_personal_notifications(queryset, self.request)
+        if (
+            config.notification_serializer_fields
             or config.notification_serializer_class
-        )
+        ):
+            return queryset.with_related()
+        return queryset
 
-        user_groups = self.get_user_groups()
-        queryset = Notification.objects.seen(
-            recipients=self.request.user,
-            seen_by=self.request.user,
-            groups=user_groups,
-            display_detail=display_detail,
-        )
-        return queryset.distinct()
-
-    def get_serializer_class(self) -> Type[Serializer]:
-        """Determine the appropriate serializer class based on the user's role
-        and settings.
+    def get_serializer_class(self) -> type[Serializer]:
+        """Determine the serializer class from package settings.
 
         Returns:
-            Serializer: Either `NotificationSerializer` for detailed responses
-            or `SimpleNotificationSerializer` for minimal responses.
+            Serializer: The serializer selected by package configuration.
 
         """
-        if self.request.user.is_staff or config.include_serializer_full_details:
-            return NotificationSerializer
+        if config.include_serializer_full_details:
+            return NotificationSelfServiceSerializer
 
         return config.notification_serializer_class or NotificationDynamicSerializer
 
-    @conditional_action(condition=config.include_soft_delete, detail=False)
+    @conditional_action(
+        condition=config.include_soft_delete,
+        detail=False,
+        methods=["get", "post"],
+    )
     def clear_activities(self, request: Request) -> Response:
         """Soft-delete or clear all activities for the user.
 
@@ -197,15 +179,17 @@ class ActivityViewSet(
             Response: A response indicating that all activities have been cleared.
 
         """
+        require_mutation_method(request)
         Notification.objects.clear_all(request.user)
-        return Response(
-            {"detail": "all activities cleared."}, status=status.HTTP_204_NO_CONTENT
-        )
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        return mark_legacy_get_response(request, response)
 
-    @conditional_action(condition=config.include_soft_delete, detail=True)
-    def clear_notification(
-        self, request: Request, pk: Optional[str] = None
-    ) -> Response:
+    @conditional_action(
+        condition=config.include_soft_delete,
+        detail=True,
+        methods=["get", "delete"],
+    )
+    def clear_notification(self, request: Request, pk: str | None = None) -> Response:
         """Soft-delete a specific notification for the user.
 
         This method is conditionally enabled based on the `include_soft_delete` setting.
@@ -218,17 +202,42 @@ class ActivityViewSet(
             Response: A response indicating that the notification has been cleared.
 
         """
+        require_mutation_method(request)
+        # Individual activity mutations must satisfy the same seen-and-visible
+        # queryset as the activity detail endpoint before changing state.
+        activity = self.get_object()
         Notification.objects.delete_notification(
-            notification_id=pk, recipient=request.user, soft_delete=True
+            notification_id=activity.pk, recipient=request.user, soft_delete=True
         )
-        return Response(
-            {"detail": f"notification {pk} cleared."}, status=status.HTTP_204_NO_CONTENT
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        return mark_legacy_get_response(request, response)
+
+    @conditional_action(
+        condition=config.include_soft_delete,
+        detail=False,
+        methods=["post"],
+    )
+    def bulk_clear(self, request: Request) -> Response:
+        """Atomically clear up to 500 selected, seen activities."""
+        ids = validated_ids(request)
+        processed = Notification.objects.clear_selected(request.user, ids)
+        return Response({"processed": processed})
+
+    def destroy(self, request: Request, *args, **kwargs) -> Response:
+        """Canonical DELETE /activities/{id}/ soft-deletes a seen activity."""
+        if not config.include_soft_delete:
+            raise MethodNotAllowed("DELETE")
+        activity = self.get_object()
+        Notification.objects.delete_notification(
+            notification_id=activity.pk, recipient=request.user, soft_delete=True
         )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @conditional_action(
         condition=config.include_hard_delete,
         permission_classes=[IsAdminUser],
         detail=False,
+        methods=["get", "delete"],
     )
     def delete_activities(self, request: Request) -> Response:
         """Permanently delete all activities for the user.
@@ -243,20 +252,19 @@ class ActivityViewSet(
             Response: A response indicating that all activities have been permanently deleted.
 
         """
+        require_mutation_method(request)
         queryset = self.filter_queryset(self.get_queryset(display_detail=True))
         queryset.delete()
-        return Response(
-            {"detail": "all activities deleted."}, status=status.HTTP_204_NO_CONTENT
-        )
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        return mark_legacy_get_response(request, response)
 
     @conditional_action(
         condition=config.include_hard_delete,
         permission_classes=[IsAdminUser],
         detail=True,
+        methods=["get", "delete"],
     )
-    def delete_notification(
-        self, request: Request, pk: Optional[str] = None
-    ) -> Response:
+    def delete_notification(self, request: Request, pk: str | None = None) -> Response:
         """Permanently delete a specific notification for the user.
 
         This method is conditionally enabled based on the `include_hard_delete` setting
@@ -270,7 +278,12 @@ class ActivityViewSet(
             Response: A response indicating that the notification has been permanently deleted.
 
         """
-        Notification.objects.delete_notification(notification_id=pk, soft_delete=False)
-        return Response(
-            {"detail": f"notification {pk} deleted."}, status=status.HTTP_204_NO_CONTENT
+        require_mutation_method(request)
+        # Configured hard deletion is an admin action, but this personal
+        # activity route must never accept an unrelated notification ID.
+        activity = self.get_object()
+        Notification.objects.delete_notification(
+            notification_id=activity.pk, soft_delete=False
         )
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        return mark_legacy_get_response(request, response)

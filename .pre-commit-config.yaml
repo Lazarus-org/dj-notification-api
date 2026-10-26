@@ -1,115 +1,113 @@
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
-        files: \.yaml$
       - id: trailing-whitespace
-        exclude: (migrations/|tests/|docs/).*
       - id: end-of-file-fixer
-        exclude: (migrations/|tests/|docs/).*
       - id: check-added-large-files
-        exclude: (migrations/|tests/|docs/).*
+        # Generated dependency hashes; uv verifies the lock separately.
+        exclude: ^uv\.lock$
       - id: check-case-conflict
-        exclude: (migrations/|tests/|docs/).*
       - id: check-merge-conflict
-        exclude: (migrations/|tests/|docs/).*
       - id: check-docstring-first
-        exclude: (migrations/|tests/|docs/).*
 
-  - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.5.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
     hooks:
-      - id: pyproject-fmt
-
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.5.0
-    hooks:
-      - id: tox-ini-fmt
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
-      - id: pyupgrade
-
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.1
-    hooks:
-      - id: isort
-        exclude: (migrations/|tests/|docs/).*
-
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black
-        args: [ "--config=pyproject.toml" ]
-        exclude: (migrations/|tests/|docs/).*
-
-  - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.6.0
-    hooks:
-      - id: commitizen
-        exclude: (migrations/|tests/|docs/).*
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.3
-    hooks:
-      - id: bandit
-        args: [ "-c", "pyproject.toml", "-r", "." ]
-        additional_dependencies: [ "bandit[toml]" ]
-        exclude: (migrations/|tests/|docs/).*
-
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.5
-    hooks:
-      - id: docformatter
-        args: [ "--in-place", "--recursive", "--blank" ]
-        exclude: (migrations/|tests/|docs/).*
-
-  - repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.19.1
-    hooks:
-      - id: blacken-docs
-        additional_dependencies:
-          - black==24.4.2
-        files: '\.rst$'
-
-  - repo: https://github.com/rstcheck/rstcheck
-    rev: "v6.2.4"
-    hooks:
-      - id: rstcheck
-        args: [ "--report-level=warning" ]
-        files: ^(docs/(.*/)*.*\.rst)
-        additional_dependencies: [ Sphinx==6.2.1 ]
+      - id: ruff
+      - id: ruff-format
+        # Black formats production code; keep a single formatter per file.
+        files: ^(django_notification/tests/|docs/conf\.py$)
 
   - repo: local
     hooks:
-      - id: pytest
-        name: Pytest
-        entry: poetry run pytest -v
+      # Run the restored tools from uv.lock, shared with CI and local installs.
+      - id: pyproject-fmt
+        name: Format pyproject.toml
+        entry: uv run --locked pyproject-fmt
         language: system
-        types: [ python ]
-        stages: [ pre-commit ]
-        pass_filenames: false
-        always_run: true
-
-      - id: pylint
-        name: pylint
-        entry: pylint
+        files: ^pyproject\.toml$
+      - id: tox-ini-fmt
+        name: Format tox.ini
+        entry: uv run --locked tox-ini-fmt
         language: system
-        types: [ python ]
-        require_serial: true
-        args:
-          - "-rn"
-          - "-sn"
-          - "--rcfile=pyproject.toml"
-        files: ^django_notification/
-        exclude: (migrations/|tests/|docs/).*
-
-      - id: pre-commit-django-migration-lint
-        name: Lint Django migrations
-        entry: ./manage.py lintmigrations
+        files: ^tox\.ini$
+      - id: pyupgrade
+        name: Upgrade Python syntax (Python 3.10+)
+        entry: uv run --locked pyupgrade --py310-plus
         language: system
         types: [python]
+        exclude: ^django_notification/migrations/
+      - id: isort
+        name: Sort Python imports
+        entry: uv run --locked isort --settings-path pyproject.toml
+        language: system
+        types: [python]
+        exclude: ^(django_notification/(migrations|tests)/|docs/)
+      - id: black
+        name: Black
+        entry: uv run --locked black --config pyproject.toml
+        language: system
+        types: [python]
+        exclude: ^(django_notification/(migrations|tests)/|docs/)
+      - id: commitizen
+        name: Check conventional commit message
+        entry: uv run --locked cz check --commit-msg-file
+        language: system
+        stages: [commit-msg]
+      - id: bandit
+        name: Bandit security scan
+        entry: uv run --locked bandit -c pyproject.toml -r django_notification
+        language: system
+        files: ^django_notification/.*\.py$
+        exclude: ^django_notification/(migrations|tests)/
         pass_filenames: false
+      - id: docformatter
+        name: Format Python docstrings
+        entry: uv run --locked docformatter --black --in-place --blank
+        language: system
+        types: [python]
+        exclude: ^(django_notification/(migrations|tests)/|docs/)
+      - id: blacken-docs
+        name: Format Python documentation examples
+        entry: uv run --locked blacken-docs
+        language: system
+        files: ^docs/.*\.rst$
+      - id: rstcheck
+        name: Check reStructuredText
+        entry: uv run --locked rstcheck --report-level=warning
+        language: system
+        files: ^docs/.*\.rst$
+      - id: pytest
+        name: Pytest (100% coverage required)
+        entry: uv run --locked pytest -q
+        language: system
+        types: [python]
+        stages: [pre-commit]
+        pass_filenames: false
+        always_run: true
+      - id: pylint
+        name: Pylint
+        entry: uv run --locked pylint -rn -sn --rcfile=pyproject.toml
+        language: system
+        types: [python]
+        require_serial: true
+        files: ^django_notification/
+        exclude: ^django_notification/(migrations|tests)/
+      - id: pre-commit-django-migration-lint
+        name: Lint Django migrations
+        entry: uv run --locked python scripts/lint_migrations.py
+        language: system
+        types: [python]
+        files: ^(django_notification/.*\.py|scripts/lint_migrations\.py)$
+        pass_filenames: false
+      - id: package-metadata
+        name: Validate packaging metadata (offline)
+        entry: uv run --locked python scripts/check_packaging.py
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|tox\.ini|\.pre-commit-config.*\.yaml|\.github/workflows/.*\.yml)$

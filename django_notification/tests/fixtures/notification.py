@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 from django.contrib.auth.models import Group, User
@@ -15,7 +15,7 @@ from django_notification.models.helper.enums.status_choices import NotificationS
 
 
 @pytest.fixture
-def notification_dict(notification: Notification) -> Dict[str, Any]:
+def notification_dict(notification: Notification) -> dict[str, Any]:
     """
     Fixture to provide a dictionary representation of a given Notification instance.
 
@@ -103,7 +103,7 @@ def notification(db, user_content_type: ContentType, user: User) -> Notification
 
 
 @pytest.fixture
-def notifications(db, user: User, qs_user: User, qs_group: Group) -> List[Notification]:
+def notifications(db, user: User, qs_user: User, qs_group: Group) -> list[Notification]:
     """
     Fixture to create and return a list of multiple Notification instances for testing.
 

@@ -1,5 +1,6 @@
-from typing import Any, List
+from typing import Any
 
+from django.conf import settings
 from django.core.checks import Error, register
 
 from django_notification.models import Notification
@@ -15,7 +16,7 @@ from django_notification.validators.config_validators import (
 
 
 @register()
-def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
+def check_notification_settings(app_configs: Any, **kwargs: Any) -> list[Error]:
     """Check and validate notification settings in the Django configuration.
 
     This function performs validation of various notification-related settings
@@ -35,7 +36,57 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
         A list of `Error` objects for any detected configuration issues.
 
     """
-    errors: List[Error] = []
+    errors: list[Error] = []
+    mode = getattr(settings, "DJANGO_NOTIFICATION_API_EVENT_DELIVERY", "signal")
+    if mode not in ("signal", "outbox"):
+        errors.append(
+            Error(
+                "DJANGO_NOTIFICATION_API_EVENT_DELIVERY must be 'signal' or 'outbox'",
+                id="django_notification.E001",
+            )
+        )
+
+    # External delivery is opt-in and must use durable event intent.
+    # Reject incorrect backend paths at system-check time rather than
+    # silently acknowledging an outbox event without creating jobs.
+    from django.core.exceptions import ImproperlyConfigured
+
+    from django_notification.delivery.registry import backend_paths, load_backend
+
+    try:
+        channels = backend_paths()
+        if channels and mode != "outbox":
+            errors.append(
+                Error(
+                    "External delivery requires EVENT_DELIVERY='outbox'",
+                    id="django_notification.E002",
+                )
+            )
+        for channel in channels:
+            load_backend(channel)
+    except ImproperlyConfigured:
+        errors.append(
+            Error(
+                "Invalid DJANGO_NOTIFICATION_DELIVERY_BACKENDS configuration",
+                id="django_notification.E003",
+            )
+        )
+
+    # Locale customization applies only to optional delivery rendering.
+    from django_notification.delivery.rendering import normalize_locale
+
+    default_locale = getattr(
+        settings,
+        "DJANGO_NOTIFICATION_DELIVERY_DEFAULT_LOCALE",
+        settings.LANGUAGE_CODE,
+    )
+    if normalize_locale(default_locale) is None:
+        errors.append(
+            Error(
+                "Invalid DJANGO_NOTIFICATION_DELIVERY_DEFAULT_LOCALE",
+                id="django_notification.E004",
+            )
+        )
 
     # Validate boolean settings
     errors.extend(
@@ -86,6 +137,18 @@ def check_notification_settings(app_configs: Any, **kwargs: Any) -> List[Error]:
     errors.extend(
         validate_boolean_setting(
             config.api_allow_retrieve, f"{config.prefix}API_ALLOW_RETRIEVE"
+        )
+    )
+    errors.extend(
+        validate_boolean_setting(
+            config.api_allow_legacy_get_mutations,
+            f"{config.prefix}API_ALLOW_LEGACY_GET_MUTATIONS",
+        )
+    )
+    errors.extend(
+        validate_boolean_setting(
+            config.api_retrieve_marks_seen,
+            f"{config.prefix}API_RETRIEVE_MARKS_SEEN",
         )
     )
 

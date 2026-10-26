@@ -1,0 +1,1 @@
+"""Transactional outbox regression tests."""

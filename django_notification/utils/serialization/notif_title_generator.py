@@ -1,11 +1,11 @@
-from typing import Any, Dict
+from typing import Any
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
 
-def generate_title(notification: Dict[str, Any]) -> str:
-    """Generate the title for the notification if it is a dictionary, (when
-    using values() method in queryset).
+def generate_title(notification: dict[str, Any]) -> str:
+    """Generate the title for the notification if it is a dictionary, (when using
+    values() method in queryset).
 
     Args:
         notification (dict): A dictionary representing the notification retrieved from the queryset.

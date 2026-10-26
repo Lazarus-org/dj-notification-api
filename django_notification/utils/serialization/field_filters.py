@@ -1,7 +1,4 @@
-from typing import Dict, List
-
-
-def filter_non_empty_fields(data: Dict, exclude_fields: List = None) -> Dict:
+def filter_non_empty_fields(data: dict, exclude_fields: list | None = None) -> dict:
     """Filters out empty fields and sensitive fields from the given data.
 
     Args:

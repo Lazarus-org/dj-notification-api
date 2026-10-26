@@ -116,18 +116,13 @@ class TestNotification:
 
         assert notification.seen_by.filter(id=user.id).exists()
 
-    def test_mark_as_seen_with_group(
+    def test_mark_as_seen_with_group_only_notification_is_allowed(
         self, notification: Notification, user: User, group: Group
     ) -> None:
-        """
-        Test the `mark_as_seen` method when the user belongs to a group that is a recipient.
-
-        Asserts:
-        -------
-            - The recipient user is correctly marked as having seen the notification through their group.
-        """
+        """Members of a targeted group have per-user read-state ownership."""
         user.groups.add(group)
         notification.group.add(group)
+
         notification.mark_as_seen(user)
 
         assert notification.seen_by.filter(id=user.id).exists()

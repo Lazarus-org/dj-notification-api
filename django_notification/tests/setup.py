@@ -1,3 +1,4 @@
+import os
 import random
 import string
 
@@ -64,10 +65,30 @@ def configure_django_settings() -> None:
             SECRET_KEY=generate_secret_key(),  # Add a secret key for testing
             DATABASES={
                 "default": {
-                    "ENGINE": "django.db.backends.sqlite3",
-                    "NAME": ":memory:",
+                    **(
+                        {
+                            "ENGINE": "django.db.backends.postgresql",
+                            "NAME": os.environ.get(
+                                "PGDATABASE", "notification_validation"
+                            ),
+                            "USER": os.environ.get("PGUSER", "validation"),
+                            "PASSWORD": os.environ.get("PGPASSWORD", ""),
+                            "HOST": os.environ.get("PGHOST", "127.0.0.1"),
+                            "PORT": os.environ.get("PGPORT", "55439"),
+                        }
+                        if os.environ.get("DJANGO_NOTIFICATION_TEST_DATABASE")
+                        == "postgresql"
+                        else {
+                            "ENGINE": "django.db.backends.sqlite3",
+                            "NAME": ":memory:",
+                        }
+                    ),
                 }
             },
+            DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
+            # This module configures tests only; avoid expensive production
+            # password derivation for each disposable fixture account.
+            PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
             INSTALLED_APPS=[
                 "django.contrib.admin",
                 "django.contrib.auth",
@@ -97,6 +118,9 @@ def configure_django_settings() -> None:
             DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS=True,
             DJANGO_NOTIFICATION_API_ALLOW_LIST=True,
             DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE=True,
+            # Legacy API regressions deliberately opt into the old behavior.
+            DJANGO_NOTIFICATION_API_ALLOW_LEGACY_GET_MUTATIONS=True,
+            DJANGO_NOTIFICATION_API_RETRIEVE_MARKS_SEEN=True,
             DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE="20/minute",
             DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE="50/minute",
             DJANGO_NOTIFICATION_API_FILTERSET_CLASS="django_notification.api.filters.notification_filter.NotificationFilter",

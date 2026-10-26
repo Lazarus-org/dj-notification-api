@@ -1,6 +1,8 @@
-from typing import Any, List, Optional, Type, Union
+from typing import Any
 
 from django.conf import settings
+from django.contrib.admin.sites import AdminSite
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
 from django_notification.constants.default_settings import (
@@ -14,9 +16,9 @@ from django_notification.constants.default_settings import (
 
 # pylint: disable=too-many-instance-attributes
 class NotificationConfig:
-    """A configuration handler for the Django Notification API, allowing
-    settings to be dynamically loaded from Django settings with defaults
-    provided through `DefaultAPISettings`.
+    """A configuration handler for the Django Notification API, allowing settings to be
+    dynamically loaded from Django settings with defaults provided through
+    `DefaultAPISettings`.
 
     Attributes:
         include_soft_delete (bool): Whether soft delete is enabled for notifications.
@@ -43,8 +45,8 @@ class NotificationConfig:
     prefix = "DJANGO_NOTIFICATION_"
 
     def __init__(self) -> None:
-        """Initialize the NotificationConfig, loading values from Django
-        settings or falling back to the default API settings."""
+        """Initialize the NotificationConfig, loading values from Django settings or
+        falling back to the default API settings."""
         self.include_soft_delete: bool = self.get_setting(
             f"{self.prefix}API_INCLUDE_SOFT_DELETE",
             default_api_settings.include_soft_delete,
@@ -82,25 +84,31 @@ class NotificationConfig:
             f"{self.prefix}API_ALLOW_RETRIEVE",
             default_api_settings.allow_retrieve,
         )
-        self.notification_serializer_fields: List[str] = self.get_setting(
+        self.api_allow_legacy_get_mutations: bool = self.get_setting(
+            f"{self.prefix}API_ALLOW_LEGACY_GET_MUTATIONS",
+            default_api_settings.allow_legacy_get_mutations,
+        )
+        self.api_retrieve_marks_seen: bool = self.get_setting(
+            f"{self.prefix}API_RETRIEVE_MARKS_SEEN",
+            default_api_settings.retrieve_marks_seen,
+        )
+        self.notification_serializer_fields: list[str] = self.get_setting(
             f"{self.prefix}SERIALIZER_FIELDS",
             None,
         )
-        self.notification_serializer_class: Optional[Type[Any]] = (
-            self.get_optional_classes(
-                f"{self.prefix}SERIALIZER_CLASS",
-                default_serializer_settings.notification_serializer_class,
-            )
+        self.notification_serializer_class: type[Any] | None = self.get_optional_class(
+            f"{self.prefix}SERIALIZER_CLASS",
+            default_serializer_settings.notification_serializer_class,
         )
-        self.user_serializer_fields: List[str] = self.get_setting(
+        self.user_serializer_fields: list[str] = self.get_setting(
             f"{self.prefix}USER_SERIALIZER_FIELDS",
             default_serializer_settings.user_serializer_fields,
         )
-        self.user_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.user_serializer_class: type[Any] | None = self.get_optional_class(
             f"{self.prefix}USER_SERIALIZER_CLASS",
             default_serializer_settings.user_serializer_class,
         )
-        self.group_serializer_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.group_serializer_class: type[Any] | None = self.get_optional_class(
             f"{self.prefix}GROUP_SERIALIZER_CLASS",
             default_serializer_settings.group_serializer_class,
         )
@@ -112,37 +120,35 @@ class NotificationConfig:
             f"{self.prefix}STAFF_USER_THROTTLE_RATE",
             default_throttle_settings.staff_user_throttle_rate,
         )
-        self.api_throttle_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.api_throttle_class: type[Any] | None = self.get_optional_class(
             f"{self.prefix}API_THROTTLE_CLASS",
             default_throttle_settings.throttle_class,
         )
-        self.api_pagination_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.api_pagination_class: type[Any] | None = self.get_optional_class(
             f"{self.prefix}API_PAGINATION_CLASS",
             default_pagination_and_filter_settings.pagination_class,
         )
-        self.api_extra_permission_class: Optional[Type[Any]] = (
-            self.get_optional_classes(
-                f"{self.prefix}API_EXTRA_PERMISSION_CLASS",
-                default_api_settings.extra_permission_class,
-            )
+        self.api_extra_permission_class: type[Any] | None = self.get_optional_class(
+            f"{self.prefix}API_EXTRA_PERMISSION_CLASS",
+            default_api_settings.extra_permission_class,
         )
-        self.api_parser_classes: Optional[List[Type[Any]]] = self.get_optional_classes(
+        self.api_parser_classes: list[type[Any]] | None = self.get_optional_class_list(
             f"{self.prefix}API_PARSER_CLASSES",
             default_api_settings.parser_classes,
         )
-        self.api_filterset_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.api_filterset_class: type[Any] | None = self.get_optional_class(
             f"{self.prefix}API_FILTERSET_CLASS",
             default_pagination_and_filter_settings.filterset_class,
         )
-        self.api_ordering_fields: List[str] = self.get_setting(
+        self.api_ordering_fields: list[str] = self.get_setting(
             f"{self.prefix}API_ORDERING_FIELDS",
             default_pagination_and_filter_settings.ordering_fields,
         )
-        self.api_search_fields: List[str] = self.get_setting(
+        self.api_search_fields: list[str] = self.get_setting(
             f"{self.prefix}API_SEARCH_FIELDS",
             default_pagination_and_filter_settings.search_fields,
         )
-        self.admin_site_class: Optional[Type[Any]] = self.get_optional_classes(
+        self.admin_site_class: AdminSite | None = self.get_admin_site(
             f"{self.prefix}ADMIN_SITE_CLASS",
             default_admin_settings.admin_site_class,
         )
@@ -160,13 +166,42 @@ class NotificationConfig:
         """
         return getattr(settings, setting_name, default_value)
 
+    def get_optional_class(
+        self, setting_name: str, default_path: str | None
+    ) -> type[Any] | None:
+        """Load one class; list-shaped settings belong to parser configuration."""
+        result = self.get_optional_classes(setting_name, default_path)
+        return result if isinstance(result, type) else None
+
+    def get_optional_class_list(
+        self, setting_name: str, default_path: list[str] | None
+    ) -> list[type[Any]] | None:
+        """Load a list of parser classes with the existing import-error policy."""
+        result = self.get_optional_classes(setting_name, default_path)
+        return result if isinstance(result, list) else None
+
+    def get_admin_site(
+        self, setting_name: str, default_path: str | None
+    ) -> AdminSite | None:
+        """Django's registration decorator requires a site instance."""
+        site = self.get_optional_classes(setting_name, default_path)
+        if site is None:
+            return None
+        if isinstance(site, type) and issubclass(site, AdminSite):
+            return site()
+        if isinstance(site, AdminSite):
+            return site
+        raise ImproperlyConfigured(
+            "ADMIN_SITE_CLASS must resolve to an AdminSite class or instance"
+        )
+
     def get_optional_classes(
         self,
         setting_name: str,
-        default_path: Optional[Union[str, List[str]]],
-    ) -> Optional[Union[Type[Any], List[Type[Any]]]]:
-        """Dynamically load a class based on a setting, or return None if the
-        setting is None or invalid.
+        default_path: str | list[str] | None,
+    ) -> type[Any] | list[type[Any]] | None:
+        """Dynamically load a class based on a setting, or return None if the setting is
+        None or invalid.
 
         Args:
             setting_name (str): The name of the setting for the class path.
@@ -177,7 +212,7 @@ class NotificationConfig:
              if import fails or the path is invalid.
 
         """
-        class_path: Optional[Union[str, List[str]]] = self.get_setting(
+        class_path: str | list[str] | None = self.get_setting(
             setting_name, default_path
         )
 

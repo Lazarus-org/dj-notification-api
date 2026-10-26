@@ -28,6 +28,8 @@ class TestCheckNotificationSettings:
             No errors are returned when all settings are valid.
         """
         # Mock the config values to be valid
+        mock_config.api_allow_legacy_get_mutations = True
+        mock_config.api_retrieve_marks_seen = True
         mock_config.include_soft_delete = True
         mock_config.include_hard_delete = False
         mock_config.admin_has_add_permission = False
@@ -64,6 +66,8 @@ class TestCheckNotificationSettings:
             Three errors are returned for invalid boolean values in settings.
         """
         # Mock the config values with invalid boolean settings
+        mock_config.api_allow_legacy_get_mutations = True
+        mock_config.api_retrieve_marks_seen = True
         mock_config.include_soft_delete = "not_boolean"
         mock_config.include_hard_delete = "not_boolean"
         mock_config.admin_has_add_permission = "not_boolean"
@@ -132,6 +136,8 @@ class TestCheckNotificationSettings:
             Three errors are returned for invalid list values in settings.
         """
         # Mock the config values with invalid list settings
+        mock_config.api_allow_legacy_get_mutations = True
+        mock_config.api_retrieve_marks_seen = True
         mock_config.include_soft_delete = True
         mock_config.include_hard_delete = False
         mock_config.admin_has_add_permission = False
@@ -184,6 +190,8 @@ class TestCheckNotificationSettings:
             Two errors are returned for invalid throttle rates.
         """
         # Mock the config values with invalid throttle rates
+        mock_config.api_allow_legacy_get_mutations = True
+        mock_config.api_retrieve_marks_seen = True
         mock_config.include_soft_delete = True
         mock_config.include_hard_delete = False
         mock_config.admin_has_add_permission = False
@@ -222,6 +230,8 @@ class TestCheckNotificationSettings:
             Seven errors are returned for invalid class imports.
         """
         # Mock the config values with invalid class paths
+        mock_config.api_allow_legacy_get_mutations = True
+        mock_config.api_retrieve_marks_seen = True
         mock_config.include_soft_delete = True
         mock_config.include_hard_delete = False
         mock_config.admin_has_add_permission = False
@@ -237,8 +247,8 @@ class TestCheckNotificationSettings:
         mock_config.api_search_fields = ["title"]
         mock_config.staff_user_throttle_rate = "10/minute"
         mock_config.authenticated_user_throttle_rate = "5/minute"
-        mock_config.get_setting.side_effect = (
-            lambda name, default: "invalid.path.ClassName"
+        mock_config.get_setting.side_effect = lambda name, default: (
+            "invalid.path.ClassName"
         )
 
         errors = check_notification_settings(None)

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any
 
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
@@ -12,12 +12,11 @@ from django_notification.utils.serialization import (
 
 
 class NotificationDynamicSerializer(ModelSerializer):
-    """Serializer for Notification model that dynamically selects fields based
-    on settings or predefined fields.
+    """Serializer for Notification model that dynamically selects fields based on
+    settings or predefined fields.
 
-    If `config.notification_serializer_fields` is defined and includes 'title',
-    the 'title' field will be serialized using a SerializerMethodField. Otherwise,
-    'title' will default to a SerializerMethodField.
+    The normal API path accepts Notification instances. Dictionaries supplied
+    by legacy integrations are also supported for backward compatibility.
 
     Fields to be serialized are determined by `config.notification_serializer_fields`
     if set, otherwise defaults to a predefined set of fields including 'id', 'title',
@@ -48,34 +47,23 @@ class NotificationDynamicSerializer(ModelSerializer):
             *default_serializer_settings.notification_serializer_fields,
         ]
 
-    def get_title(self, notification: Union[Notification, Dict[str, Any]]) -> str:
-        """Generate and return the title for a notification.
+    def get_title(self, notification: Notification | dict[str, Any]) -> str:
+        """Render the same title from model objects or legacy dictionaries.
 
-        Args:
-            notification (Union[Notification, Dict[str, Any]]): The notification instance or its dictionary representation.
-
-        Returns:
-            str: The dynamically generated title.
+        Model instances are the native API path. For a legacy dict, retain its
+        historical title generation, including configured- field behavior.
 
         """
-        return (
-            str(notification)
-            if config.notification_serializer_fields
-            else generate_title(notification)
-        )
+        if isinstance(notification, Notification):
+            return str(notification)
+        if config.notification_serializer_fields:
+            return str(notification)
+        return generate_title(notification)
 
-    def to_representation(self, instance: Dict[str, Any]) -> Dict[str, str]:
-        """Convert the instance to a representation format, filtering out empty
-        fields.
-
-        Args:
-            instance (Dict[str, Any]): A dictionary representing the notification data,
-                typically from a queryset's values().
-
-        Returns:
-            Dict[str, str]: The filtered representation of the notification data.
-
-        """
+    def to_representation(
+        self, instance: Notification | dict[str, Any]
+    ) -> dict[str, Any]:
+        """Serialize models and historical dictionaries, omitting nulls if set."""
         data = super().to_representation(instance)
 
         if config.exclude_serializer_null_fields:

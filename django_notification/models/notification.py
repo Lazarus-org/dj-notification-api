@@ -1,12 +1,12 @@
-from typing import Tuple
-
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.db.models import (
     CASCADE,
+    PROTECT,
     BooleanField,
     CharField,
     DateTimeField,
@@ -21,6 +21,17 @@ from django.db.models import (
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from django_notification.events import (
+    NotificationEvent,
+    NotificationEventKind,
+    publish_notification_event,
+)
+from django_notification.models.helper.enums.group_audience_mode import (
+    GroupAudienceMode,
+)
+from django_notification.models.helper.enums.priority_choices import (
+    NotificationPriority,
+)
 from django_notification.models.helper.enums.status_choices import NotificationStatus
 from django_notification.models.notification_recipient import NotificationRecipient
 from django_notification.models.notification_seen import NotificationSeen
@@ -30,6 +41,7 @@ from django_notification.models.permissions.notification_permission import (
 from django_notification.repository.manager.notification import (
     NotificationDataAccessLayer,
 )
+from django_notification.utils.user_model import UserModel
 
 
 class Notification(Model):
@@ -42,6 +54,7 @@ class Notification(Model):
     Attributes:
         recipient (ManyToManyField): Users receiving the notification.
         group (ManyToManyField): Groups receiving the notification.
+        group_audience_mode (CharField): Membership eligibility strategy.
         verb (CharField): The action verb associated with the notification.
         description (TextField): A description of the notification.
         status (CharField): The current status of the notification.
@@ -60,6 +73,7 @@ class Notification(Model):
         public (BooleanField): Indicates if the notification is public.
         data (JSONField): Additional metadata or attributes associated with the notification.
         timestamp (DateTimeField): Time when the notification was created.
+        expires_at (DateTimeField): Optional time when inbox eligibility ends.
 
     """
 
@@ -76,6 +90,30 @@ class Notification(Model):
         verbose_name=_("Group"),
         help_text=_("The groups that will receive the notification."),
         blank=True,
+    )
+    group_audience_mode = CharField(
+        verbose_name=_("Group audience mode"),
+        help_text=_(
+            "DYNAMIC follows current group membership; SNAPSHOT retains "
+            "the group members captured when created through the manager."
+        ),
+        max_length=8,
+        choices=GroupAudienceMode.choices,
+        default=GroupAudienceMode.DYNAMIC,
+    )
+    category = ForeignKey(
+        "django_notification.NotificationCategory",
+        on_delete=PROTECT,
+        related_name="notifications",
+        default="general",
+        help_text=_("Managed category key; general is the default."),
+    )
+    priority = CharField(
+        max_length=8,
+        choices=NotificationPriority.choices,
+        default=NotificationPriority.NORMAL,
+        db_index=True,
+        help_text=_("Display priority independent of notification status."),
     )
     verb = CharField(
         verbose_name=_("Verb"),
@@ -197,17 +235,29 @@ class Notification(Model):
         db_index=True,
     )
 
+    expires_at = DateTimeField(
+        verbose_name=_("Expires at"),
+        help_text=_(
+            "Optional expiration instant after which this notification no longer "
+            "appears in personal inboxes; database retention "
+            "is separate."
+        ),
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
     objects = NotificationDataAccessLayer()
 
     class Meta:
-        db_table: str = "notification"
-        verbose_name: str = _("Notification")
-        verbose_name_plural: str = _("Notifications")
-        ordering: Tuple[str] = ("-timestamp",)
+        db_table = "notification"
+        verbose_name = _("Notification")
+        verbose_name_plural = _("Notifications")
+        ordering = ("-timestamp",)
 
     def __str__(self) -> str:
-        """Return a string representation of the notification including its
-        description and the natural time since its timestamp.
+        """Return a string representation of the notification including its description
+        and the natural time since its timestamp.
 
         Returns:
             str: The string representation of the notification.
@@ -247,7 +297,7 @@ class Notification(Model):
             verb=self.verb,
         )
 
-    def mark_as_seen(self, user: settings.AUTH_USER_MODEL) -> None:
+    def mark_as_seen(self, user: UserModel) -> None:
         """Mark the notification as seen by a specific user.
 
         Args:
@@ -259,11 +309,27 @@ class Notification(Model):
         """
         permission_class = NotificationPermission(self)
         permission_class.validate_permission(user, "mark as seen")
-        self.seen_by.add(user)
+        # Keep the legacy helper's existing permission-only contract (unlike
+        # the stricter personal-inbox API, this also accepts unsent records).
+        # Only a newly-created read state emits the public lifecycle event.
+        database = self._state.db or DEFAULT_DB_ALIAS
+        with transaction.atomic(using=database):
+            _, created = NotificationSeen.objects.using(database).get_or_create(
+                notification_id=self.pk, user_id=user.pk
+            )
+            if created:
+                publish_notification_event(
+                    NotificationEvent(
+                        kind=NotificationEventKind.SEEN,
+                        database=database,
+                        notification_id=self.pk,
+                        user_id=user.pk,
+                    )
+                )
 
     def save(self, *args, **kwargs) -> None:
-        """Save the notification instance, automatically generating the
-        description if it is not provided.
+        """Save the notification instance, automatically generating the description if
+        it is not provided.
 
         Args:
             *args: Additional arguments for the save method.

@@ -140,3 +140,9 @@ nginx.conf
 test_app/
 myenv/
 myenv3_8/
+
+# uv toolchain
+.uv/
+.uv-bootstrap/
+.validation/
+.venv-validation/

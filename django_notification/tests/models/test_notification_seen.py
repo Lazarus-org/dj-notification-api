@@ -58,11 +58,12 @@ class TestNotificationSeen:
         self, notification: Notification, user: User
     ) -> None:
         """
-        Test the save method when the user is a recipient or group member of the notification.
+        Test the save method when the user is a direct recipient of the notification.
 
         Asserts:
         -------
-            - The `NotificationSeen` instance is saved successfully.
+            - The `NotificationSeen` instance is saved successfully for a direct
+              recipient.
         """
         # Add the user as a recipient
         notification.recipient.add(user)
@@ -78,17 +79,30 @@ class TestNotificationSeen:
             notification=notification, user=user
         ).exists()
 
+    def test_group_member_can_mark_seen(
+        self, notification: Notification, user: User, group
+    ) -> None:
+        """Targeted-group membership permits an individual seen marker."""
+        user.groups.add(group)
+        notification.group.add(group)
+
+        NotificationSeen.objects.create(notification=notification, user=user)
+
+        assert NotificationSeen.objects.filter(
+            notification=notification, user=user
+        ).exists()
+
     def test_save_method_with_invalid_user(
         self, notification: Notification, another_user: User
     ) -> None:
         """
-        Test that a `PermissionError` is raised when the user is not a recipient or group member.
+        Test that a `PermissionError` is raised when the user is not a direct recipient.
 
         Asserts:
         -------
             - A `PermissionError` is raised with the expected message.
         """
-        # Ensure that another_user is not a recipient or group member
+        # Ensure that another_user is not a direct recipient.
         with pytest.raises(
             PermissionError,
             match="Sorry! you don't have permission to mark as seen this notification.",
@@ -98,28 +112,20 @@ class TestNotificationSeen:
             )
             notification_seen.save()
 
-    def test_save_method_for_staff_user(
+    def test_save_method_for_staff_non_recipient_is_denied(
         self, notification: Notification, user: User
     ) -> None:
-        """
-        Test that a staff user can save `NotificationSeen` even if they are not a recipient or group member.
-
-        Asserts:
-        -------
-            - The `NotificationSeen` instance is saved successfully for a staff user.
-        """
-        # Promote the user to staff
+        """Staff status alone does not grant read-state ownership."""
         user.is_staff = True
         user.save()
 
-        # Save NotificationSeen instance
-        notification_seen = NotificationSeen(
-            notification=notification, user=user, seen_at=now()
-        )
-        notification_seen.save()
+        with pytest.raises(
+            PermissionError,
+            match="Sorry! you don't have permission to mark as seen this notification.",
+        ):
+            NotificationSeen.objects.create(notification=notification, user=user)
 
-        # Verify that the instance is saved
-        assert NotificationSeen.objects.filter(
+        assert not NotificationSeen.objects.filter(
             notification=notification, user=user
         ).exists()
 

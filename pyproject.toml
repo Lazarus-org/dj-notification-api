@@ -1,78 +1,92 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core" ]
+build-backend = "hatchling.build"
 
-[tool.poetry]
+requires = [ "hatchling>=1.27,<2" ]
+
+[project]
 name = "dj-notification-api"
 version = "1.2.1"
-description = "A Django package developed by Lazarus for efficiently handling notifications through various APIs"
-authors = [ "ARYAN-NIKNEZHAD <aryan513966@gmail.com>", "MEHRSHAD-MIRSHEKARY <mehrshad_mirshekary@email.com>" ]
-license = "MIT"
+description = "A pluggable Django notification API with in-app and optional external delivery"
 readme = "README.md"
-keywords = [ "django_notification", "django", "notification", "django-notification" ]
-
+keywords = [ "django", "django-rest-framework", "notification", "notifications" ]
+license = "MIT"
+authors = [
+  { name = "ARYAN-NIKNEZHAD", email = "aryan513966@gmail.com" },
+  { name = "MEHRSHAD-MIRSHEKARY", email = "mehrshad_mirshekary@email.com" },
+]
+requires-python = ">=3.10"
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Environment :: Web Environment",
   "Framework :: Django",
-  "Framework :: Django :: 4.2",
-  "Framework :: Django :: 5.0",
-  "Framework :: Django :: 5.1",
+  "Framework :: Django :: 5.2",
+  "Framework :: Django :: 6.0",
+  "Framework :: Django :: 6.1",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-
-packages = [
-  { include = "django_notification" },
+dependencies = [
+  "django>=5.2,<5.3; python_version<'3.12'",
+  "django>=5.2,<6.2; python_version>='3.12'",
+  "django-filter>=25.2,<27",
+  "djangorestframework>=3.18.3,<3.19",
 ]
 
-[tool.poetry.urls]
-"Documentation" = "https://django-notification.readthedocs.io"
-"Source Code" = "https://github.com/Lazarus-org/dj-notification-api"
-"Changelog" = "https://github.com/lazarus-org/dj-notification-api/blob/main/CHANGELOG.md"
-"Issues" = "https://github.com/lazarus-org/dj-notification-api/issues"
+optional-dependencies.channels = [ "channels>=4.3,<5" ]
+optional-dependencies.redis = [ "channels>=4.3,<5", "channels-redis>=4.3,<5" ]
+urls.Changelog = "https://github.com/lazarus-org/dj-notification-api/blob/main/CHANGELOG.md"
+urls.Documentation = "https://dj-notification-api.readthedocs.io/"
+urls.Issues = "https://github.com/lazarus-org/dj-notification-api/issues"
+urls.Source = "https://github.com/lazarus-org/dj-notification-api"
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-django = [
-  { version = ">=4.2,<5.0", python = ">=3.9,<3.10" },
-  { version = ">=4.2,<5.3", python = ">=3.10" },      # Django 4.2 and 5.x for Python 3.10+
+[dependency-groups]
+dev = [
+  "bandit[toml]>=1.8,<2",
+  "black==25.1",
+  "blacken-docs==1.19.1",
+  "build>=1.2,<2",
+  "channels[daphne]>=4.3,<5",
+  "commitizen>=4,<5",
+  "django-migration-linter>=5.1,<7",
+  "django-stubs>=5.2,<7",
+  "docformatter==1.7.5",
+  "isort==5.13.2",
+  "mypy>=1.15,<2",
+  "pre-commit>=4,<5",
+  "psycopg[binary]>=3.2,<4",
+  "pylint>=3.3,<4",
+  "pylint-django>=2.6,<3",
+  "pyproject-fmt==2.5.1",
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "pytest-django>=4.11,<5",
+  "pyupgrade==3.19.1",
+  "rstcheck[sphinx]==6.2.4",
+  "ruff>=0.14,<1",
+  "sphinx>=8,<10",
+  "sphinx-rtd-theme>=3,<4",
+  "tomli>=2,<3; python_version<'3.11'",
+  "tox>=4.20,<5",
+  "tox-ini-fmt==1.5",
+  "tox-uv>=1.20,<2",
+  "twine>=6,<8",
 ]
-djangorestframework = "^3.14.0"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-pytest-django = "^4.8.0"
-pytest-cov = "^5.0.0"
-pylint = "^3.2.6"
-pylint-django = "^2.5.5"
-mypy = "^1.11.1"
-isort = "^5.13.2"
-black = "^24.4.2"
-commitizen = "^3.28.0"
-pre-commit = "^3.5.0"
-bandit = { extras = [ "toml" ], version = "^1.7.9" }
-tox = "^4.16.0"
-django-stubs = "^5.0.4"
-sphinx = "^6.2.1"
-sphinx-rtd-theme = "^2.0.0"
-docformatter = "^1.7.5"
-codecov = "^2.1.13"
-python-semantic-release = "^9.8.8"
-django-migration-linter = "^5.1.0"
-django-filter = "^24.3"
+[tool.hatch.build.targets.wheel]
+packages = [ "django_notification" ]
+
+[tool.hatch.build.targets.sdist]
+include = [ "/django_notification", "/README.md", "/LICENCE", "/pyproject.toml" ]
 
 [tool.black]
+extend-exclude = '(^|/)django_notification/tests/' # Ruff owns test formatting.
 line-length = 88
 exclude = '''
 /(
@@ -93,6 +107,13 @@ exclude = '''
   | .*\.egg-info
 )/
 '''
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+extend-exclude = [ "django_notification/migrations" ]
+
+lint.select = [ "E4", "E7", "E9", "F" ]
 
 [tool.isort]
 profile = "black"
@@ -150,7 +171,7 @@ ignore = [
   ".mypy_cache/*",
   ".pytest_cache/*",
 ]
-django-settings-module = "kernel.settings"
+django-settings-module = "django_notification.tests.typing_settings"
 load-plugins = [
   "pylint_django",
   "pylint.extensions.docparams",
@@ -169,7 +190,7 @@ module-rgx = "(([a-z_][a-z0-9_]*)|(__.*__))$"
 [tool.pytest.ini_options]
 python_files = [ "tests.py", "test_*.py" ]
 testpaths = [ "django_notification/tests" ]
-addopts = "--cov --cov-report=term-missing --cov-report=html --cov-fail-under=90"
+addopts = "--strict-markers --cov=django_notification --cov-report=term-missing --cov-fail-under=100"
 markers = [
   "models: Marks tests related to all database models in the project.",
   "models_notification: Marks tests for the Notification model, including creation and model-specific methods.",
@@ -212,120 +233,41 @@ norecursedirs = [
 
 [tool.coverage.run]
 source = [ "django_notification" ]
-omit = [
-  "*/tests/*",
-  "*/migrations/*",
-]
+omit = [ "*/tests/*", "*/migrations/*" ]
 
 [tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self\\.debug",
-  "raise AssertionError",
-  "if 0:",
-  "if __name__ == .__main__.:",
-]
+exclude_lines = [ "pragma: no cover", "def __repr__", "raise AssertionError" ]
 
 [tool.mypy]
-mypy_path = "stubs"
-disallow_untyped_calls = true
-disallow_untyped_defs = true
+# Match the development Django 6/stubs runtime; Ruff and tox verify Python 3.10.
+python_version = "3.13"
+plugins = [ "mypy_django_plugin.main" ]
 ignore_missing_imports = true
-explicit_package_bases = true
-exclude = """
-^docs/source/conf.py|
-^build/|
-^tests/|
-^stubs/|
-^kernel/
-"""
+check_untyped_defs = true
+warn_unused_ignores = true
+exclude = "(?x) ( ^django_notification/migrations/ | ^django_notification/tests/ | ^kernel/ )"
 
-[tool.bandit]
-targets = [ "./django_notification" ]
-exclude_dirs = [
-  "tests",
-  "migrations",
-]
-severity = "medium"
-confidence = "medium"
-max_lines = 500
-progress = true
-reports = true
-output_format = "screen"
-output_file = "bandit_report.txt"
-include = [ "B101", "B102" ]
-exclude_tests = [ "B301", "B302" ]
+[tool.uv]
+# Lock each supported Python/Django branch when an index is available.
+# Keep Python 3.10/3.11 on Django 5.2; Django 6.x requires 3.12+.
+required-version = ">=0.13.5"
 
-[tool.bandit.plugins]
-B104 = { check_typed_list = true }
+[tool.django-stubs]
+django_settings_module = "django_notification.tests.typing_settings"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "1.2.1"
-version_files = [ "pyproject.toml" ]
+version_provider = "pep621"
 tag_format = "v$version"
 
-[tool.commitizen.settings]
-increment_types = [ "feat", "fix", "refactor" ]
-
-[tool.semantic_release]
-assets = [  ]
-build_command_env = [  ]
-commit_message = "{version}\n\nAutomatically generated by python-semantic-release"
-commit_parser = "emoji"
-logging_use_named_masks = false
-major_on_zero = true
-allow_zero_version = true
-no_git_verify = false
-tag_format = "v{version}"
-#version_variables = [ "django_notification/version.py:__version__" ]
-
-[tool.semantic_release.branches.main]
-match = "(main|master)"
-prerelease_token = "rc"
-prerelease = false
-
-[tool.semantic_release.changelog]
-template_dir = "templates"
-changelog_file = "CHANGELOG.md"
-exclude_commit_patterns = [  ]
-
-[tool.semantic_release.changelog.environment]
-block_start_string = "{%"
-block_end_string = "%}"
-variable_start_string = "{{"
-variable_end_string = "}}"
-comment_start_string = "{#"
-comment_end_string = "#}"
-trim_blocks = false
-lstrip_blocks = false
-newline_sequence = "\n"
-keep_trailing_newline = false
-extensions = [  ]
-autoescape = true
-
-[tool.semantic_release.commit_author]
-env = "GIT_COMMIT_AUTHOR"
-default = "semantic-release <semantic-release>"
-
-[tool.semantic_release.commit_parser_options]
-allowed_tags = [ "build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test" ]
-minor_tags = [ "feat" ]
-patch_tags = [ "fix", "perf" ]
-default_bump_level = 0
-parse_emoji = true
-
-[tool.semantic_release.remote]
-name = "origin"
-token = ""
-type = "github"
-ignore_token_for_push = false
-insecure = false
-
-[tool.semantic_release.publish]
-dist_glob_patterns = [ "dist/*" ]
-upload_to_vcs_release = true
+[tool.bandit]
+targets = [ "django_notification" ]
+exclude_dirs = [
+  "django_notification/tests",
+  'django_notification\tests',
+  "django_notification/migrations",
+  'django_notification\migrations',
+]
 
 [tool.django_migration_linter]
 exclude_migration_tests = [ "NOT_NULL", "ADD_UNIQUE" ]

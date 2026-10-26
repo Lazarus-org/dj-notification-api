@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from django.contrib import admin
 from django.db.models import Field, QuerySet, URLField
@@ -11,6 +11,7 @@ from django_notification.models.notification import (
     NotificationRecipient,
     NotificationSeen,
 )
+from django_notification.repository.queryset.notification import NotificationQuerySet
 from django_notification.settings.conf import config
 from django_notification.utils.user_model import USERNAME_FIELD
 
@@ -28,8 +29,8 @@ class NotificationRecipientInline(admin.TabularInline):
     extra = 0
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Override the get_queryset method to select related fields for
-        performance optimization.
+        """Override the get_queryset method to select related fields for performance
+        optimization.
 
         Args:
             request: The current HTTP request.
@@ -54,8 +55,8 @@ class NotificationSeenInline(admin.TabularInline):
     extra = 0
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Override the get_queryset method to select related fields for
-        performance optimization.
+        """Override the get_queryset method to select related fields for performance
+        optimization.
 
         Args:
             request: The current HTTP request.
@@ -81,16 +82,35 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 
     """
 
-    actions: List[str] = ["mark_as_sent"]
-    inlines: List[admin.TabularInline] = [
+    actions = ["mark_as_sent"]
+    inlines = [
         NotificationRecipientInline,
         NotificationSeenInline,
     ]
-    list_display: List[str] = ["id", "get_title", "is_sent", "public", "timestamp"]
-    list_filter: List[str] = ["is_sent", "public", "timestamp"]
-    list_per_page: int = 10
-    search_fields: List[str] = ["id", f"recipient__{USERNAME_FIELD}", "group__name"]
+    list_display = [
+        "id",
+        "get_title",
+        "category",
+        "priority",
+        "group_audience_mode",
+        "is_sent",
+        "public",
+        "expires_at",
+        "timestamp",
+    ]
+    list_filter = [
+        "category",
+        "priority",
+        "group_audience_mode",
+        "is_sent",
+        "public",
+        "expires_at",
+        "timestamp",
+    ]
+    list_per_page = 10
+    search_fields = ["id", f"recipient__{USERNAME_FIELD}", "group__name"]
 
+    @admin.display(description="Title")
     def get_title(self, instance: Notification) -> str:
         """Retrieve the title of the notification for display in the list view.
 
@@ -103,11 +123,9 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         """
         return str(instance)
 
-    get_title.short_description = "Title"
-
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Override the get_queryset method to select related fields for
-        performance optimization.
+        """Override the get_queryset method to select related fields for performance
+        optimization.
 
         Args:
             request: The current HTTP request.
@@ -126,7 +144,9 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
             )
         )
 
-    def mark_as_sent(self, request: HttpRequest, queryset: QuerySet) -> None:
+    def mark_as_sent(
+        self, request: HttpRequest, queryset: NotificationQuerySet
+    ) -> None:
         """Admin action to mark selected notifications as sent.
 
         Args:
@@ -134,14 +154,18 @@ class NotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
             queryset: The queryset of selected notifications.
 
         """
-        updated = queryset.update(is_sent=True)
+        from django_notification.services.notification import (
+            NotificationLifecycleService,
+        )
+
+        updated = NotificationLifecycleService(queryset).mark_all_as_sent()
         self.message_user(
             request, f"{updated} notification(s) successfully marked as sent."
         )
 
     def formfield_for_dbfield(
         self, db_field: Field, request: HttpRequest, **kwargs: Any
-    ) -> FormField:
+    ) -> FormField | None:
         """Customize the form field for database fields in the admin interface.
 
         This method ensures that URLFields default to the HTTPS scheme when

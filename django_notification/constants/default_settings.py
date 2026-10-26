@@ -1,25 +1,24 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 from django_notification.utils.user_model import REQUIRED_FIELDS, USERNAME_FIELD
 
 
 @dataclass(frozen=True)
 class DefaultSerializerSettings:
-    notification_serializer_fields: Optional[List[str]] = field(
+    notification_serializer_fields: list[str] = field(
         default_factory=lambda: ["id", "description", "status", "link", "timestamp"]
     )
-    notification_serializer_class: Optional[str] = None
-    user_serializer_fields: List[str] = field(
+    notification_serializer_class: str | None = None
+    user_serializer_fields: list[str] = field(
         default_factory=lambda: [USERNAME_FIELD] + list(REQUIRED_FIELDS)
     )
-    user_serializer_class: Optional[str] = None
-    group_serializer_class: Optional[str] = None
+    user_serializer_class: str | None = None
+    group_serializer_class: str | None = None
 
 
 @dataclass(frozen=True)
 class DefaultAdminSettings:
-    admin_site_class: Optional[str] = None
+    admin_site_class: str | None = None
     admin_has_add_permission: bool = False
     admin_has_change_permission: bool = False
     admin_has_delete_permission: bool = False
@@ -39,11 +38,11 @@ class DefaultPaginationAndFilteringSettings:
     pagination_class: str = (
         "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
     )
-    filterset_class: Optional[str] = None
-    ordering_fields: List[str] = field(
+    filterset_class: str | None = None
+    ordering_fields: list[str] = field(
         default_factory=lambda: ["id", "timestamp", "public"]
     )
-    search_fields: List[str] = field(default_factory=lambda: ["verb", "description"])
+    search_fields: list[str] = field(default_factory=lambda: ["verb", "description"])
 
 
 # pylint: disable=too-many-instance-attributes
@@ -53,10 +52,12 @@ class DefaultAPISettings:
     include_hard_delete: bool = False
     allow_list: bool = True
     allow_retrieve: bool = True
+    allow_legacy_get_mutations: bool = False
+    retrieve_marks_seen: bool = False
     include_serializer_full_details: bool = False
     exclude_serializer_none_fields: bool = False
-    extra_permission_class: Optional[str] = None
-    parser_classes: List[str] = field(
+    extra_permission_class: str | None = None
+    parser_classes: list[str] = field(
         default_factory=lambda: [
             "rest_framework.parsers.JSONParser",
             "rest_framework.parsers.MultiPartParser",

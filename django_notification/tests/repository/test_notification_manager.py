@@ -1,5 +1,4 @@
 import sys
-from typing import List
 
 import pytest
 from django.contrib.auth.models import Group, User
@@ -20,7 +19,7 @@ class TestNotificationQuerySet:
     """
 
     def test_all_notifications_with_recipients(
-        self, notifications: List[Notification], qs_user: List[User]
+        self, notifications: list[Notification], qs_user: list[User]
     ) -> None:
         """
         Test that `all_notifications` filters notifications by recipients.
@@ -39,7 +38,7 @@ class TestNotificationQuerySet:
         assert queryset.count() == len(notifications)
 
     def test_all_notifications_with_groups(
-        self, notifications: List[Notification], qs_group: List[Group]
+        self, notifications: list[Notification], qs_group: list[Group]
     ) -> None:
         """
         Test that `all_notifications` filters notifications by groups.
@@ -59,9 +58,9 @@ class TestNotificationQuerySet:
 
     def test_all_notifications_with_recipients_and_groups(
         self,
-        notifications: List[Notification],
-        qs_user: List[User],
-        qs_group: List[Group],
+        notifications: list[Notification],
+        qs_user: list[User],
+        qs_group: list[Group],
     ) -> None:
         """
         Test that `all_notifications` filters notifications by both recipients and groups.
@@ -82,8 +81,60 @@ class TestNotificationQuerySet:
         )
         assert queryset.count() == len(notifications)
 
+    def test_staff_unseen_query_is_scoped_to_direct_recipients(
+        self, admin_user: User, user: User, notification: Notification
+    ) -> None:
+        """Staff status does not make another user's notification visible."""
+        notification.recipient.add(user)
+
+        assert (
+            not Notification.objects.unseen(unseen_by=admin_user)
+            .filter(pk=notification.pk)
+            .exists()
+        )
+
+        notification.recipient.add(admin_user)
+        assert (
+            Notification.objects.unseen(unseen_by=admin_user)
+            .filter(pk=notification.pk)
+            .exists()
+        )
+
+    def test_group_target_mark_all_and_clear_all(
+        self, notification: Notification, user: User, group: Group
+    ) -> None:
+        """Manager lifecycle helpers preserve group membership and uniqueness."""
+        user.groups.add(group)
+        notification.group.add(group)
+        notification.recipient.add(user)
+
+        count = Notification.objects.mark_all_as_seen(user)
+
+        assert count == 1
+        assert notification.seen.filter(user=user).count() == 1
+        Notification.objects.clear_all(user)
+        assert (
+            DeletedNotification.objects.filter(
+                user=user, notification=notification
+            ).count()
+            == 1
+        )
+
+    def test_group_member_manager_soft_delete(
+        self, notification: Notification, user: User, group: Group
+    ) -> None:
+        """Single soft-delete supports a group-only notification."""
+        user.groups.add(group)
+        notification.group.add(group)
+
+        Notification.objects.delete_notification(notification.pk, recipient=user)
+
+        assert DeletedNotification.objects.filter(
+            user=user, notification=notification
+        ).exists()
+
     def test_sent_with_groups(
-        self, notifications: List[Notification], qs_group: List[Group]
+        self, notifications: list[Notification], qs_group: list[Group]
     ) -> None:
         """
         Test that `sent` filters notifications by groups.
@@ -101,7 +152,7 @@ class TestNotificationQuerySet:
         queryset = Notification.objects.sent(groups=qs_group)
         assert queryset.count() == len([n for n in notifications if n.is_sent])
 
-    def test_unsent(self, notifications: List[Notification]) -> None:
+    def test_unsent(self, notifications: list[Notification]) -> None:
         """
         Test that `unsent` filters only unsent notifications.
 
@@ -119,9 +170,9 @@ class TestNotificationQuerySet:
 
     def test_unsent_with_recipients_and_groups(
         self,
-        notifications: List[Notification],
-        qs_user: List[User],
-        qs_group: List[Group],
+        notifications: list[Notification],
+        qs_user: list[User],
+        qs_group: list[Group],
     ) -> None:
         """
         Test that `unsent` filters unsent notifications with recipients and groups.
@@ -141,7 +192,7 @@ class TestNotificationQuerySet:
         assert queryset.count() == len([n for n in notifications if not n.is_sent])
 
     def test_unsent_exclude_deleted(
-        self, notifications: List[Notification], qs_user: List[User]
+        self, notifications: list[Notification], qs_user: list[User]
     ) -> None:
         """
         Test that `unsent` excludes notifications that have been soft deleted.
@@ -159,7 +210,7 @@ class TestNotificationQuerySet:
         queryset = Notification.objects.unsent(exclude_deleted_by=qs_user)
         assert queryset.count() > 0
 
-    def test_mark_as_sent(self, notifications: List[Notification]) -> None:
+    def test_mark_as_sent(self, notifications: list[Notification]) -> None:
         """
         Test that `mark_as_sent` is called for all notifications.
 
@@ -175,7 +226,7 @@ class TestNotificationQuerySet:
         assert True
 
     def test_deleted(
-        self, notifications: List[Notification], qs_user: List[User]
+        self, notifications: list[Notification], qs_user: list[User]
     ) -> None:
         """
         Test that `deleted` returns notifications that have been marked as deleted.
@@ -194,7 +245,7 @@ class TestNotificationQuerySet:
         assert deleted.count() == 0  # Assuming no notifications are deleted yet
 
     def test_create_notification_with_groups(
-        self, another_user: User, qs_user: List[User], qs_group: List[Group]
+        self, another_user: User, qs_user: list[User], qs_group: list[Group]
     ) -> None:
         """
         Test that `create_notification` adds groups correctly to the notification.
@@ -219,7 +270,7 @@ class TestNotificationQuerySet:
         assert notification.group.count() == 1
         assert notification.group.first() == qs_group
 
-    def test_update_notification(self, notifications: List[Notification]) -> None:
+    def test_update_notification(self, notifications: list[Notification]) -> None:
         """
         Test that `update_notification` correctly updates the notification attributes.
 
@@ -243,7 +294,7 @@ class TestNotificationQuerySet:
         assert updated_notification.data is not None
 
     def test_delete_notification_without_recipient(
-        self, notifications: List[Notification]
+        self, notifications: list[Notification]
     ) -> None:
         """
         Test that `delete_notification` raises a ValueError if no recipient is provided for a soft delete.
@@ -263,7 +314,7 @@ class TestNotificationQuerySet:
             )
 
     def test_delete_notification_with_recipient(
-        self, notifications: List[Notification], qs_user: List[User]
+        self, notifications: list[Notification], qs_user: list[User]
     ) -> None:
         """
         Test that `delete_notification` correctly handles soft delete with a recipient.

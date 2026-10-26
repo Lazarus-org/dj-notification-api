@@ -49,7 +49,7 @@ class TestNotificationRecipient:
         NotificationRecipient.objects.create(notification=notification, recipient=user)
 
         # Try to create a second NotificationRecipient instance with the same recipient and notification
-        with pytest.raises(IntegrityError, match="UNIQUE constraint failed"):
+        with pytest.raises(IntegrityError):
             NotificationRecipient.objects.create(
                 notification=notification, recipient=user
             )

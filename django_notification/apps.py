@@ -1,3 +1,5 @@
+from importlib import import_module
+
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
@@ -21,4 +23,4 @@ class DjangoNotificationConfig(AppConfig):
         settings for notifications.
 
         """
-        from django_notification.settings import checks
+        import_module("django_notification.settings.checks")

@@ -58,22 +58,22 @@ class TestDeletedNotificationAdmin:
         url = reverse("admin:django_notification_deletednotification_changelist")
         response = client.get(url)
 
-        assert (
-            response.status_code == 200
-        ), "Expected changelist view to return status 200."
+        assert response.status_code == 200, (
+            "Expected changelist view to return status 200."
+        )
         content = response.content.decode()
-        assert (
-            "notification_id" in content
-        ), "'notification_id' field is missing in the list display."
-        assert (
-            "get_title" in content
-        ), "'get_title' field is missing in the list display."
-        assert (
-            "get_deleted_by" in content
-        ), "'get_deleted_by' field is missing in the list display."
-        assert (
-            "deleted_at" in content
-        ), "'deleted_at' field is missing in the list display."
+        assert "notification_id" in content, (
+            "'notification_id' field is missing in the list display."
+        )
+        assert "get_title" in content, (
+            "'get_title' field is missing in the list display."
+        )
+        assert "get_deleted_by" in content, (
+            "'get_deleted_by' field is missing in the list display."
+        )
+        assert "deleted_at" in content, (
+            "'deleted_at' field is missing in the list display."
+        )
 
     def test_deleted_notification_admin_filters(
         self, admin_user: User, deleted_notification: DeletedNotification
@@ -94,12 +94,12 @@ class TestDeletedNotificationAdmin:
             url + "?deleted_at__gte=2024-01-01+00%3A00%3A00%2B00%3A00"
         )
 
-        assert (
-            response.status_code == 200
-        ), "Expected filtered changelist view to return status 200."
-        assert (
-            "Deleted Notifications" in response.content.decode()
-        ), "'Deleted Notifications' filter not applied."
+        assert response.status_code == 200, (
+            "Expected filtered changelist view to return status 200."
+        )
+        assert "Deleted Notifications" in response.content.decode(), (
+            "'Deleted Notifications' filter not applied."
+        )
 
     def test_deleted_notification_admin_search(
         self, admin_user: User, user: User, deleted_notification: DeletedNotification
@@ -123,17 +123,17 @@ class TestDeletedNotificationAdmin:
             DeletedNotification.objects.all(),
             deleted_notification.notification.id,
         )
-        assert (
-            queryset.count() == 1
-        ), "Search by notification ID did not return the expected result."
+        assert queryset.count() == 1, (
+            "Search by notification ID did not return the expected result."
+        )
 
         # Test search by the username of the user who deleted this notification
         queryset, _ = model_admin.get_search_results(
             request, DeletedNotification.objects.all(), user.username
         )
-        assert (
-            queryset.count() == 1
-        ), "Search by username did not return the expected result."
+        assert queryset.count() == 1, (
+            "Search by username did not return the expected result."
+        )
 
     def test_deleted_notification_admin_queryset(
         self, admin_user: User, deleted_notification: DeletedNotification
@@ -153,9 +153,9 @@ class TestDeletedNotificationAdmin:
         queryset = model_admin.get_queryset(request)
 
         # Check that the query uses select_related for 'notification' and 'user' fields
-        assert "notification" in str(
-            queryset.query
-        ), "'notification' field not optimized with select_related."
-        assert "user" in str(
-            queryset.query
-        ), "'user' field not optimized with select_related."
+        assert "notification" in str(queryset.query), (
+            "'notification' field not optimized with select_related."
+        )
+        assert "user" in str(queryset.query), (
+            "'user' field not optimized with select_related."
+        )

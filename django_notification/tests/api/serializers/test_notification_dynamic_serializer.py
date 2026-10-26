@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -8,7 +8,6 @@ from pytest import mark
 from django_notification.api.serializers.dynamic_notification import (
     NotificationDynamicSerializer,
 )
-from django_notification.constants.default_settings import default_serializer_settings
 from django_notification.settings.conf import config
 from django_notification.tests.constants import PYTHON_VERSION, PYTHON_VERSION_REASON
 from django_notification.utils.serialization.field_filters import (
@@ -34,7 +33,7 @@ class TestNotificationDynamicSerializer:
 
     @patch.object(config, "exclude_serializer_null_fields", False)
     @mark.django_db
-    def test_title_generation(self, notification_dict: Dict[str, Any]) -> None:
+    def test_title_generation(self, notification_dict: dict[str, Any]) -> None:
         """
         Test that the NotificationDynamicSerializer generates the correct title for the notification.
 
@@ -50,7 +49,7 @@ class TestNotificationDynamicSerializer:
         assert serializer.data["title"] == generate_title(notification_dict)
 
     @mark.django_db
-    def test_filter_non_empty_fields(self, notification_dict: Dict[str, Any]) -> None:
+    def test_filter_non_empty_fields(self, notification_dict: dict[str, Any]) -> None:
         """
         Test that the NotificationDynamicSerializer filters out empty fields from its output.
 
@@ -68,7 +67,7 @@ class TestNotificationDynamicSerializer:
             assert value is not None and value != "", f"Field {field} is empty"
 
     @mark.django_db
-    def test_to_representation(self, notification_dict: Dict[str, Any]) -> None:
+    def test_to_representation(self, notification_dict: dict[str, Any]) -> None:
         """
         Test that the NotificationDynamicSerializer's to_representation method correctly processes the notification data.
 

@@ -63,11 +63,11 @@ class TestDeletedNotification:
         self, notification: Notification, user: User
     ) -> None:
         """
-        Test the save method when the user is a recipient or group member of the notification.
+        Test the save method when the user is a direct recipient of the notification.
 
         Asserts:
         -------
-            - The `DeletedNotification` instance is saved correctly if the user is a recipient or group member.
+            - The `DeletedNotification` instance is saved for a direct recipient.
         """
         # Add the user as a recipient
         notification.recipient.add(user)
@@ -83,17 +83,30 @@ class TestDeletedNotification:
             notification=notification, user=user
         ).exists()
 
+    def test_group_member_can_soft_delete(
+        self, notification: Notification, user: User, group
+    ) -> None:
+        """Targeted-group membership permits an independent soft-delete marker."""
+        user.groups.add(group)
+        notification.group.add(group)
+
+        DeletedNotification.objects.create(notification=notification, user=user)
+
+        assert DeletedNotification.objects.filter(
+            notification=notification, user=user
+        ).exists()
+
     def test_save_method_with_invalid_user(
         self, notification: Notification, another_user: User
     ) -> None:
         """
-        Test that a `PermissionError` is raised when the user is not a recipient or group member.
+        Test that a `PermissionError` is raised when the user is not a direct recipient.
 
         Asserts:
         -------
             - A `PermissionError` is raised with the appropriate message if the user is not authorized.
         """
-        # Ensure that another_user is not a recipient or group member
+        # Ensure that another_user is not a direct recipient.
         with pytest.raises(
             PermissionError,
             match="Sorry! you don't have permission to delete this notification",
@@ -103,28 +116,20 @@ class TestDeletedNotification:
             )
             deleted_notification.save()
 
-    def test_save_method_for_staff_user(
+    def test_save_method_for_staff_non_recipient_is_denied(
         self, notification: Notification, user: User
     ) -> None:
-        """
-        Test that a staff user can save `DeletedNotification` even if they are not a recipient or group member.
-
-        Asserts:
-        -------
-            - The `DeletedNotification` instance is saved correctly if the user is a staff member.
-        """
-        # Promote the user to staff
+        """Staff status alone does not grant soft-delete ownership."""
         user.is_staff = True
         user.save()
 
-        # Save DeletedNotification instance
-        deleted_notification = DeletedNotification(
-            notification=notification, user=user, deleted_at=now()
-        )
-        deleted_notification.save()
+        with pytest.raises(
+            PermissionError,
+            match="Sorry! you don't have permission to delete this notification",
+        ):
+            DeletedNotification.objects.create(notification=notification, user=user)
 
-        # Verify that the instance is saved
-        assert DeletedNotification.objects.filter(
+        assert not DeletedNotification.objects.filter(
             notification=notification, user=user
         ).exists()
 

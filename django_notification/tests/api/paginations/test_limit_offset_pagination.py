@@ -40,9 +40,9 @@ class TestDefaultLimitOffsetPagination:
         drf_request = Request(request)  # Wrap in DRF request
         paginator = DefaultLimitOffSetPagination()
         limit = paginator.get_limit(drf_request)
-        assert (
-            limit == 5
-        ), "The limit was not correctly returned for a valid limit parameter."
+        assert limit == 5, (
+            "The limit was not correctly returned for a valid limit parameter."
+        )
 
     def test_get_limit_with_default_limit(self) -> None:
         """
@@ -56,9 +56,9 @@ class TestDefaultLimitOffsetPagination:
         drf_request = Request(request)  # Wrap in DRF request
         paginator = DefaultLimitOffSetPagination()
         limit = paginator.get_limit(drf_request)
-        assert (
-            limit == paginator.default_limit
-        ), "The default limit was not correctly returned when no limit was provided."
+        assert limit == paginator.default_limit, (
+            "The default limit was not correctly returned when no limit was provided."
+        )
 
     def test_get_limit_with_invalid_limit(self) -> None:
         """
@@ -72,9 +72,9 @@ class TestDefaultLimitOffsetPagination:
         drf_request = Request(request)  # Wrap in DRF request
         paginator = DefaultLimitOffSetPagination()
         limit = paginator.get_limit(drf_request)
-        assert (
-            limit == paginator.default_limit
-        ), "The default limit was not correctly returned for an invalid limit parameter."
+        assert limit == paginator.default_limit, (
+            "The default limit was not correctly returned for an invalid limit parameter."
+        )
 
     def test_get_limit_with_limit_above_max_limit(self) -> None:
         """
@@ -88,9 +88,9 @@ class TestDefaultLimitOffsetPagination:
         drf_request = Request(request)  # Wrap in DRF request
         paginator = DefaultLimitOffSetPagination()
         limit = paginator.get_limit(drf_request)
-        assert (
-            limit == paginator.max_limit
-        ), "The max limit was not correctly enforced for a limit exceeding the maximum allowed value."
+        assert limit == paginator.max_limit, (
+            "The max limit was not correctly enforced for a limit exceeding the maximum allowed value."
+        )
 
     def test_get_limit_with_limit_below_min_limit(self) -> None:
         """
@@ -104,6 +104,6 @@ class TestDefaultLimitOffsetPagination:
         drf_request = Request(request)  # Wrap in DRF request
         paginator = DefaultLimitOffSetPagination()
         limit = paginator.get_limit(drf_request)
-        assert (
-            limit == paginator.default_limit
-        ), "The default limit was not correctly enforced for a limit below the minimum allowed value."
+        assert limit == paginator.default_limit, (
+            "The default limit was not correctly enforced for a limit below the minimum allowed value."
+        )

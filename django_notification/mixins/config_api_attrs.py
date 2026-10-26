@@ -1,15 +1,14 @@
-from typing import List, Optional, Type
-
 from rest_framework.parsers import BaseParser
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
+from rest_framework.settings import api_settings
 from rest_framework.throttling import BaseThrottle
 
 from django_notification.settings.conf import config
 
 
 class ConfigurableAttrsMixin:
-    """A mixin for dynamically configuring API attributes based on settings
-    from the config.
+    """A mixin for dynamically configuring API attributes based on settings from the
+    config.
 
     This mixin allows you to configure attributes such as permission classes, filter classes,
     pagination, and throttling for the API views. It reads configurations from the `config`
@@ -27,8 +26,7 @@ class ConfigurableAttrsMixin:
     """
 
     def configure_attrs(self) -> None:
-        """Configures API attributes dynamically based on settings from the
-        `config`.
+        """Configures API attributes dynamically based on settings from the `config`.
 
         This method sets the following attributes:
         - `ordering_fields`: Configured based on `config.api_ordering_fields`.
@@ -40,14 +38,27 @@ class ConfigurableAttrsMixin:
         - `throttle_classes`: Configured based on `config.api_throttle_class`.
 
         """
-        self.ordering_fields: Optional[List[str]] = config.api_ordering_fields
-        self.search_fields: Optional[List[str]] = config.api_search_fields
-        self.parser_classes: List[Type[BaseParser]] = config.api_parser_classes
+        self.ordering_fields: list[str] | None = config.api_ordering_fields
+        self.search_fields: list[str] | None = config.api_search_fields
+        self.parser_classes: list[type[BaseParser]] = (
+            config.api_parser_classes or api_settings.DEFAULT_PARSER_CLASSES
+        )
 
-        self.permission_classes: List[Type[BasePermission]] = [IsAuthenticated]
-
+        # DRF supplies @action(permission_classes=...) via view initkwargs.
+        # Never replace an action-specific permission with the configured
+        # defaults: doing so would remove IsAdminUser from hard-delete routes.
+        # Authentication and the project's extra permission are mandatory for
+        # both ordinary routes and action-specific routes.
+        action_permissions = self.__dict__.get(
+            "permission_classes", getattr(type(self), "permission_classes", ())
+        )
+        permissions: list[type[BasePermission]] = [IsAuthenticated]
         if config.api_extra_permission_class:
-            self.permission_classes.append(config.api_extra_permission_class)
+            permissions.append(config.api_extra_permission_class)
+        for permission in action_permissions:
+            if permission is not AllowAny and permission not in permissions:
+                permissions.append(permission)
+        self.permission_classes = permissions
 
         if config.api_filterset_class:
             self.filterset_class = config.api_filterset_class
@@ -56,6 +67,6 @@ class ConfigurableAttrsMixin:
             self.pagination_class = config.api_pagination_class
 
         if config.api_throttle_class:
-            self.throttle_classes: Optional[List[Type[BaseThrottle]]] = [
+            self.throttle_classes: list[type[BaseThrottle]] | None = [
                 config.api_throttle_class
             ]

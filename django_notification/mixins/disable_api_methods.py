@@ -1,12 +1,12 @@
-from typing import Any, List
+from typing import Any
 
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.request import Request
 
 
 class DisableMethodsMixin:
-    """A mixin to dynamically disable specified HTTP methods based on
-    configuration or conditions.
+    """A mixin to dynamically disable specified HTTP methods based on configuration or
+    conditions.
 
     This mixin allows you to disable HTTP methods such as GET, POST, PUT, DELETE, etc.,
     by overriding them with a method that raises `MethodNotAllowed`. This is useful for
@@ -14,9 +14,9 @@ class DisableMethodsMixin:
 
     """
 
-    def disable_methods(self, methods: List[str]) -> None:
-        """Disables the specified HTTP methods by overriding them with a method
-        that raises `MethodNotAllowed`.
+    def disable_methods(self, methods: list[str]) -> None:
+        """Disables the specified HTTP methods by overriding them with a method that
+        raises `MethodNotAllowed`.
 
         Args:
             methods (List[str]): A list of HTTP method names to disable (e.g., ["GET", "POST"]).

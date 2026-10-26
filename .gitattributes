@@ -1,0 +1,9 @@
+* text=auto
+*.py text eol=lf
+*.rst text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.bat text eol=crlf

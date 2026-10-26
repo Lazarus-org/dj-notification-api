@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from django.utils.timezone import now, timedelta
@@ -43,7 +43,7 @@ class TestGenerateTitle:
         ],
     )
     def test_generate_title_with_valid_data(
-        self, notification_dict: Dict[str, Any], expected_title: str
+        self, notification_dict: dict[str, Any], expected_title: str
     ) -> None:
         """
         Test that `generate_title` correctly formats the title when provided with valid data.
@@ -77,7 +77,7 @@ class TestGenerateTitle:
             generate_title(notification)  # type: ignore
 
     def test_generate_title_with_no_description(
-        self, notification_dict: Dict[str, Any]
+        self, notification_dict: dict[str, Any]
     ) -> None:
         """
         Test that `generate_title` raises a ValueError when the description key is missing.

@@ -1,45 +1,124 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    name: Python ${{ matrix.python-version }}
+  source-quality:
+    name: Metadata, lint, pre-commit, build
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version:
-          - '3.9'
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
+          version: "0.13.5"
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify metadata and compatibility matrix
+        run: python scripts/check_packaging.py
+      - name: Install quality tools
+        run: uv sync --locked --all-extras
+      - name: Lint
         run: |
-          python -m pip install --upgrade pip
-          pip install coverage codecov pytest poetry
-          pip install -r packages/requirements-dev.txt
+          uv run --locked ruff check django_notification
+          uv run --locked black --check django_notification scripts
+          uv run --locked ruff format --check django_notification/tests docs/conf.py
+      - name: Static security scan
+        run: uv run --locked bandit -c pyproject.toml -r django_notification
+      - name: Type checks and strict documentation build
+        run: |
+          uv run --locked mypy django_notification
+          uv run --locked sphinx-build -W --keep-going -b html docs docs/_build/html
+      - name: Pre-commit
+        run: uv run --locked pre-commit run --config .pre-commit-config-ci.yaml --all-files
+      - name: Build package and check artifacts
+        run: |
+          uv build
+          uv run --locked twine check dist/*
+      - name: Verify installed core without optional integrations
+        run: |
+          uv venv .validation/core
+          uv pip install --python .validation/core/bin/python dist/*.whl
+          repo_dir="$PWD"
+          cd "$RUNNER_TEMP"
+          "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only
+          "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only --user-model CustomUser
+          "$repo_dir/.validation/core/bin/python" "$repo_dir/scripts/verify_installation.py" --require-core-only --user-model BareUser
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/*
+          if-no-files-found: error
 
-      - name: Run tests with coverage
-        run: pytest --cov=django_notification --cov-report=xml
+  compatibility:
+    name: Python ${{ matrix.python }} / Django ${{ matrix.django }} / DRF 3.18
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {python: '3.10', django: '52', env: 'py310-django52-drf318'}
+          - {python: '3.11', django: '52', env: 'py311-django52-drf318'}
+          - {python: '3.12', django: '52', env: 'py312-django52-drf318'}
+          - {python: '3.12', django: '60', env: 'py312-django60-drf318'}
+          - {python: '3.12', django: '61', env: 'py312-django61-drf318'}
+          - {python: '3.13', django: '52', env: 'py313-django52-drf318'}
+          - {python: '3.13', django: '60', env: 'py313-django60-drf318'}
+          - {python: '3.13', django: '61', env: 'py313-django61-drf318'}
+          - {python: '3.14', django: '52', env: 'py314-django52-drf318'}
+          - {python: '3.14', django: '60', env: 'py314-django60-drf318'}
+          - {python: '3.14', django: '61', env: 'py314-django61-drf318'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.5"
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install tox
+        run: uv pip install --system "tox==4.67.1" "tox-uv==1.37.0"
+      - name: Run requested environment only
+        run: tox -e ${{ matrix.env }}
 
-      - name: Run Tox tests
-        run: tox
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files --config=.pre-commit-config-ci.yaml
-
-      - name: Upload coverage to Codecov
-        run: codecov
+  postgresql:
+    name: PostgreSQL transactions and concurrency
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          POSTGRES_USER: validation
+          POSTGRES_PASSWORD: validation
+          POSTGRES_DB: notification_validation
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U validation"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_NOTIFICATION_TEST_DATABASE: postgresql
+      PGUSER: validation
+      PGPASSWORD: validation
+      PGDATABASE: notification_validation
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.5"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: uv sync --locked --all-extras
+      - run: uv run --locked pytest

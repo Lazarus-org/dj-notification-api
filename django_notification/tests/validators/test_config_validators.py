@@ -271,7 +271,8 @@ class TestValidateOptionalClassSetting:
             The result should contain errors for each invalid class path with the expected error ID.
         """
         errors = validate_optional_classes_setting(
-            [1, 5], "SOME_CLASS_SETTING"  # type: ignore
+            [1, 5],
+            "SOME_CLASS_SETTING",  # type: ignore
         )
         assert len(errors) == 2
         assert errors[0].id == "django_notification.E012_SOME_CLASS_SETTING"

@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any
 
 from django.conf import settings
 from django.db.models import CASCADE, DateTimeField, ForeignKey, Index, Model
@@ -18,7 +18,7 @@ class NotificationSeen(Model):
         notification (ForeignKey): A foreign key linking to the Notification model,
             indicating which notification was seen.
         user (ForeignKey): A foreign key linking to the User model,
-            representing the recipient or group member who has seen the notification.
+            representing the direct recipient or group member who has seen it.
         seen_at (DateTimeField): A timestamp of when the notification was seen,
             automatically set to the current time when created.
 
@@ -36,7 +36,8 @@ class NotificationSeen(Model):
         save(*args, **kwargs) -> None:
             Saves the instance to the database.
             - Validates that the `seen_at` timestamp is not in the past.
-            - Ensures the user has permission to mark the notification as seen.
+            - Ensures the user is a recipient or targeted-group member before marking it
+              as seen.
             - If the user does not have permission, raises a `PermissionError`.
 
     Usage Example:
@@ -62,7 +63,7 @@ class NotificationSeen(Model):
     user = ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name=_("User"),
-        help_text=_("The recipient or a group member who has seen the notification."),
+        help_text=_("The recipient or group member who has seen the notification."),
         db_comment=(
             "Foreign key linking to the User model (AUTH_USER_MODEL),"
             " representing the user who has viewed the notification."
@@ -78,17 +79,17 @@ class NotificationSeen(Model):
     )
 
     class Meta:
-        db_table: str = "notification_seen"
-        verbose_name: str = _("Notification Seen")
-        verbose_name_plural: str = _("Notifications Seen")
-        unique_together: Tuple[str, str] = ("notification", "user")
-        indexes: List[Index] = [
+        db_table = "notification_seen"
+        verbose_name = _("Notification Seen")
+        verbose_name_plural = _("Notifications Seen")
+        unique_together = ("notification", "user")
+        indexes = [
             Index(
                 fields=["notification", "user"],
                 name="notification_seen_user_idx",
             ),
         ]
-        ordering: Tuple[str] = ("-seen_at",)
+        ordering = ("-seen_at",)
 
     def __str__(self) -> str:
         username = get_username(self.user)
@@ -97,7 +98,8 @@ class NotificationSeen(Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Saves the object to the database.
 
-        This method checks if the user has permission to mark the notification as seen.
+        This method checks that the user is a recipient or targeted-group member
+        before marking the notification as seen.
 
         Args:
             *args: Additional positional arguments passed to the parent `save` method.

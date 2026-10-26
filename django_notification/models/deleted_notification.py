@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any
 
 from django.conf import settings
 from django.db.models import CASCADE, DateTimeField, ForeignKey, Index, Model
@@ -66,11 +66,11 @@ class DeletedNotification(Model):
     )
 
     class Meta:
-        db_table: str = "deleted_notifications"
-        verbose_name: str = _("Deleted Notification")
-        verbose_name_plural: str = _("Deleted Notifications")
-        unique_together: Tuple[str, str] = ("user", "notification")
-        indexes: List[Index] = [
+        db_table = "deleted_notifications"
+        verbose_name = _("Deleted Notification")
+        verbose_name_plural = _("Deleted Notifications")
+        unique_together = ("user", "notification")
+        indexes = [
             Index(
                 fields=["notification", "user"],
                 name="deleted_notification_user_idx",

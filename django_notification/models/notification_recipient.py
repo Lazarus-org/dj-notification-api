@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 from django.conf import settings
 from django.db.models import CASCADE, ForeignKey, Index, Model
 from django.utils.translation import gettext_lazy as _
@@ -50,11 +48,11 @@ class NotificationRecipient(Model):
     )
 
     class Meta:
-        db_table: str = "notification_recipient"
-        verbose_name: str = _("Notification Recipient")
-        verbose_name_plural: str = _("Notification Recipients")
-        unique_together: Tuple[str, str] = ("recipient", "notification")
-        indexes: List[Index] = [
+        db_table = "notification_recipient"
+        verbose_name = _("Notification Recipient")
+        verbose_name_plural = _("Notification Recipients")
+        unique_together = ("recipient", "notification")
+        indexes = [
             Index(
                 fields=["notification", "recipient"],
                 name="notification_recipient_idx",

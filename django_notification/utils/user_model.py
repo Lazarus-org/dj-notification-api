@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth import get_user_model
 
 # Cache the user model and username field
-UserModel = get_user_model()
-USERNAME_FIELD = UserModel.USERNAME_FIELD
-REQUIRED_FIELDS = UserModel.REQUIRED_FIELDS
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser as UserModel
+else:
+    UserModel = get_user_model()
+USERNAME_FIELD = get_user_model().USERNAME_FIELD
+REQUIRED_FIELDS = get_user_model().REQUIRED_FIELDS
 
 
 def get_username(user: UserModel) -> str:

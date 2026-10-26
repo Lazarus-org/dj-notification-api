@@ -1,11 +1,11 @@
 import logging
 
-from django_notification.utils.user_model import UserModel, get_username
+from django_notification.utils.user_model import UserModel
 
 
 class NotificationPermission:
-    """A permission class responsible for determining if a user has permission
-    to perform actions related to notifications.
+    """A permission class responsible for determining if a user has permission to
+    perform actions related to notifications.
 
     This class encapsulates the permission logic for notifications, allowing
     for a clear separation of concerns and making it reusable across the system.
@@ -15,9 +15,9 @@ class NotificationPermission:
 
     Methods:
         user_has_permission(user: User) -> bool:
-            Checks if the user is a recipient, in a group, or a staff member with permission.
+            Checks for direct-recipient or targeted-group membership.
         validate_permission(user: User, action: str) -> None:
-            Validates if the user has permission to perform a specific action on the notification.
+            Validates whether the user can perform an action on the notification.
 
     """
 
@@ -25,8 +25,7 @@ class NotificationPermission:
         self.notification = notification
 
     def user_has_permission(self, user: UserModel) -> bool:
-        """Check if the user is a recipient, in a group, or a staff member with
-        permission.
+        """Check whether the user is a direct recipient or group member.
 
         Args:
             user (User): The user to check.
@@ -35,16 +34,21 @@ class NotificationPermission:
             bool: Whether the user has permission or not.
 
         """
-        is_recipient = self.notification.recipient.filter(pk=user.pk).exists()
-        is_in_group = self.notification.group.filter(
-            pk__in=user.groups.values_list("id", flat=True)
-        ).exists()
+        notification = self.notification
+        if notification.pk is None:
+            return False
 
-        return is_recipient or is_in_group or user.is_staff
+        # Use the same authoritative direct/group visibility policy as the API
+        # and lifecycle service. This also handles inactive/anonymous users and
+        # custom user models without a `groups` relationship.
+        queryset = notification.__class__.objects
+        if notification._state.db is not None:
+            queryset = queryset.db_manager(notification._state.db)
+        return queryset.visible_to(user).active_at().filter(pk=notification.pk).exists()
 
     def validate_permission(self, user: UserModel, action: str) -> None:
-        """Validate if the user has permission to perform a specific action on
-        the notification.
+        """Validate if the user has permission to perform a specific action on the
+        notification.
 
         Args:
             user (User): The user to validate.
@@ -55,14 +59,7 @@ class NotificationPermission:
 
         """
         if not self.user_has_permission(user):
-            username = get_username(user)
-            logging.warning(
-                "User %s (ID: %s) tried to %s notification %s without permission.",
-                username,
-                user.pk,
-                action,
-                self.notification.pk,
-            )
+            logging.warning("Notification permission denied for action: %s", action)
             raise PermissionError(
                 f"Sorry! you don't have permission to {action} this notification."
             )

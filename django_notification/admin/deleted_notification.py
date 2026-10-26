@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpRequest
@@ -23,22 +21,21 @@ class DeletedNotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 
     """
 
-    autocomplete_fields: List[str] = ["notification", "user"]
-    list_display: List[str] = [
+    autocomplete_fields = ["notification", "user"]
+    list_display = [
         "notification_id",
         "get_title",
         "get_deleted_by",
         "deleted_at",
     ]
-    list_filter: List[str] = ["deleted_at"]
-    list_per_page: int = 10
-    search_fields: List[str] = ["notification__id", f"user__{USERNAME_FIELD}"]
+    list_filter = ["deleted_at"]
+    list_per_page = 10
+    search_fields = ["notification__id", f"user__{USERNAME_FIELD}"]
 
     def get_search_results(
         self, request: HttpRequest, queryset: QuerySet, search_term: str
-    ) -> Tuple[QuerySet, bool]:
-        """Override the get_search_results method to include additional search
-        logic.
+    ) -> tuple[QuerySet, bool]:
+        """Override the get_search_results method to include additional search logic.
 
         Searches by notification ID or user details. Adds results to the queryset if the search term is valid.
 
@@ -66,6 +63,7 @@ class DeletedNotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
 
         return queryset, use_distinct
 
+    @admin.display(description="Title")
     def get_title(self, instance: DeletedNotification) -> str:
         """Retrieve the title of the notification for display in the list view.
 
@@ -78,8 +76,7 @@ class DeletedNotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         """
         return str(instance.notification)
 
-    get_title.short_description = "Title"
-
+    @admin.display(description="Deleted by")
     def get_deleted_by(self, instance: DeletedNotification) -> str:
         """Retrieve the username of the user who deleted the notification.
 
@@ -92,11 +89,9 @@ class DeletedNotificationAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         """
         return str(instance.user)
 
-    get_deleted_by.short_description = "Deleted by"
-
     def get_queryset(self, request: HttpRequest) -> QuerySet:
-        """Override the get_queryset method to select related fields for
-        performance optimization.
+        """Override the get_queryset method to select related fields for performance
+        optimization.
 
         Args:
             request: The current request object.

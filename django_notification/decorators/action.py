@@ -1,12 +1,13 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 from rest_framework.decorators import action
 
 
 def conditional_action(condition: bool, *args: Any, **kwargs: Any) -> Callable:
-    """Conditionally apply the Django REST Framework's `action` decorator based
-    on the given condition.
+    """Conditionally apply the Django REST Framework's `action` decorator based on the
+    given condition.
 
     Args:
         condition (bool): A boolean condition to determine if the `action` decorator should be applied.

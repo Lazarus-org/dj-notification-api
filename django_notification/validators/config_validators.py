@@ -1,13 +1,11 @@
-from typing import List, Optional
-
 from django.core.checks import Error
 from django.utils.module_loading import import_string
 
 VALID_TIME_UNITS = ["second", "minute", "hour", "day"]
 
 
-def validate_boolean_setting(value: bool, config_name: str) -> List[Error]:
-    errors: List[Error] = []
+def validate_boolean_setting(value: bool, config_name: str) -> list[Error]:
+    errors: list[Error] = []
     if not isinstance(value, bool):
         errors.append(
             Error(
@@ -20,11 +18,11 @@ def validate_boolean_setting(value: bool, config_name: str) -> List[Error]:
 
 
 def validate_list_fields(
-    fields: List[str],
+    fields: list[str],
     config_name: str,
-    available_fields: Optional[List] = None,
+    available_fields: list | None = None,
     allow_none: bool = False,
-) -> List[Error]:
+) -> list[Error]:
     errors = []
     if allow_none and fields is None:
         return errors
@@ -67,7 +65,7 @@ def validate_list_fields(
     return errors
 
 
-def validate_throttle_rate(rate: str, setting_name: str) -> List[Error]:
+def validate_throttle_rate(rate: str, setting_name: str) -> list[Error]:
     """
     Validates that a throttle rate is in the correct format: `{number}/{time_unit}`.
 
@@ -125,7 +123,7 @@ def validate_throttle_rate(rate: str, setting_name: str) -> List[Error]:
 
 def validate_optional_class_setting(
     setting_value: str, setting_name: str
-) -> List[Error]:
+) -> list[Error]:
     """Validate that the setting is a valid class path and can be imported.
 
     Args:
@@ -136,7 +134,7 @@ def validate_optional_class_setting(
         List[Error]: A list of validation errors, or an empty list if valid.
 
     """
-    errors: List[Error] = []
+    errors: list[Error] = []
 
     if setting_value is None:
         # If the setting is None, we consider it optional and valid
@@ -168,10 +166,10 @@ def validate_optional_class_setting(
 
 
 def validate_optional_classes_setting(
-    setting_value: List[str], setting_name: str
-) -> List[Error]:
-    """Validate that the setting value is a list of class paths and ensure that
-    they can be imported.
+    setting_value: list[str], setting_name: str
+) -> list[Error]:
+    """Validate that the setting value is a list of class paths and ensure that they can
+    be imported.
 
     Args:
         setting_value (List[str]): The setting value to validate, typically a list of class paths.
@@ -181,7 +179,7 @@ def validate_optional_classes_setting(
         List[Error]: A list of validation errors, or an empty list if the setting is valid.
 
     """
-    errors: List[Error] = []
+    errors: list[Error] = []
 
     # If the setting is None, it's optional, so we consider it valid.
     if setting_value is None:

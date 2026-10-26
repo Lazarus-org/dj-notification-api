@@ -1,5 +1,4 @@
 import sys
-from typing import List
 from unittest.mock import Mock
 
 import pytest
@@ -67,19 +66,19 @@ class TestNotificationAdminSite:
         url = reverse("admin:django_notification_notification_changelist")
         response = client.get(url)
 
-        assert (
-            response.status_code == 200
-        ), "Expected changelist view to return status 200."
+        assert response.status_code == 200, (
+            "Expected changelist view to return status 200."
+        )
         content = response.content.decode()
         assert "id" in content, "'id' field is missing in the list display."
-        assert (
-            "get_title" in content
-        ), "'get_title' field is missing in the list display."
+        assert "get_title" in content, (
+            "'get_title' field is missing in the list display."
+        )
         assert "is_sent" in content, "'is_sent' field is missing in the list display."
         assert "public" in content, "'public' field is missing in the list display."
-        assert (
-            "timestamp" in content
-        ), "'timestamp' field is missing in the list display."
+        assert "timestamp" in content, (
+            "'timestamp' field is missing in the list display."
+        )
 
     def test_notification_admin_inlines(
         self,
@@ -105,16 +104,16 @@ class TestNotificationAdminSite:
         )
         response = client.get(url)
 
-        assert (
-            response.status_code == 200
-        ), "Expected change form view to return status 200."
+        assert response.status_code == 200, (
+            "Expected change form view to return status 200."
+        )
         content = response.content.decode()
-        assert (
-            "Notification Recipients" in content
-        ), "'Notification Recipients' section is missing in the change form view."
-        assert (
-            "Notification Seen" in content
-        ), "'Notification Seen' section is missing in the change form view."
+        assert "Notification Recipients" in content, (
+            "'Notification Recipients' section is missing in the change form view."
+        )
+        assert "Notification Seen" in content, (
+            "'Notification Seen' section is missing in the change form view."
+        )
 
     def test_notification_admin_queryset(
         self, admin_user: User, notification: Notification
@@ -134,15 +133,15 @@ class TestNotificationAdminSite:
         queryset = model_admin.get_queryset(request)
 
         # Check that the query uses select_related for specified fields
-        assert "actor_content_type" in str(
-            queryset.query
-        ), "'actor_content_type' field not optimized with select_related."
-        assert "target_content_type" in str(
-            queryset.query
-        ), "'target_content_type' field not optimized with select_related."
-        assert "action_object_content_type" in str(
-            queryset.query
-        ), "'action_object_content_type' field not optimized with select_related."
+        assert "actor_content_type" in str(queryset.query), (
+            "'actor_content_type' field not optimized with select_related."
+        )
+        assert "target_content_type" in str(queryset.query), (
+            "'target_content_type' field not optimized with select_related."
+        )
+        assert "action_object_content_type" in str(queryset.query), (
+            "'action_object_content_type' field not optimized with select_related."
+        )
 
     def test_notification_recipient_inline_queryset(
         self,
@@ -164,12 +163,12 @@ class TestNotificationAdminSite:
         queryset = inline.get_queryset(request)
 
         # Check that the query uses select_related for specified fields
-        assert "notification" in str(
-            queryset.query
-        ), "'notification' field not optimized with select_related."
-        assert "recipient" in str(
-            queryset.query
-        ), "'recipient' field not optimized with select_related."
+        assert "notification" in str(queryset.query), (
+            "'notification' field not optimized with select_related."
+        )
+        assert "recipient" in str(queryset.query), (
+            "'recipient' field not optimized with select_related."
+        )
 
     def test_notification_seen_inline_queryset(
         self,
@@ -191,15 +190,15 @@ class TestNotificationAdminSite:
         queryset = inline.get_queryset(request)
 
         # Check that the query uses select_related for specified fields
-        assert "notification" in str(
-            queryset.query
-        ), "'notification' field not optimized with select_related."
-        assert "user" in str(
-            queryset.query
-        ), "'user' field not optimized with select_related."
+        assert "notification" in str(queryset.query), (
+            "'notification' field not optimized with select_related."
+        )
+        assert "user" in str(queryset.query), (
+            "'user' field not optimized with select_related."
+        )
 
     def test_mark_all_as_sent_action(
-        self, admin_user: User, notifications: List[Notification]
+        self, admin_user: User, notifications: list[Notification]
     ) -> None:
         """
         Test the 'mark_as_sent' action in the NotificationAdmin interface for bulk marking notifications as sent.
@@ -223,13 +222,13 @@ class TestNotificationAdminSite:
         response = client.post(url, post_data)
 
         # Check if the action was successful and redirected back
-        assert (
-            response.status_code == 302
-        ), "Expected redirect status code after action."
+        assert response.status_code == 302, (
+            "Expected redirect status code after action."
+        )
 
         # Reload notifications from the database and verify that they are marked as sent
         for notification in notifications:
             notification.refresh_from_db()
-            assert (
-                notification.is_sent is True
-            ), f"Notification {notification.id} was not marked as sent."
+            assert notification.is_sent is True, (
+                f"Notification {notification.id} was not marked as sent."
+            )
