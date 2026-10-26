@@ -67,7 +67,7 @@ dev = [
   "pytest>=8.3,<10",
   "pytest-cov>=6,<8",
   "pytest-django>=4.11,<5",
-  "pyupgrade==3.19.1",
+  "pyupgrade==3.21.2",
   "rstcheck[sphinx]==6.2.4",
   "ruff>=0.14,<1",
   "sphinx>=8,<10",

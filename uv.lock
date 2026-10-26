@@ -1301,7 +1301,7 @@ provides-extras = ["channels", "redis"]
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", extras = ["toml"], specifier = ">=1.8,<2" },
-    { name = "black", specifier = "==25.1.0" },
+    { name = "black", specifier = "==25.1" },
     { name = "blacken-docs", specifier = "==1.19.1" },
     { name = "build", specifier = ">=1.2,<2" },
     { name = "channels", extras = ["daphne"], specifier = ">=4.3,<5" },
@@ -1319,14 +1319,14 @@ dev = [
     { name = "pytest", specifier = ">=8.3,<10" },
     { name = "pytest-cov", specifier = ">=6,<8" },
     { name = "pytest-django", specifier = ">=4.11,<5" },
-    { name = "pyupgrade", specifier = "==3.19.1" },
+    { name = "pyupgrade", specifier = "==3.21.2" },
     { name = "rstcheck", extras = ["sphinx"], specifier = "==6.2.4" },
     { name = "ruff", specifier = ">=0.14,<1" },
     { name = "sphinx", specifier = ">=8,<10" },
     { name = "sphinx-rtd-theme", specifier = ">=3,<4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2,<3" },
     { name = "tox", specifier = ">=4.20,<5" },
-    { name = "tox-ini-fmt", specifier = "==1.5.0" },
+    { name = "tox-ini-fmt", specifier = "==1.5" },
     { name = "tox-uv", specifier = ">=1.20,<2" },
     { name = "twine", specifier = ">=6,<8" },
 ]
@@ -2943,14 +2943,14 @@ wheels = [
 
 [[package]]
 name = "pyupgrade"
-version = "3.19.1"
+version = "3.21.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tokenize-rt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/35/3a/efa8e75cf84d53f1b3f0113387ab120ef460396a4068e41b6cf18a3d216d/pyupgrade-3.19.1.tar.gz", hash = "sha256:d10e8c5f54b8327211828769e98d95d95e4715de632a3414f1eef3f51357b9e2", size = 45116, upload-time = "2024-12-17T01:43:02.326Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/a1/dc63caaeed232b1c58eae1b7a75f262d64ab8435882f696ffa9b58c0c415/pyupgrade-3.21.2.tar.gz", hash = "sha256:1a361bea39deda78d1460f65d9dd548d3a36ff8171d2482298539b9dc11c9c06", size = 45455, upload-time = "2025-11-19T00:39:48.012Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/43/c6c1ff945c7900613f6e6ef2a8688639a247d62eb0ffa9935c599f69c08e/pyupgrade-3.19.1-py2.py3-none-any.whl", hash = "sha256:8c5b0bfacae5ff30fa136a53eb7f22c34ba007450d4099e9da8089dabb9e67c9", size = 62412, upload-time = "2024-12-17T01:42:59.829Z" },
+    { url = "https://files.pythonhosted.org/packages/16/8c/433dac11910989a90c40b10149d07ef7224232236971a562d3976790ec53/pyupgrade-3.21.2-py2.py3-none-any.whl", hash = "sha256:2ac7b95cbd176475041e4dfe8ef81298bd4654a244f957167bd68af37d52be9f", size = 62814, upload-time = "2025-11-19T00:39:46.958Z" },
 ]
 
 [[package]]
