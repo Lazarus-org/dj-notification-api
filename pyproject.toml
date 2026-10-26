@@ -58,7 +58,7 @@ dev = [
   "django-stubs>=6.1.2,<7; python_version>='3.11'",
   "docformatter>=1.7.8,<2",
   "isort>=9.0.2,<10",
-  "mypy>=1.20.2,<2",
+  "mypy>=2.4.0,<3",
   "pre-commit>=4.6.2,<5; python_version<'3.11'",
   "pre-commit>=4.7,<5; python_version>='3.11'",
   "psycopg[binary]>=3.3.6,<4",
