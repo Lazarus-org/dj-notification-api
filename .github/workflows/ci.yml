@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.5"
           enable-cache: true
@@ -79,7 +79,7 @@ jobs:
           - {python: '3.14', django: '61', env: 'py314-django61-drf318'}
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.5"
           enable-cache: true
@@ -114,7 +114,7 @@ jobs:
       PGPORT: '5432'
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "0.13.5"
       - uses: actions/setup-python@v7
