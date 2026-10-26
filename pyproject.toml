@@ -1,7 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-
-requires = [ "hatchling>=1.27,<2" ]
+requires = [ "hatchling>=1.32.3,<2" ]
 
 [project]
 name = "dj-notification-api"
@@ -33,14 +32,14 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "django>=5.2,<5.3; python_version<'3.12'",
-  "django>=5.2,<6.2; python_version>='3.12'",
-  "django-filter>=25.2,<27",
+  "django>=5.2.18,<5.3; python_version<'3.12'",
+  "django>=6,<6.2; python_version>='3.12'",
+  "django-filter>=26.1,<27; python_version<'3.11'",
+  "django-filter>=26.2,<27; python_version>='3.11'",
   "djangorestframework>=3.18.3,<3.19",
 ]
-
-optional-dependencies.channels = [ "channels>=4.3,<5" ]
-optional-dependencies.redis = [ "channels>=4.3,<5", "channels-redis>=4.3,<5" ]
+optional-dependencies.channels = [ "channels>=4.3.2,<5" ]
+optional-dependencies.redis = [ "channels>=4.3.2,<5", "channels-redis>=4.3,<5" ]
 urls.Changelog = "https://github.com/lazarus-org/dj-notification-api/blob/main/CHANGELOG.md"
 urls.Documentation = "https://dj-notification-api.readthedocs.io/"
 urls.Issues = "https://github.com/lazarus-org/dj-notification-api/issues"
@@ -48,46 +47,57 @@ urls.Source = "https://github.com/lazarus-org/dj-notification-api"
 
 [dependency-groups]
 dev = [
-  "bandit[toml]>=1.8,<2",
-  "black==25.1",
-  "blacken-docs==1.19.1",
-  "build>=1.2,<2",
-  "channels[daphne]>=4.3,<5",
-  "commitizen>=4,<5",
-  "django-migration-linter>=5.1,<7",
-  "django-stubs>=5.2,<7",
-  "docformatter==1.7.5",
-  "isort>=5.13.2,<7",
-  "mypy>=1.15,<2",
-  "pre-commit>=4,<5",
-  "psycopg[binary]>=3.2,<4",
-  "pylint>=3.3,<4",
-  "pylint-django>=2.6,<3",
-  "pyproject-fmt==2.5.1",
-  "pytest>=8.3,<10",
-  "pytest-cov>=6,<8",
-  "pytest-django>=4.11,<5",
-  "pyupgrade==3.19.1",
-  "rstcheck[sphinx]==6.2.4",
-  "ruff>=0.14,<1",
-  "sphinx>=8,<10",
-  "sphinx-rtd-theme>=3,<4",
-  "tomli>=2,<3; python_version<'3.11'",
-  "tox>=4.20,<5",
-  "tox-ini-fmt==1.5",
-  "tox-uv>=1.20,<2",
-  "twine>=6,<8",
+  "bandit[toml]>=1.9.4,<2",
+  "black>=26.10.1,<27",
+  "blacken-docs>=1.20,<2",
+  "build>=1.6.1,<2",
+  "channels[daphne]>=4.3.2,<5",
+  "commitizen>=4.19.3,<5",
+  "django-migration-linter>=6,<7",
+  "django-stubs>=6.0.9,<7; python_version<'3.11'",
+  "django-stubs>=6.1.2,<7; python_version>='3.11'",
+  "docformatter>=1.7.8,<2",
+  "isort>=9.0.2,<10",
+  "mypy>=1.20.2,<2",
+  "pre-commit>=4.6.2,<5; python_version<'3.11'",
+  "pre-commit>=4.7,<5; python_version>='3.11'",
+  "psycopg[binary]>=3.3.6,<4",
+  "pylint>=4.1.3,<5",
+  "pylint-django>=2.8,<3",
+  "pyproject-fmt>=2.30.2,<3; python_version<'3.11'",
+  "pyproject-fmt>=2.30.3,<3; python_version>='3.11'",
+  "pytest>=9.1.1,<10",
+  "pytest-cov>=7.1,<8",
+  "pytest-django>=4.14,<5",
+  "pyupgrade>=3.21.2,<4; python_version<'3.11'",
+  "pyupgrade>=3.22,<4; python_version>='3.11'",
+  "rstcheck[sphinx]>=6.3,<7",
+  "ruff>=0.17.2,<1",
+  "sphinx>=8.1.3,<10; python_version<'3.11'",
+  "sphinx>=9.0.4,<10; python_version>='3.11'",
+  "sphinx-rtd-theme>=3.1,<4",
+  "tomli>=2.5,<3; python_version<'3.11'",
+  "tox>=4.65,<5; python_version<'3.11'",
+  "tox>=4.67.1,<5; python_version>='3.11'",
+  "tox-ini-fmt>=1.9,<2; python_version<'3.11'",
+  "tox-ini-fmt>=1.10,<2; python_version>='3.11'",
+  "tox-uv>=1.36.1,<2; python_version<'3.11'",
+  "tox-uv>=1.37,<2; python_version>='3.11'",
+  "twine>=7,<8",
 ]
 
-[tool.hatch.build.targets.wheel]
-packages = [ "django_notification" ]
+[tool.hatch]
+build.targets.wheel.packages = [ "django_notification" ]
+build.targets.sdist.include = [ "/django_notification", "/README.md", "/LICENCE", "/pyproject.toml" ]
 
-[tool.hatch.build.targets.sdist]
-include = [ "/django_notification", "/README.md", "/LICENCE", "/pyproject.toml" ]
+[tool.uv]
+# Lock each supported Python/Django branch when an index is available.
+# Keep Python 3.10/3.11 on Django 5.2; Django 6.x requires 3.12+.
+required-version = ">=0.13.5"
 
 [tool.black]
-extend-exclude = '(^|/)django_notification/tests/' # Ruff owns test formatting.
 line-length = 88
+extend-exclude = "(^|/)django_notification/tests/"  # Ruff owns test formatting.
 exclude = '''
 /(
     \.git
@@ -112,162 +122,171 @@ exclude = '''
 target-version = "py310"
 line-length = 88
 extend-exclude = [ "django_notification/migrations" ]
-
 lint.select = [ "E4", "E7", "E9", "F" ]
 
 [tool.isort]
 profile = "black"
 line_length = 88
 skip = [
-  "venv",
-  ".venv",
-  ".tox",
-  "build",
-  "dist",
-  ".git",
-  "__pycache__",
   "*.egg-info",
+  ".git",
   ".mypy_cache",
   ".pytest_cache",
-  "migrations",
-  "node_modules",
+  ".tox",
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
   "env",
   "kernel",
+  "migrations",
+  "node_modules",
+  "venv",
 ]
 
 [tool.pylint]
+argument-rgx = "[a-z_][a-z0-9_]{2,30}$"
+attr-rgx = "[a-z_][a-z0-9_]{2,30}$"
+class-rgx = "[A-Z_][a-zA-Z0-9]+$"
+const-rgx = "([A-Z_][A-Z0-9_]*)|(__.*__)"
 disable = [
   "C0103", # Invalid constant name
   "C0114", # Missing module docstring
   "C0115", # Missing class docstring
   "C0116", # Missing function or method docstring
-  "E1101", # Instance of 'Foo' has no 'bar' member
-  "W0212", # Access to a protected member
   "C0301", # Line too long
   "C0411", # Wrong import order
+  "C0415",
+  "E1101", # Instance of 'Foo' has no 'bar' member
+  "R0401",
+  "R0801", # Duplicate code
+  "R0903", # Too few public methods
+  "R1705", # Unnecessary "elif" after "return"
+  "R1719", # The if expression can be replaced with 'bool(test)'
+  "W0212", # Access to a protected member
   "W0611", # Unused imports
   "W0613", # Unused arguments
-  "W0622", # Redefining built-in names
-  "R0903", # Too few public methods
-  "R0801", # Duplicate code
   "W0621",
-  "C0415",
-  "R1719", # The if expression can be replaced with 'bool(test)'
-  "R1705", # Unnecessary "elif" after "return"
-  "R0401",
-]
-max-line-length = 88
-max-positional-arguments = 15
-ignore = [
-  "tests",
-  "migrations/*",
-  "venv/*",
-  "build/*",
-  "dist/*",
-  ".git/*",
-  ".tox/*",
-  "__pycache__/*",
-  "*.egg-info/*",
-  ".mypy_cache/*",
-  ".pytest_cache/*",
+  "W0622", # Redefining built-in names
 ]
 django-settings-module = "django_notification.tests.typing_settings"
+function-rgx = "[a-z_][a-z0-9_]{2,30}$"
+ignore = [
+  "*.egg-info/*",
+  ".git/*",
+  ".mypy_cache/*",
+  ".pytest_cache/*",
+  ".tox/*",
+  "__pycache__/*",
+  "build/*",
+  "dist/*",
+  "migrations/*",
+  "tests",
+  "venv/*",
+]
 load-plugins = [
   "pylint_django",
   "pylint.extensions.docparams",
 ]
-
-suggestion-mode = true
-const-rgx = "([A-Z_][A-Z0-9_]*)|(__.*__)"
-attr-rgx = "[a-z_][a-z0-9_]{2,30}$"
-variable-rgx = "[a-z_][a-z0-9_]{2,30}$"
-argument-rgx = "[a-z_][a-z0-9_]{2,30}$"
+max-line-length = 88
+max-positional-arguments = 15
 method-rgx = "[a-z_][a-z0-9_]{2,30}$"
-function-rgx = "[a-z_][a-z0-9_]{2,30}$"
-class-rgx = "[A-Z_][a-zA-Z0-9]+$"
 module-rgx = "(([a-z_][a-z0-9_]*)|(__.*__))$"
+variable-rgx = "[a-z_][a-z0-9_]{2,30}$"
 
-[tool.pytest.ini_options]
-python_files = [ "tests.py", "test_*.py" ]
-testpaths = [ "django_notification/tests" ]
-addopts = "--strict-markers --cov=django_notification --cov-report=term-missing --cov-fail-under=100"
-markers = [
-  "models: Marks tests related to all database models in the project.",
-  "models_notification: Marks tests for the Notification model, including creation and model-specific methods.",
-  "models_notification_recipient: Marks tests related to the NotificationRecipient model.",
-  "models_notification_seen: Marks tests for the NotificationSeen model, which track when notifications have been seen.",
-  "models_deleted_notification: Marks tests for handling deleted notifications, including soft logic.",
-  "admin: Marks tests for Django admin functionalities, including access, rendering, and configurations.",
-  "admin_notification: Marks tests for managing notifications in the Django admin, such as listing, filtering, and bulk actions.",
-  "admin_deleted_notification: Marks tests for managing deleted notifications in the Django admin, including visibility and actions.",
-  "api: Marks tests related to the Django REST Framework (DRF) API as a whole.",
-  "api_views: Marks tests for DRF views, covering endpoints, request handling, and response generation.",
-  "api_views_notification: Marks tests for views handling notification-related API operations, such as listing or managing notifications.",
-  "api_views_activity: Marks tests for views related to activity-related operations in the API.",
-  "api_paginations: Marks tests for pagination in the API, ensuring correct behavior of paginated responses across various endpoints.",
-  "api_serializers: Marks tests for DRF serializers, including validation, data transformation, and response formatting.",
-  "api_serializers_dynamic_notification: Marks tests for the NotificationDynamicSerializer, focusing on how notification data is serialized.",
-  "api_serializers_group: Marks tests for serializers that handle group-related data, focusing on serialization.",
-  "api_throttlings: Marks tests for DRF throttling mechanisms, ensuring the correct limiting of API requests.",
-  "utils: Marks tests for general utility functions used across the project.",
-  "utils_title_generator: Marks tests for the title generation utility, whichformats titles based on notification content.",
-  "settings: Marks tests for settings and configurations in the project.",
-  "settings_conf: Marks tests related to loading project-specific settings and configurations.",
-  "settings_checks: Marks tests for settings validation, ensuring that required settings are correctly configured.",
-  "validators: Marks tests for custom validators used throughout the project.",
-  "config_validators: Marks tests for configuration validators that validate the config values in project settings.",
-  "managers: Marks tests for custom managers, ensuring they perform for filtering and querying the database.",
-  "decorators: Marks tests for custom Python decorators used in the project.",
-  "decorators_action: Marks tests for action-related decorators.",
+[tool.bandit]
+exclude_dirs = [
+  "django_notification/migrations",
+  "django_notification/tests",
+  'django_notification\migrations',
+  'django_notification\tests',
 ]
-
-norecursedirs = [
-  "migrations",
-  "env",
-  "venv",
-  ".venv",
-  "dist",
-  "build",
-  "kernel",
-]
-
-[tool.coverage.run]
-source = [ "django_notification" ]
-omit = [ "*/tests/*", "*/migrations/*" ]
-
-[tool.coverage.report]
-exclude_lines = [ "pragma: no cover", "def __repr__", "raise AssertionError" ]
+targets = [ "django_notification" ]
 
 [tool.mypy]
+exclude = "(?x) ( ^django_notification/migrations/ | ^django_notification/tests/ | ^kernel/ )"
+ignore_missing_imports = true
 # Match the development Django 6/stubs runtime; Ruff and tox verify Python 3.10.
 python_version = "3.13"
-plugins = [ "mypy_django_plugin.main" ]
-ignore_missing_imports = true
 check_untyped_defs = true
 warn_unused_ignores = true
-exclude = "(?x) ( ^django_notification/migrations/ | ^django_notification/tests/ | ^kernel/ )"
-
-[tool.uv]
-# Lock each supported Python/Django branch when an index is available.
-# Keep Python 3.10/3.11 on Django 5.2; Django 6.x requires 3.12+.
-required-version = ">=0.13.5"
+plugins = [ "mypy_django_plugin.main" ]
 
 [tool.django-stubs]
 django_settings_module = "django_notification.tests.typing_settings"
+
+[tool.pytest]
+ini_options.testpaths = [ "django_notification/tests" ]
+ini_options.norecursedirs = [
+  ".venv",
+  "build",
+  "dist",
+  "env",
+  "kernel",
+  "migrations",
+  "venv",
+]
+ini_options.python_files = [ "test_*.py", "tests.py" ]
+ini_options.addopts = "--strict-markers --cov=django_notification --cov-report=term-missing --cov-fail-under=100"
+ini_options.markers = [
+  "admin: Marks tests for Django admin functionalities, including access, rendering, and configurations.",
+  """\
+  admin_deleted_notification: Marks tests for managing deleted notifications in the Django admin, including visibility \
+  and actions.\
+  """,
+  """\
+  admin_notification: Marks tests for managing notifications in the Django admin, such as listing, filtering, and bulk \
+  actions.\
+  """,
+  "api: Marks tests related to the Django REST Framework (DRF) API as a whole.",
+  """\
+  api_paginations: Marks tests for pagination in the API, ensuring correct behavior of paginated responses across \
+  various endpoints.\
+  """,
+  """\
+  api_serializers: Marks tests for DRF serializers, including validation, data transformation, and response formatting.\
+  """,
+  """\
+  api_serializers_dynamic_notification: Marks tests for the NotificationDynamicSerializer, focusing on how \
+  notification data is serialized.\
+  """,
+  "api_serializers_group: Marks tests for serializers that handle group-related data, focusing on serialization.",
+  "api_throttlings: Marks tests for DRF throttling mechanisms, ensuring the correct limiting of API requests.",
+  "api_views: Marks tests for DRF views, covering endpoints, request handling, and response generation.",
+  "api_views_activity: Marks tests for views related to activity-related operations in the API.",
+  """\
+  api_views_notification: Marks tests for views handling notification-related API operations, such as listing or \
+  managing notifications.\
+  """,
+  "config_validators: Marks tests for configuration validators that validate the config values in project settings.",
+  "decorators: Marks tests for custom Python decorators used in the project.",
+  "decorators_action: Marks tests for action-related decorators.",
+  "managers: Marks tests for custom managers, ensuring they perform for filtering and querying the database.",
+  "models: Marks tests related to all database models in the project.",
+  "models_deleted_notification: Marks tests for handling deleted notifications, including soft logic.",
+  "models_notification: Marks tests for the Notification model, including creation and model-specific methods.",
+  "models_notification_recipient: Marks tests related to the NotificationRecipient model.",
+  "models_notification_seen: Marks tests for the NotificationSeen model, which track when notifications have been seen.",
+  "settings: Marks tests for settings and configurations in the project.",
+  "settings_checks: Marks tests for settings validation, ensuring that required settings are correctly configured.",
+  "settings_conf: Marks tests related to loading project-specific settings and configurations.",
+  "utils: Marks tests for general utility functions used across the project.",
+  """\
+  utils_title_generator: Marks tests for the title generation utility, whichformats titles based on notification \
+  content.\
+  """,
+  "validators: Marks tests for custom validators used throughout the project.",
+]
+
+[tool.coverage]
+run.source = [ "django_notification" ]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
+report.exclude_lines = [ "def __repr__", "pragma: no cover", "raise AssertionError" ]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
 version_provider = "pep621"
 tag_format = "v$version"
-
-[tool.bandit]
-targets = [ "django_notification" ]
-exclude_dirs = [
-  "django_notification/tests",
-  'django_notification\tests',
-  "django_notification/migrations",
-  'django_notification\migrations',
-]
 
 [tool.django_migration_linter]
 exclude_migration_tests = [ "NOT_NULL", "ADD_UNIQUE" ]

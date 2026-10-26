@@ -2,7 +2,7 @@ default_install_hook_types: [pre-commit, commit-msg]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
@@ -28,7 +28,7 @@ repos:
       # Run the restored tools from uv.lock, shared with CI and local installs.
       - id: pyproject-fmt
         name: Format pyproject.toml
-        entry: uv run --locked pyproject-fmt
+        entry: uv run --locked pyproject-fmt --no-generate-python-version-classifiers
         language: system
         files: ^pyproject\.toml$
       - id: tox-ini-fmt
