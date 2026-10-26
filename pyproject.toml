@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [ "hatchling>=1.32.3,<2" ]
+requires = [ "hatchling>=1.32.4,<2" ]
 
 [project]
 name = "dj-notification-api"
