@@ -63,7 +63,7 @@ dev = [
   "psycopg[binary]>=3.2,<4",
   "pylint>=3.3,<4",
   "pylint-django>=2.6,<3",
-  "pyproject-fmt==2.5.1",
+  "pyproject-fmt==2.30.2",
   "pytest>=8.3,<10",
   "pytest-cov>=6,<8",
   "pytest-django>=4.11,<5",
