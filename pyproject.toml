@@ -57,7 +57,7 @@ dev = [
   "django-migration-linter>=5.1,<7",
   "django-stubs>=5.2,<7",
   "docformatter==1.7.5",
-  "isort==5.13.2",
+  "isort>=5.13.2,<7",
   "mypy>=1.15,<2",
   "pre-commit>=4,<5",
   "psycopg[binary]>=3.2,<4",

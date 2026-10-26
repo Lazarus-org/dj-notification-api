@@ -1309,7 +1309,7 @@ dev = [
     { name = "django-migration-linter", specifier = ">=5.1,<7" },
     { name = "django-stubs", specifier = ">=5.2,<7" },
     { name = "docformatter", specifier = "==1.7.5" },
-    { name = "isort", specifier = "==5.13.2" },
+    { name = "isort", specifier = ">=5.13.2,<7" },
     { name = "mypy", specifier = ">=1.15,<2" },
     { name = "pre-commit", specifier = ">=4,<5" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2,<4" },
