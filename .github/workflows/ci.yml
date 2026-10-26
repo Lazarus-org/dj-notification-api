@@ -15,7 +15,7 @@ jobs:
     name: Metadata, lint, pre-commit, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.13.5"
@@ -78,7 +78,7 @@ jobs:
           - {python: '3.14', django: '60', env: 'py314-django60-drf318'}
           - {python: '3.14', django: '61', env: 'py314-django61-drf318'}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.13.5"
@@ -113,7 +113,7 @@ jobs:
       PGHOST: 127.0.0.1
       PGPORT: '5432'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.13.5"
