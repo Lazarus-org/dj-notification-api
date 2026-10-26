@@ -1,104 +1,94 @@
-Welcome to dj-notification-api Documentation!
-=============================================
+dj-notification-api
+===================
 
+Build a personal notification inbox in Django, then add email, webhooks or
+real-time updates when your application needs them. Each recipient has their
+own read and cleared state, even when several people share one notification.
 
-.. |br| raw:: html
+Start with :doc:`quick_start` to create a notification and follow it from the
+unread inbox into the activity list. The core inbox needs no worker, Redis,
+Channels or provider account.
 
-   <br />
+Choose your integration
+-----------------------
 
+.. list-table::
+   :header-rows: 1
+   :widths: 25 45 30
 
-.. image:: https://img.shields.io/github/license/lazarus-org/dj-notification-api
-    :target: https://github.com/lazarus-org/dj-notification-api/blob/main/LICENSE
-    :alt: License
+   * - You need
+     - Configure
+     - Read
+   * - An in-app inbox
+     - Django app, migrations and authenticated REST routes
+     - :doc:`quick_start`, :doc:`api_guide`
+   * - Email or another external channel
+     - Outbox, delivery receiver, backend and two workers
+     - :doc:`delivery`
+   * - Live inbox refreshes
+     - Channels adapter, authenticated ASGI routing and channel layer
+     - :doc:`channels`
+   * - Daily or weekly email summaries
+     - Email delivery and per-user schedules
+     - :doc:`schedules_and_digests`
+   * - Failure diagnosis and replay
+     - Management commands and process monitoring
+     - :doc:`operations`, :doc:`troubleshooting`
 
-.. image:: https://img.shields.io/pypi/v/dj-notification-api
-    :target: https://pypi.org/project/dj-notification-api/
-    :alt: PyPI release
-
-.. image:: https://img.shields.io/readthedocs/dj-notification-api
-    :target: https://dj-notification-api.readthedocs.io/en/latest/
-    :alt: Documentation
-
-.. image:: https://img.shields.io/badge/pylint-10/10-brightgreen?logo=python&logoColor=blue
-   :target: https://www.pylint.org/
-   :alt: Pylint
-
-.. image:: https://img.shields.io/pypi/pyversions/dj-notification-api
-    :target: https://pypi.org/project/dj-notification-api/
-    :alt: Supported Python versions
-
-.. image:: https://img.shields.io/pypi/djversions/dj-notification-api
-    :target: https://pypi.org/project/dj-notification-api/
-    :alt: Supported Django versions
-
-.. image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=yellow
-   :target: https://github.com/pre-commit/pre-commit
-   :alt: pre-commit
-
-.. image:: https://img.shields.io/github/issues/lazarus-org/dj-notification-api
-    :target: https://github.com/lazarus-org/dj-notification-api/issues
-    :alt: Open Issues
-
-.. image:: https://img.shields.io/github/last-commit/lazarus-org/dj-notification-api
-    :target: https://github.com/lazarus-org/dj-notification-api/commits/main
-    :alt: Last Commit
-
-.. image:: https://img.shields.io/github/languages/top/lazarus-org/dj-notification-api
-    :target: https://github.com/lazarus-org/dj-notification-api
-    :alt: Languages
-
-.. image:: https://img.shields.io/codecov/c/github/lazarus-org/dj-notification-api/main
-   :target: https://codecov.io/gh/lazarus-org/dj-notification-api
-   :alt: Coverage
-
-
-
-|br|
-
-`dj-notification-api` is a Django package developed by Lazarus designed to simplify and optimize the process of managing notifications through various APIs.
-With this package, you can easily integrate a notification system into your Django project by just installing it. it offers a fully customizable notification API that can be tailored to suit your specific needs.
-
-It also provides an intuitive and powerful admin interface, allowing you to manage, track, and configure notifications effortlessly. Enjoy the flexibility and performance optimizations built into the package.
-
-Supported Versions
-------------------
-
-`dj-notification-api` supports the following combinations of Django, REST Framework and Python versions:
-
-==========  ==============  ===========================
-  Django    REST Framework  Python
-==========  ==============  ===========================
-4.2         3.14, 3.15      3.9, 3.10, 3.11, 3.12, 3.13
-5.0         3.14, 3.15      3.10, 3.11, 3.12, 3.13
-5.1         3.14, 3.15      3.10, 3.11, 3.12, 3.13
-==========  ==============  ===========================
-
-Documentation
--------------
-
-The documentation is organized into the following sections:
+Learn and integrate
+-------------------
 
 .. toctree::
    :maxdepth: 2
 
    quick_start
-   api_guide
+   concepts
    usage
+   api_guide
    settings
+   customization
    roles
+
+Deliver and notify in real time
+-------------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   delivery
+   templates_and_channels
+   schedules_and_digests
+   routing_rules
+   events
+   outbox
+   channels
+
+Run in production
+------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   operations
+   troubleshooting
+   delivery_analytics
+   upgrading
+
+Contribute
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   development_toolchain
    contributing
 
-Need Help?
-----------
+Project links
+--------------
 
-If you have questions or have trouble using the app please file a bug report at:
+* `Source and issues <https://github.com/lazarus-org/dj-notification-api>`_
+* `PyPI package <https://pypi.org/project/dj-notification-api/>`_
+* `Changelog <https://github.com/lazarus-org/dj-notification-api/blob/main/CHANGELOG.md>`_
 
-https://github.com/lazarus-org/dj-notification-api/issues
-
-
-Indices and tables
-==================
-
-* :ref:`search`
-* :ref:`genindex`
-* :ref:`modindex`
+Use documentation matching your installed release. Read :doc:`upgrading`
+before adopting changed framework requirements or HTTP behavior.

@@ -2,11 +2,9 @@
 
 ## Supported Versions
 
-We actively support the following versions of `dj-notification-api` with security updates:
-
-| Version   | Supported          |
-| --------- | ------------------ |
-| 1.x     | ✅ Fully supported  |
+Security maintenance applies to the latest maintained release line.
+Older package versions may not receive backported fixes. Review current
+release notes and the project advisories when deciding when to upgrade.
 
 ## Reporting a Vulnerability
 
@@ -19,15 +17,15 @@ We take security issues seriously. If you find a vulnerability in `dj-notificati
    - Steps to reproduce the issue.
    - Any other relevant information, such as proof of concept or screenshots.
 
-We will:
-- Acknowledge your report within 2 business days.
+We aim to:
+- Acknowledge confidential reports promptly.
 - Work with you to understand and resolve the issue as quickly as possible.
 - Provide an estimate of when a patch will be available and credit you (if desired) in the changelog.
 
 ## Handling Vulnerabilities
 
 When a vulnerability is confirmed:
-- We will create a fix and apply it to all actively supported versions of `dj-notification-api`.
+- We will assess affected maintained versions and prepare appropriate fixes.
 - A new release with the security fix will be published, and the vulnerability will be disclosed in the changelog or via a security advisory.
 - We may delay the disclosure of details about the vulnerability until a sufficient number of users have updated to the patched version.
 

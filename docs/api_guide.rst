@@ -1,268 +1,286 @@
-API Guide
-=========
+REST API reference
+===================
 
-This section provides a detailed overview of the Django Notification API, allowing users to manage notifications efficiently. The API exposes two main endpoints:
+All examples use the mount point ``/notification/`` from :doc:`quick_start`.
+If you mount the router elsewhere, replace that prefix. Endpoints use the
+host project's DRF authentication classes and require an authenticated user.
+There is no API for creating notifications or selecting another user's inbox.
 
-1. **notification/notifications/**:
+Feeds, detail and counts
+------------------------
 
-   - Lists all unseen notifications.
-   - Retrieves a single unseen notification.
-   - Marks all notifications as seen (action: ``mark_all_as_seen``).
+.. list-table::
+   :header-rows: 1
+   :widths: 12 43 45
 
-2. **notification/activities/**:
+   * - Method
+     - Path below /notification/
+     - Result
+   * - GET
+     - notifications/
+     - Unread, sent, active, personally undeleted items
+   * - GET
+     - activities/
+     - Seen items with the same eligibility rules
+   * - GET
+     - notifications/{id}/
+     - Detail of an item currently in the unread inbox
+   * - GET
+     - activities/{id}/
+     - Detail of an item currently in the read activity list
+   * - GET
+     - notifications/{id}/preview/
+     - Detail of a visible item whether read or unread; never marks seen
+   * - GET
+     - notifications/summary/
+     - Counts across eligible read and unread items
 
-   - Lists all seen notifications.
-   - Retrieves a single seen notification.
-   - Soft deletes all seen notifications (action: ``clear_activities``).
-   - Soft deletes a single seen notification (action: ``clear_notification``).
-   - For Admins:
+Every query remains scoped to the current user. Staff/superuser status does
+not expose another user's messages. A direct/group overlap produces one
+item. Expired, cleared or otherwise inaccessible IDs return ``404``.
 
-     - Hard deletes all seen notifications (action: ``delete_activities``).
-     - Hard deletes a single seen notification (action: ``delete_notification``).
+The default list representation contains ``id``, ``title``, ``description``,
+``status``, ``link`` and ``timestamp``. It uses limit/offset pagination::
 
+    GET /notification/notifications/?limit=20&offset=0&ordering=-timestamp
 
-Notifications API
------------------
-
-The ``notification/notifications/`` endpoint provides the following features:
-
-- **List unseen notifications**:
-
-  Fetches all unseen notifications for the authenticated user. Controlled by the ``DJANGO_NOTIFICATION_API_ALLOW_LIST`` setting.
-
-- **Retrieve a notification**:
-
-  Retrieves a specific unseen notification by its ID and automatically marks it as seen. Controlled by the ``DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE`` setting.
-
-- **Mark all as seen**:
-
-  Marks all unseen notifications for the user as seen. Once marked, they move to the ``activities`` endpoint.
-
-
-Activities API
---------------
-
-The ``notification/activities/`` endpoint offers these features:
-
-- **List seen notifications**:
-
-  Lists all seen notifications for the authenticated user. Controlled by the ``DJANGO_NOTIFICATION_API_ALLOW_LIST`` setting.
-
-- **Retrieve a seen notification**:
-
-  Fetches a specific seen notification by its ID. Controlled by the ``DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE`` setting.
-
-- **Clear activities (Soft delete)**:
-
-  Soft deletes all seen notifications, removing them from view without permanent deletion. Controlled by the ``DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE`` setting.
-
-- **Clear a single notification (Soft delete)**:
-
-  Soft deletes a specific seen notification by its ID.
-
-- **Delete activities (Hard delete)**:
-
-  Permanently deletes all seen notifications for ``ADMIN`` users. Controlled by the ``DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE`` setting.
-
-- **Delete a single notification (Hard delete)**:
-
-  Permanently deletes a specific seen notification by its ID (only for ``ADMIN`` users).
-
-
-Example Responses
------------------
-
-Here are some examples of responses for each action:
-
-
-**List notifications with full details**:
-
-.. code-block:: text
-
-   GET /notification/notifications/
-
-   Response:
-   HTTP/1.1 200 OK
-   Content-Type: application/json
-
-   "results": [
-      {
-          "id": 1,
-          "title": "User logged in to the Admin panel a minute ago",
-          "recipient": [
-              {
-                  "username": "user",
-                  "email": "example@domain.com"
-              }
-          ],
-          "group": [],
-          "verb": "Logged in to Admin panel",
+    {
+      "count": 1,
+      "next": null,
+      "previous": null,
+      "results": [
+        {
+          "id": 42,
+          "title": "Example display title",
+          "description": "Your order is ready.",
           "status": "INFO",
-          "actor_content_type": 4,
-          "target_content_type": null,
-          "action_object_content_type": null,
-          "link": "<link>",
-          "is_sent": true,
-          "seen_by": [
-              {
-                  "username": "admin",
-                  "email": "admin@test.com"
-              }
-          ],
-          "public": true,
-          "data": null,
-          "timestamp": "2024-09-05T13:34:20.969193Z"
-      }
-   ]
+          "link": "https://app.example.com/orders/73",
+          "timestamp": "2026-01-01T12:00:00Z"
+        }
+      ]
+    }
 
-If the ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` setting is ``True``, this detailed response will be returned for all users.
+This is an illustrative payload; IDs, timestamp formatting and human-readable
+title depend on your data and DRF settings. Pagination defaults to 10 items,
+caps ``limit`` at 100 and uses 10 when the limit is invalid or below one.
+Follow ``next`` rather than constructing a fixed number of pages.
 
-**List notifications with simplified data (with default serializer fields)**:
+Detail and preview use the personal full representation: ``id``, ``title``,
+``verb``, ``description``, ``status``, ``link``, ``is_sent``, ``public``,
+``category``, ``priority`` and ``timestamp``. Recipient lists, groups,
+other users' read states and arbitrary ``data`` are omitted. Configure list
+representations in :doc:`settings` and :doc:`customization`.
 
-.. code-block:: text
+Summary returns an unpaginated object::
 
-   GET /notification/notifications/
+    GET /notification/notifications/summary/
 
-   Response:
-   HTTP/1.1 200 OK
-   Content-Type: application/json
+    {"total_count": 5, "read_count": 2, "unread_count": 3}
 
-   "results": [
-      {
-          "id": 1,
-          "title": "User accepted your request 5 seconds ago",
-          "status": "INFO",
-          "link": "<link>",
-          "timestamp": "2024-09-05T13:34:20.969193Z"
-      },
+Read-only detail GET is the default. Once marked seen, an item's unread-detail
+URL returns ``404``; use preview or activity detail to fetch it again.
 
-      ...
-   ]
+Search, filters and ordering
+----------------------------
 
-This response is returned when ``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` is set to ``False``. Admins always see full details. you can change the serializer fields using ``DJANGO_NOTIFICATION_SERIALIZER_FIELDS`` in settings.
+Both feeds support:
 
-**Mark all as seen**:
+* ``category=orders`` for one category slug. An unmatched slug gives no rows.
+* ``priority=HIGH`` for LOW, NORMAL, HIGH or URGENT. Invalid values give ``400``.
+* ``search=invoice`` using the configured search fields, initially
+  ``verb`` and ``description``.
+* ``ordering=-timestamp`` using configured fields, initially ``id``,
+  ``timestamp`` and ``public``.
 
-.. code-block:: text
+For example::
 
-   GET /notification/notifications/mark_all_as_seen/
+    GET /notification/notifications/?category=orders&priority=HIGH&search=invoice
 
-   Response:
-   HTTP/1.1 200 OK
+Summary accepts category and priority filters too. Search and ordering are
+list filter backends, not summary inputs. Filters cannot widen authorization.
+Additional Django-filter fields require an explicitly configured filterset.
 
-   "detail": "3 Notifications marked as seen."
+Single-item read actions
+------------------------
 
+Both actions accept an empty body and return ``200``::
 
-**Clear activities (soft delete)**:
+    POST /notification/notifications/42/mark_seen/
 
-.. code-block:: text
+    {"id": 42, "seen": true, "changed": true}
 
-   GET /notification/activities/clear_activities/
+    POST /notification/notifications/42/mark_unseen/
 
-   Response:
-   HTTP/1.1 204 No Content
+    {"id": 42, "seen": false, "changed": true}
 
-   "detail": "All activities cleared."
+Repeating the same action returns ``changed: false``. Unlike unread detail,
+these actions select from all eligible personal items, so marking an already
+read item seen is valid. They cannot restore expired or cleared content.
 
+Selected-item read actions
+--------------------------
 
-**Clear a single notification (soft delete)**:
+Send a JSON array in the ``ids`` field::
 
-.. code-block:: text
+    POST /notification/notifications/bulk_mark_seen/
+    Content-Type: application/json
 
-   GET /notification/activities/1/clear_notification/
+    {"ids": [42, 43, 42]}
 
-   Response:
-   HTTP/1.1 204 No Content
+    {"processed": 2, "seen": true}
 
-   "detail": "Notification 1 cleared."
+``bulk_mark_unseen/`` accepts the same body and returns ``seen: false``.
+The request must contain 1–500 entries before deduplication, all valid
+positive integer IDs. Repeated entries are deduplicated in request order.
+A list with more than 500 entries is invalid even if many repeat.
 
+The action is all-or-nothing. If any selected ID is inaccessible, the
+response is ``404`` and no selected state changes are committed.
+``processed`` counts unique eligible IDs, including ones already in the
+requested state; it is not the number of newly inserted seen rows.
 
-**Delete all activities (hard delete)**:
+Mark everything read
+---------------------
 
-.. code-block:: text
+``POST notifications/mark_all_as_seen/`` processes the user's eligible unread
+items and returns an object such as::
 
-   GET /notification/activities/delete_activities/
+    {"detail": "3 Notifications marked as seen."}
 
-   Response:
-   HTTP/1.1 204 No Content
+This action operates on the whole eligible unread selection. Category,
+search or priority parameters do not turn it into a filtered bulk action.
+Use explicit IDs with ``bulk_mark_seen/`` for selected results. Concurrent
+mark-all requests may report overlapping candidate counts while unique
+constraints prevent duplicate read-state rows.
 
-   "detail": "All activities deleted."
+Clear read activities
+----------------------
 
+Soft clearing is enabled by default. Clear one seen item with::
 
-**Delete a single notification (hard delete)**:
-
-.. code-block:: text
-
-   GET /notification/activities/3/delete_notification/
-
-   Response:
-   HTTP/1.1 204 No Content
-
-   "detail": "Notification 3 deleted."
-
-**Note**: you can exclude Any fields with a ``null`` value in the response output by adding this config in your ``settings.py``:
-.. code-block:: python
-
-   DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = True
-
-Throttling
-----------
-
-The API includes a built-in throttling mechanism that limits the number of requests a user can make based on their role. You can customize these throttle limits in the settings file.
-
-To specify the throttle rates for authenticated users and staff members, add the following in your settings:
-
-.. code-block:: ini
-
-   DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE = "100/day"
-   DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE = "60/minute"
-
-These settings limit the number of requests users can make within a given timeframe.
-
-**Note:** You can define custom throttle classes and reference them in your settings.
-
-
-Filtering, Ordering, and Search
--------------------------------
-
-The API supports filtering, ordering, and searching of notifications. Filter Class can be applied optionally, allowing users to narrow down results.
-
-Options include:
-
-- **Filtering**: By default, the filtering feature is not included. If you want to use this, you need to install ``django-filter`` first, then add ``django_filters`` to your ``INSTALLED_APPS`` and provide the path to the ``NotificationFilter`` class (`"django_notification.api.filters.notification_filter.NotificationFilter"`). Alternatively, you can use a custom filter class if needed.
-
-  - **Note**: for more clarification, refer to the `DJANGO_NOTIFICATION_API_FILTERSET_CLASS` in :doc:`Settings <settings>` section.
-
-- **Ordering**: Results can be ordered by fields such as ``id``, ``timestamp``, or ``public``.
-
-- **Search**: You can search fields like ``verb`` and ``description``.
-
-These fields can be customized by adjusting the related configurations in your Django settings.
-
-
-Pagination
-----------
-
-The API supports limit-offset pagination, with configurable minimum, maximum, and default page size limits. This controls the number of results returned per page.
-
-Permissions
------------
-
-The base permission for all endpoints is ``IsAuthenticated``, meaning users must be logged in to access the API. You can extend this by creating custom permission classes to implement more specific access control.
-
-For instance, you can allow only specific user roles to perform certain actions.
-
-Parser Classes
---------------
-
-The API supports multiple parser classes that control how data is processed. The default parsers include:
-
-- ``JSONParser``
-- ``MultiPartParser``
-- ``FormParser``
-
-You can modify parser classes by updating the API settings to include additional parsers or customize the existing ones to suit your project.
-
-----
-
-Each feature can be configured through the Django settings file. For further details, refer to the :doc:`Settings <settings>` section.
+    DELETE /notification/activities/42/
+
+A successful response is ``204`` with no body. The compatibility path
+``DELETE activities/42/clear_notification/`` has the same effect.
+An unread item must be marked seen before it can be cleared as an activity.
+
+For selected seen items::
+
+    POST /notification/activities/bulk_clear/
+    Content-Type: application/json
+
+    {"ids": [42, 43]}
+
+    {"processed": 2}
+
+The same 1–500 input limit and atomic access validation apply.
+``POST activities/clear_activities/`` clears all eligible seen items and
+returns ``204``. These manager actions do not apply list query parameters.
+There is no public undo endpoint. A second DELETE after clearing returns
+``404`` because the activity is no longer accessible.
+
+Category and channel preferences
+---------------------------------
+
+These collection endpoints are unpaginated:
+
+* ``GET notifications/categories/`` returns active categories with
+  ``category``, ``name`` and ``mandatory``.
+* ``GET notifications/preferences/`` adds the user's effective ``enabled``.
+* ``GET notifications/channel_preferences/`` returns active-category/channel
+  combinations with ``category``, ``channel``, ``mandatory`` and ``enabled``.
+  The catalog includes all four known channels, even when no provider is enabled.
+
+Change a preference with PUT or PATCH::
+
+    PATCH /notification/notifications/preferences/orders/
+    Content-Type: application/json
+
+    {"enabled": false}
+
+    {"category": "orders", "name": "Orders", "mandatory": false, "enabled": false}
+
+To disable only email for that category, use
+``notifications/channel_preferences/orders/email/`` with the same body.
+Missing overrides mean enabled. Setting ``true`` removes the override.
+Unknown/inactive categories and unknown channels return ``404``; disabling
+a mandatory category returns ``400``. No request accepts another user's ID.
+
+A category opt-out can hide existing optional messages and prevent delivery.
+A channel opt-out leaves the inbox intact. Opting back in can make existing
+active inbox content visible again, but does not replay cancelled external
+jobs. See :doc:`templates_and_channels`.
+
+Delivery schedules
+-------------------
+
+``GET notifications/delivery_schedule/`` returns one effective record for
+each known channel. Defaults are IMMEDIATE, UTC and no quiet hours::
+
+    {
+      "channel": "email",
+      "frequency": "IMMEDIATE",
+      "timezone": "UTC",
+      "quiet_start": null,
+      "quiet_end": null
+    }
+
+Update one channel through PUT or PATCH at
+``notifications/delivery_schedule/email/``. PUT requires ``frequency``
+and ``timezone`` and resets omitted quiet-hour values to null. PATCH keeps
+omitted stored values, or starts from defaults when no schedule exists.
+Only email supports DAILY/WEEKLY; other channels accept IMMEDIATE.
+See :doc:`schedules_and_digests` for local-time behavior and retry effects.
+
+Authentication, throttling and errors
+--------------------------------------
+
+The package uses the host's DRF authentication settings. Session-authenticated
+unsafe requests must send a CSRF token. Do not add a user ID to a URL, body
+or query string to impersonate the recipient.
+
+Default request limits are 30/minute for ordinary authenticated users and
+100/minute for staff. They use Django's cache through DRF throttling; configure
+an appropriate shared cache for multiple processes. Staff's larger request
+budget grants no extra content access.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Status
+     - Meaning
+     - Client handling
+   * - 400
+     - Invalid body, priority or preference/schedule input
+     - Display field errors; correct input before retrying
+   * - 401 / 403
+     - Authentication, permission or CSRF failure
+     - Reauthenticate or supply required credentials/CSRF token
+   * - 404
+     - Unknown ID or unavailable personal item
+     - Remove stale client data and refresh feeds
+   * - 405
+     - Disabled operation or wrong HTTP method
+     - Check enabled settings and use the documented method
+   * - 429
+     - Throttling
+     - Respect Retry-After when supplied
+
+The exact authentication status and error envelope depend on the project's
+DRF classes. For example, an empty bulk list normally returns a field error
+under ``ids``. Avoid treating every ``404`` as evidence that the notification
+never existed: membership, expiry or clearing may have changed.
+
+Permanent deletion and older clients
+-------------------------------------
+
+Permanent-delete REST actions are disabled by default. When explicitly
+enabled, ``DELETE activities/delete_activities/`` and
+``DELETE activities/{id}/delete_notification/`` require staff permission and
+start from that administrator's own eligible seen activities. Deleting a
+shared notification removes it for all recipients, not just the caller.
+
+GET mutations are disabled by default. Older clients may opt into them through
+the two switches in :doc:`upgrading`, but new clients should always use
+explicit POST/DELETE actions. A legacy detail GET marks seen only when both
+compatibility switches are enabled. Preview never writes state.

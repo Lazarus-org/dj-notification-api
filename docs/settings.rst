@@ -1,383 +1,232 @@
-Settings
-=========
-
-This section outlines the available settings for configuring the `dj-notification-api` package. You can customize these settings in your Django project's `settings.py` file to tailor the behavior of the notification system to your needs.
-
-Example Settings
-----------------
-
-Below is an example configuration with default values:
-
-.. code-block:: python
-
-    DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE = True
-    DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE = False
-    DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION = False
-    DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION = False
-    DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION = False
-    DJANGO_NOTIFICATION_ADMIN_SITE_CLASS = None
-    DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS = False
-    DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS = False
-    DJANGO_NOTIFICATION_API_ALLOW_LIST = True
-    DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE = True
-    DJANGO_NOTIFICATION_SERIALIZER_FIELDS = None  # if you want to have your custom fields, you need to pass this as a list of fields
-    DJANGO_NOTIFICATION_SERIALIZER_CLASS = (
-        None  # pass your custom notification serializer if needed
-    )
-    # DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS = [if not provided, gets USERNAME_FIELD and REQUIRED_FIELDS from user model]
-    DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS = (
-        "django_notification.api.serializers.UserSerializer"
-    )
-    DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS = (
-        "django_notification.api.serializers.group.GroupSerializer"
-    )
-    DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE = "30/minute"
-    DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE = "100/minute"
-    DJANGO_NOTIFICATION_API_THROTTLE_CLASS = (
-        "django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"
-    )
-    DJANGO_NOTIFICATION_API_PAGINATION_CLASS = "django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"
-    DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS = None
-    DJANGO_NOTIFICATION_API_PARSER_CLASSES = [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.MultiPartParser",
-        "rest_framework.parsers.FormParser",
-    ]
-    DJANGO_NOTIFICATION_API_FILTERSET_CLASS = None
-    DJANGO_NOTIFICATION_API_ORDERING_FIELDS = ["id", "timestamp", "public"]
-    DJANGO_NOTIFICATION_API_SEARCH_FIELDS = ["verb", "description"]
-
-Settings Overview
---------------------
-
-Below is a detailed description of each setting, so you can better understand and tweak them to fit your project's needs.
-
-``DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``True``
-
-**Description**: Enables soft delete, allowing notifications to be excluded from API views without removing them from the database. If enabled, the ``clear_activities`` and ``clear_notification`` actions will be available in the ``activities`` API.
-
-----
-
-``DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: Enables hard delete, allowing notifications to be permanently removed from the database. If enabled, the ``delete_activities`` and ``delete_notification`` actions will be available in the ``activities`` API.
-
-----
-
-``DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: Controls whether the admin interface allows adding new notifications. Set this to ``True`` to enable Admin users to create new notifications.
-
-
-----
-
-``DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: Controls whether the admin interface allows modifying existing notifications. Set this to ``True`` to allow Admin users to edit notifications.
-
-----
-
-``DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: Controls whether the admin interface allows deleting notifications. Set this to ``True`` to enable Admin users to delete notifications.
-
-----
-
-``DJANGO_NOTIFICATION_ADMIN_SITE_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``Optional[str]``
-
-**Default**: ``None``
-
-**Description**: Optionally specifies A custom AdminSite class to apply on Admin interface. This allows for more customization on Admin interface, enabling you to apply your AdminSite class into `dj-notification-api` Admin interface.
-
-----
-
-``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: When set to ``True``, API responses will include all notification fields. By default, only essential fields are returned.
-
-----
-
-``DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``False``
-
-**Description**: When set to ``True``, API responses will exclude any fields that it's value is ``null``.
-
-----
-
-``DJANGO_NOTIFICATION_API_ALLOW_LIST``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``True``
-
-**Description**: Allows the listing of notifications via the API. Set to ``False`` to disable this feature.
-
-----
-
-``DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``bool``
-
-**Default**: ``True``
-
-**Description**: Allows retrieving individual notifications via the API. Set to ``False`` to disable this feature.
-
-----
-
-``DJANGO_NOTIFICATION_SERIALIZER_FIELDS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type**: ``List[str]``
-
-**Default**: ``["id", "description", "status", "link", "timestamp"]``
-
-**Description**: Defines the fields to be included in the notification dynamic serializer in API.
-
-**Note**: Note: By default, the related setting is set to ``None`` and use default fields, which means the queryset will use ``.values()`` to fetch only the default fields. However, if you add custom fields, the actual queryset will be returned without using ``.values()``.
-
-----
-
-``DJANGO_NOTIFICATION_SERIALIZER_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Type**: ``str``
-
-**Default**: ``"django_notification.api.serializers.dynamic_notification.NotificationDynamicSerializer"``
-
-**Description**: Specifies the serializer class used for notification objects in the API. Customize this if you need a different notification serializer.
-
-**Example**:
-
-.. code-block:: python
-
-    from rest_framework.serializers import ModelSerializer
-
-    from django_notification.models.notification import Notification
-
-
-    class CustomNotificationSerializer(ModelSerializer):
-
-        group = YourGroupSerializer(many=True, read_only=True)
-        recipient = YourUserSerializer(many=True, read_only=True)
-        seen_by = YourUserSerializer(many=True, read_only=True)
-
-        class Meta:
-            model = Notification
-            fields = (
-                "id",
-                "recipient",
-                "group",
-                "verb",
-                "status",
-                "actor_content_type",
-                "target_content_type",
-                "action_object_content_type",
-                "link",
-                "is_sent",
-                "seen_by",
-                "public",
-                "data",
-                "timestamp",
-            )
-
-**Note**: You can define a custom serializer for regular users like this, while staff users will continue to receive the default detailed serializer. This allows for tailored data representation based on user roles.
-
-----
-
-``DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``List[str]``
-
-**Default**: ``USERNAME_FIELD`` and ``REQUIRED_FIELDS`` from user model
-
-**Description**: Defines the fields to be included in the user serializer in API.
-
-----
-
-``DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``str``
-
-**Default**: ``"django_notification.api.serializers.UserSerializer"``
-
-**Description**: Specifies the serializer class used for user objects in the API. Customize this if you need a different user serializer.
-
-----
-
-``DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``str``
-
-**Default**: ``"django_notification.api.serializers.group.GroupSerializer"``
-
-**Description**: Specifies the serializer class used for group objects in the API. You can change this to use a different group serializer.
-
-----
-
-``DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``str``
-
-**Default**: ``"30/minute"``
-
-**Description**: Sets the throttle rate (requests per minute, hour or day) for authenticated users in the API.
-
-----
-
-``DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: `str`
-
-**Default**: `"100/minute"`
-
-**Description**: Sets the throttle rate (requests per minute, hour or day) for staff (Admin) users in the API.
-
-----
-
-``DJANGO_NOTIFICATION_API_THROTTLE_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``str``
-
-**Default**: ``"django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"``
-
-**Description**: Specifies the throttle class used to limit API requests. Customize this or set it to ``None`` if no throttling is needed or want to use ``rest_framework`` `DEFAULT_THROTTLE_CLASSES`.
-
-----
-
-``DJANGO_NOTIFICATION_API_PAGINATION_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``str``
-
-**Default**: ``"django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"``
-
-**Description**: Defines the pagination class used in the API. Customize this if you prefer a different pagination style or set to ``None`` to disable pagination.
-
-----
-
-``DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``Optional[str]``
-
-**Default**: ``None``
-
-**Description**: Optionally specifies an additional permission class to extend the base permission (``IsAuthenticated``) for the API. This allows for more fine-grained access control, enabling you to restrict API access to users with a specific permission, in addition to requiring authentication.
-
-----
-
-``DJANGO_NOTIFICATION_API_PARSER_CLASSES``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``List[str]``
-
-**Default**:
-  .. code-block:: python
-
-    DJANGO_NOTIFICATION_API_PARSER_CLASSES = [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.MultiPartParser",
-        "rest_framework.parsers.FormParser",
-    ]
-
-**Description**: Specifies the parsers used to handle API request data formats. You can modify this list to add your parsers or set ``None`` if no parser needed.
-
-----
-
-``DJANGO_NOTIFICATION_API_FILTERSET_CLASS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``Optional[str]``
-
-**Default**: ``None``
-
-**Description**: Specifies the filter class for API queries. If you want to use this, you need to add ``django_filters`` to your `INSTALLED_APPS` and provide the path to the ``NotificationFilter`` class (``"django_notification.api.filters.notification_filter.NotificationFilter"``). Alternatively, you can use a custom filter class if needed.
-
-in your settings.py:
-
-.. code-block:: python
-
-  INSTALLED_APPS = [
-      # ...
-      "django_filters",
-      # ...
-  ]
-
-and then apply this setting:
-
-.. code-block:: python
-
-  # apply in settings.py
-
-  DJANGO_NOTIFICATION_API_FILTERSET_CLASS = (
-      "django_notification.api.filters.notification_filter.NotificationFilter"
-  )
-
-
-``DJANGO_NOTIFICATION_API_ORDERING_FIELDS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``List[str]``
-
-**Default**: ``["id", "timestamp", "public"]``
-
-**Description**: Specifies the fields available for ordering in API queries, allowing the API responses to be sorted by these fields. you can see all available fields here
-
-----
-
-``DJANGO_NOTIFICATION_API_SEARCH_FIELDS``:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Type**: ``List[str]``
-
-**Default**: ``["verb", "description"]``
-
-**Description**: Specifies the fields that are searchable in the API, allowing users to filter results based on these fields.
-
-----
-
-All Available Fields:
+Configuration reference
+=========================
+
+Set these values in your Django project's settings module. The package loads
+its API configuration during Django initialization; restart application and
+worker processes after changing settings. Run ``python manage.py check``
+before deployment to catch invalid types, import paths and delivery settings.
+
+Only configure what you need. The inbox works with the defaults. Categories,
+user preferences, schedules, templates and routing rules are database records,
+not global settings.
+
+HTTP behavior
+--------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 53 12 35
+
+   * - Setting
+     - Default
+     - Effect
+   * - DJANGO_NOTIFICATION_API_INCLUDE_SOFT_DELETE
+     - True
+     - Enables personal clearing of seen activities
+   * - DJANGO_NOTIFICATION_API_INCLUDE_HARD_DELETE
+     - False
+     - Enables staff-only permanent deletion actions
+   * - DJANGO_NOTIFICATION_API_ALLOW_LIST
+     - True
+     - Enables list actions and notification summary
+   * - DJANGO_NOTIFICATION_API_ALLOW_RETRIEVE
+     - True
+     - Enables detail actions and notification preview
+   * - DJANGO_NOTIFICATION_API_ALLOW_LEGACY_GET_MUTATIONS
+     - False
+     - Allows historical state-changing GET actions when explicitly enabled
+   * - DJANGO_NOTIFICATION_API_RETRIEVE_MARKS_SEEN
+     - False
+     - Marks unread detail seen only if legacy GET mutations are also allowed
+
+These switches do not grant recipient access. Disabling list/retrieve is not
+a replacement for the host application's permission policy. See
+:doc:`api_guide` for each route and :doc:`upgrading` for old HTTP clients.
+
+Serializer selection
 ---------------------
 
-These are all fields that are available for searching, ordering, and filtering in the notifications API with their recommended usage:
+``DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS`` (bool, default False)
+    Uses the personal full serializer for list responses when True. Detail
+    and preview already use that serializer. It includes verb, category,
+    priority and send/public flags; it does not expose recipients, group
+    permissions, other users' seen state or arbitrary data.
 
+``DJANGO_NOTIFICATION_SERIALIZER_FIELDS`` (list of strings or None, default None)
+    Selects fields for the default dynamic list serializer. With None, lists
+    use title plus id, description, status, link and timestamp. It does not
+    change detail/preview representations. Explicit fields may expose sensitive
+    model relations; choose only fields suitable for every addressed user.
 
-- ``id``: Unique identifier of the notification (orderable, filterable).
-- ``recipient``: The users receiving the notification (filterable).
-- ``group``: The groups receiving the notification (filterable).
-- ``verb``: The action associated with the notification (searchable).
-- ``description``: A description of the notification (searchable).
-- ``status``: Current status of the notification (filterable).
-- ``actor_content_type``: Content type of the actor object (filterable).
-- ``target_content_type``: Content type of the target object (filterable).
-- ``action_object_content_type``: Content type of the action object (filterable).
-- ``public``: Indicates if the notification is public (orderable, filterable).
-- ``timestamp``: The time when the notification was created (orderable, filterable).
-- ``link``: URL associated with the action (searchable).
-- ``data``: Additional metadata or attributes in JSON format (searchable).
-- ``seen_by``: Users who have seen the notification (filterable).
+``DJANGO_NOTIFICATION_SERIALIZER_CLASS`` (import path or None, default None)
+    Custom list serializer. None selects NotificationDynamicSerializer. Full
+    details takes precedence over this option. The configured class receives
+    Notification model instances, not projected dictionaries.
 
-**Note**: Exercise caution when modifying search and ordering fields. **Avoid** using foreign key or joined fields (``recipient``, ``group``, ``all content_types``, ``seen_by``) in **search fields**, as this may result in errors. instead you can access the inner fields of them like this: ``recipient__username``.
+``DJANGO_NOTIFICATION_SERIALIZER_EXCLUDE_NULL_FIELDS`` (bool, default False)
+    Removes None, empty strings, empty lists and empty dictionaries from
+    built-in output. Despite its name, this filters more than null alone.
+    Leave False when clients rely on a stable set of keys.
+
+For a richer built-in list::
+
+    DJANGO_NOTIFICATION_SERIALIZER_INCLUDE_FULL_DETAILS = True
+
+For a deliberately narrow list, keep full details False and set::
+
+    DJANGO_NOTIFICATION_SERIALIZER_FIELDS = [
+        "id", "title", "description", "status", "category", "priority", "timestamp",
+    ]
+
+The configured projection/custom serializer affects lists, including activity
+lists. It does not replace the protected personal detail serializer.
+See :doc:`customization` for a complete application serializer.
+
+Trusted user/group serialization
+---------------------------------
+
+These settings support nested serialization in trusted integrations using
+``NotificationSerializer``. They do not add nested recipient relationships
+to the built-in personal representation.
+
+* ``DJANGO_NOTIFICATION_USER_SERIALIZER_FIELDS``: defaults to
+  ``USERNAME_FIELD`` followed by the user model's ``REQUIRED_FIELDS``.
+* ``DJANGO_NOTIFICATION_USER_SERIALIZER_CLASS``: import path or None;
+  None selects the package's UserSerializer.
+* ``DJANGO_NOTIFICATION_GROUP_SERIALIZER_CLASS``: import path or None;
+  None selects the package's GroupSerializer.
+
+Do not reuse a trusted serializer containing all recipients or seen users in
+personal endpoints. A shared notification may involve unrelated accounts.
+
+Authentication, permissions and parsers
+---------------------------------------
+
+Authentication comes from ``REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]``.
+The package requires authenticated access and checks recipient visibility.
+``DJANGO_NOTIFICATION_API_EXTRA_PERMISSION_CLASS`` defaults to None and can
+name one additional DRF permission class. It adds a restriction rather than
+granting broader visibility.
+
+``DJANGO_NOTIFICATION_API_PARSER_CLASSES`` defaults to import paths for
+``rest_framework.parsers.JSONParser``, ``MultiPartParser`` and
+``FormParser``. For JSON-only clients::
+
+    DJANGO_NOTIFICATION_API_PARSER_CLASSES = [
+        "rest_framework.parsers.JSONParser",
+    ]
+
+Supply serializer/permission/parser classes by dotted import path. Invalid
+imports fail configuration; configure them before the application starts.
+
+Throttling and pagination
+--------------------------
+
+``DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE``
+    Default ``"30/minute"`` for ordinary authenticated users.
+
+``DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE``
+    Default ``"100/minute"``. Staff have the same recipient boundaries.
+
+``DJANGO_NOTIFICATION_API_THROTTLE_CLASS``
+    Default
+    ``"django_notification.api.throttlings.role_base_throttle.RoleBasedUserRateThrottle"``.
+    A custom import path replaces it; None leaves the view's inherited DRF
+    throttling configuration in effect rather than adding this throttle.
+    Use Django's shared cache when counters must span application processes.
+
+``DJANGO_NOTIFICATION_API_PAGINATION_CLASS``
+    Default
+    ``"django_notification.api.paginations.limit_offset_pagination.DefaultLimitOffSetPagination"``.
+    Default page size is 10 and maximum is 100. A custom import path replaces
+    it; None leaves inherited DRF pagination in effect. With no inherited
+    paginator, lists return an array instead of a paginated envelope.
+
+Example for different request budgets::
+
+    DJANGO_NOTIFICATION_AUTHENTICATED_USER_THROTTLE_RATE = "60/minute"
+    DJANGO_NOTIFICATION_STAFF_USER_THROTTLE_RATE = "120/minute"
+
+Ordering, search and filtersets
+-------------------------------
+
+* ``DJANGO_NOTIFICATION_API_ORDERING_FIELDS`` defaults to
+  ``["id", "timestamp", "public"]``.
+* ``DJANGO_NOTIFICATION_API_SEARCH_FIELDS`` defaults to
+  ``["verb", "description"]``.
+* ``DJANGO_NOTIFICATION_API_FILTERSET_CLASS`` defaults to None. To enable
+  the bundled filterset, add ``django_filters`` to INSTALLED_APPS and set its
+  import path as shown in :doc:`customization`.
+
+Category/priority filtering is built in independently of the optional
+filterset. Search is a text-search interface; avoid JSON fields or recipient
+relations that leak information about other users. Keep the allowlist small
+and index/order according to your application's query patterns.
+
+Django admin
+-------------
+
+All three switches below default to False:
+
+* ``DJANGO_NOTIFICATION_ADMIN_HAS_ADD_PERMISSION``
+* ``DJANGO_NOTIFICATION_ADMIN_HAS_CHANGE_PERMISSION``
+* ``DJANGO_NOTIFICATION_ADMIN_HAS_DELETE_PERMISSION``
+
+They control notification administration alongside Django model permissions.
+Ordinary admin edits are ORM writes; they do not synthesize lifecycle events.
+Use manager methods for notification creation and send transitions when
+delivery/event integration matters.
+
+``DJANGO_NOTIFICATION_ADMIN_SITE_CLASS`` defaults to None for Django's
+default site. It accepts a dotted path to an AdminSite subclass (instantiated
+once) or an existing AdminSite instance. Register related models on that site
+when required by autocomplete widgets. Admin authorization is distinct from
+personal REST access.
+
+Events and external delivery
+-----------------------------
+
+``DJANGO_NOTIFICATION_API_EVENT_DELIVERY`` (str, default "signal")
+    "signal" runs lifecycle callbacks after commit; "outbox" persists intent
+    for a worker. External delivery requires "outbox". See :doc:`outbox`.
+
+``DJANGO_NOTIFICATION_DELIVERY_BACKENDS`` (dict, default {})
+    Maps enabled channel names (email, sms, push, webhook) to DeliveryBackend
+    subclass import paths. An empty mapping enables no external channel.
+    Configure receiver registration and workers too; a mapping alone does
+    not send mail. See :doc:`delivery`.
+
+``DJANGO_NOTIFICATION_DELIVERY_DEFAULT_LOCALE`` (str, default LANGUAGE_CODE)
+    Fallback language for message templates. Values such as en, fa and en-us
+    are supported. Invalid deployment defaults fail system checks. User
+    locale selection and fallback order are in :doc:`templates_and_channels`.
+
+``DJANGO_NOTIFICATION_WEBHOOK_URL`` and ``DJANGO_NOTIFICATION_WEBHOOK_SECRET``
+    Required only for SignedWebhookBackend. Supply an operator-controlled
+    HTTPS URL and nonempty HMAC secret from your secret store/environment.
+    The destination never comes from a notification's link or user input.
+
+For a local email demonstration::
+
+    DJANGO_NOTIFICATION_API_EVENT_DELIVERY = "outbox"
+    DJANGO_NOTIFICATION_DELIVERY_BACKENDS = {
+        "email": "django_notification.delivery.backends.DjangoEmailBackend",
+    }
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    DEFAULT_FROM_EMAIL = "notifications@example.com"
+
+Production email configuration is Django's normal SMTP/backend configuration.
+Secrets and provider credentials belong to the host application.
+
+WebSockets
+-----------
+
+``DJANGO_NOTIFICATION_CHANNELS_DATABASE_ALIAS`` defaults to "default".
+It chooses the database used for audience lookup and socket reauthorization.
+Only events from that alias are dispatched by the adapter. Align it with the
+database storing the notifications and with the outbox worker's
+``--database`` argument.
+
+Channel layers, ASGI authentication and origin validation use standard host
+settings and middleware. Installing optional dependencies does not register
+the adapter. Follow the complete setup in :doc:`channels`.

@@ -1,179 +1,157 @@
-Quick Start
-===========
+Create your first inbox
+========================
 
-This section provides a fast and easy guide to getting the `dj-notification-api` package up and running in your Django project. Follow the steps below to quickly set up the package and start creating notifications.
+Add notification routes to an existing Django project, create a message and
+move it from unread to read. Email and WebSockets can be added afterward.
 
-1. Install the Package
+Install and configure
 ----------------------
 
-**Option 1: Using `pip` (Recommended)**
+Install into your project's virtual environment::
 
-Install the package via pip:
+    python -m pip install dj-notification-api
 
-.. code-block:: bash
+Supported combinations are Python 3.10/3.11 with Django 5.2, or Python
+3.12–3.14 with Django 5.2, 6.0 or 6.1. DRF 3.18 and ``django-filter`` are
+runtime dependencies. Check your installed release's requirements when
+upgrading an existing environment.
 
-   $ pip install dj-notification-api
+Add the apps alongside your existing Django apps::
 
-**Option 2: Using `Poetry`**
+    # config/settings.py
+    INSTALLED_APPS = [
+        # Existing auth, contenttypes, sessions and project apps ...
+        "rest_framework",
+        "django_notification",
+    ]
 
-If you're using Poetry, add the package with:
+Include the router in your root URL configuration::
 
-.. code-block:: bash
+    # config/urls.py
+    from django.urls import include, path
 
-   $ poetry add dj-notification-api
+    urlpatterns = [
+        path("notification/", include("django_notification.api.routers.notification")),
+    ]
 
-**Option 3: Using `pipenv`**
+Create the tables and check configuration::
 
-If you're using pipenv, install the package with:
+    python manage.py migrate
+    python manage.py check
 
-.. code-block:: bash
+Migrations create the default ``general`` category. No event receiver or
+background process is needed. Installing ``django-filter`` does not enable
+an extra filterset automatically; the built-in category/priority filters
+work without one.
 
-   $ pipenv install dj-notification-api
+Create a message
+-----------------
 
-The package requires ``djangorestframework`` for API support. If it's not already installed in your project, you can install it using one of the above methods:
+Open ``python manage.py shell``. Replace the usernames below with existing
+accounts. The example also works with a different ``USERNAME_FIELD``::
 
-**Using pip:**
+    from django.contrib.auth import get_user_model
+    from django_notification.models import Notification
 
-.. code-block:: bash
+    User = get_user_model()
+    actor = User.objects.get(**{User.USERNAME_FIELD: "alex"})
+    recipient = User.objects.get(**{User.USERNAME_FIELD: "sam"})
 
-  $ pip install djangorestframework
+    notification = Notification.objects.create_notification(
+        actor=actor,
+        verb="assigned you a task",
+        recipients=[recipient],
+        description="Review the delivery schedule before Friday.",
+        link="https://app.example.com/tasks/42",
+        is_sent=True,
+    )
 
-2. Add to Installed Apps
-------------------------
+Keep creation in trusted application code, such as a task-assignment service.
+There is no public REST creation endpoint. The default ``is_sent=False``
+creates a draft; omit ``is_sent=True`` only when you intend to send it later.
 
-After installing the necessary packages, ensure that both ``rest_framework`` and ``django_notification`` are added to the ``INSTALLED_APPS`` in your Django ``settings.py`` file:
+Follow the read-state flow
+---------------------------
 
-.. code-block:: python
+The API uses your project's DRF authentication. This shell example uses DRF's
+test client so it does not assume a particular token package::
 
-   INSTALLED_APPS = [
-       # ...
-       "rest_framework",  # Required for API support
-       "django_notification",
-       # ...
-   ]
+    from rest_framework.test import APIClient
 
-3. (Optional) Configure API Filters
------------------------------------
+    client = APIClient()
+    client.force_authenticate(user=recipient)  # Shell/test use only.
+    base = "/notification/notifications/"
+    item_id = notification.pk
 
-To enable filtering of notifications through the API, install ``django-filter``, include ``django_filters`` in your ``INSTALLED_APPS`` and configure the filter settings.
+    inbox = client.get(base).json()
+    assert item_id in [item["id"] for item in inbox["results"]]
 
-Install ``django-filter`` using one of the above methods:
+    preview = client.get(f"{base}{item_id}/preview/")
+    assert preview.status_code == 200
+    assert preview.json()["description"] == notification.description
 
-**Using pip:**
+    result = client.post(f"{base}{item_id}/mark_seen/").json()
+    assert result == {"id": item_id, "seen": True, "changed": True}
 
-.. code-block:: bash
+    repeated = client.post(f"{base}{item_id}/mark_seen/").json()
+    assert repeated["changed"] is False
 
-   $ pip install django-filter
+    activity = client.get("/notification/activities/").json()
+    assert item_id in [item["id"] for item in activity["results"]]
 
+This assumes default pagination and fewer than ten matching items. Follow
+``next`` for more pages. In a browser use your normal session or token login;
+``force_authenticate()`` is for tests, not an application login mechanism.
+Session-authenticated writes need the application's CSRF token.
 
-Add `django_filters` to your `INSTALLED_APPS`:
+Detail and preview GETs are read-only by default. After marking an item seen,
+its unread-detail URL returns ``404``; preview still works, and
+``activities/{id}/`` provides read detail.
 
-.. code-block:: python
+Clear or mark unread
+---------------------
 
-   INSTALLED_APPS = [
-       # ...
-       "django_filters",
-       # ...
-   ]
+Return the read item to the unread inbox::
 
-Then, set the filter class configuration in your ``settings.py``:
+    client.post(f"{base}{item_id}/mark_unseen/")
 
-.. code-block:: python
+To clear it, mark it seen and delete its activity::
 
-   DJANGO_NOTIFICATION_API_FILTERSET_CLASS = (
-       "django_notification.api.filters.notification_filter.NotificationFilter"
-   )
+    client.post(f"{base}{item_id}/mark_seen/")
+    response = client.delete(f"/notification/activities/{item_id}/")
+    assert response.status_code == 204
 
-You can also define your custom `FilterClass` and reference it in here if needed. This allows you to customize the filtering behavior according to your requirements.
+This clears the item only for Sam. Other recipients keep their own state.
+There is no public restore-cleared endpoint. Permanent deletion is a separate
+trusted administration operation.
 
+Connect a business transaction
+-------------------------------
 
-4. Apply Migrations
--------------------
+When a business change and its notification must succeed together, create
+them in the same database transaction::
 
-Run the following command to apply the necessary migrations:
+    from django.db import transaction
 
-.. code-block:: bash
+    with transaction.atomic():
+        # Save the task assignment using your application's model here.
+        Notification.objects.create_notification(
+            actor=actor,
+            recipients=[recipient],
+            verb="assigned you a task",
+            is_sent=True,
+            idempotency_key="tasks:42:assignment:7",
+        )
 
-   python manage.py migrate
+Use a stable logical event identity for ``idempotency_key``. Retrying the
+same arguments returns the original notification. An assignment event key
+must differ from the key for a later reassignment of the same task.
+See :doc:`usage` for key scope and deduplication windows.
 
+Next steps
+-----------
 
-5. Add Notification API URLs
-----------------------------
-
-Include the notification API routes in your project’s `urls.py` file:
-
-.. code-block:: python
-
-   from django.urls import path, include
-
-   urlpatterns = [
-       # ...
-       path("notification/", include("django_notification.api.routers.notification")),
-       # ...
-   ]
-
-
-6. Create Notifications
------------------------
-
-To create notifications and use them in your project, use the `Notification` model from the `django_notification` package. The `create_notification` method allows you to generate notifications dynamically based on various events in your application.
-
-**Example:**
-
-.. code-block:: python
-
-   from django.contrib.auth.models import User
-   from django_notification.models.notification import Notification
-   from django_notification.models.helper.enums.status_choices import NotificationStatus
-
-   # Define the actor and recipients
-   actor = User.objects.get(username="admin")
-   recipient = User.objects.get(username="john_doe")
-
-   # Create a new notification
-   Notification.objects.create_notification(
-       verb="Logged in to Admin panel",
-       actor=actor,
-       recipients=[recipient],
-       description="User logged in to admin area.",
-       status=NotificationStatus.INFO,
-       public=True,
-       link="https://example.com/admin/dashboard",
-       is_sent=True,
-   )
-
-**Arguments:**
-
-- **verb** (``str``): A description of the action (e.g., "Logged in", "Created an item").
-- **actor** (``Model``): The model instance that performs the action (e.g., user, system).
-- **description** (``Optional[str]``): Optional additional information.
-- **recipients** (``Optional[Union[UserModel, QuerySet, List[UserModel]]]``): One or more users who will receive the notification.
-- **groups** (``Optional[Union[Group, QuerySet, List[Group]]]``): Optional user groups who will receive the notification.
-- **status** (``Optional[str]``): Notification status (default is ``NotificationStatus.INFO``).
-- **public** (``bool``): Whether the notification is public (default is ``True``).
-- **target** (``Optional[Model]``): Optional target object related to the notification.
-- **action_object** (``Optional[Model]``): Optional object that is the focus of the action.
-- **link** (``Optional[str]``): Optional URL link related to the notification.
-- **is_sent** (``bool``): Marks whether the notification is sent (default is ``False``).
-- **data** (``Optional[Dict]``): Optional additional data in dictionary format (JSON Field).
-
-**Note**: The ``description`` field is used as the title of the notification, and it will be displayed with a time-relative format, such as: ``User logged in to admin area a minute ago.``
-
-If the ``description`` is not provided, a title will be automatically generated based on several fields like the ``actor``, ``verb``, and other relevant fields (e.g., target or action object).
-
-
-7. Verify Notifications
------------------------
-
-Once notifications are created, they can be managed through the API endpoints. To test and verify the creation, make a request to the relevant endpoint, for example:
-
-.. code-block:: bash
-
-   curl -X GET http://localhost:8000/notification/notifications/
-
-This will return a list of notifications created for the authenticated user.
-
-----
-
-With the setup complete, the ``django_notification`` is ready for use in your project. For further customizations and settings, refer to the :doc:`API Guide <api_guide>` and :doc:`Settings <settings>` sections.
-
+* :doc:`concepts` explains audiences, preferences and independent state.
+* :doc:`api_guide` covers payloads, pagination, errors and client actions.
+* :doc:`delivery` walks through console email and production workers.
+* :doc:`troubleshooting` diagnoses an empty inbox or missing external send.

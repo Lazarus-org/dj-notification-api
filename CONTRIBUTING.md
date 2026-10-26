@@ -1,164 +1,115 @@
 # Contributing to dj-notification-api
 
+Thanks for contributing. Bug reports, focused fixes, tests, and documentation
+improvements are welcome. Open an issue for a substantial behavior or API
+change before beginning a large implementation.
 
-We’re excited that you’re interested in contributing to `dj-notification-api`! Whether you’re fixing a bug, adding a feature, or improving the project, your help is appreciated.
+## Development setup
 
-## Overview
+Use a compatible Python version (3.10–3.14) and install
+[`uv`](https://docs.astral.sh/uv/):
 
+```bash
+git clone https://github.com/lazarus-org/dj-notification-api.git
+cd dj-notification-api
+uv sync --locked --all-extras --python 3.13
+```
 
-- **Setting Up Your Environment**
-- **Testing Your Changes**
-- **Code Style Guidelines**
-- **Utilizing Pre-commit Hooks**
-- **Creating a Pull Request**
-- **Reporting Issues**
-- **Resources**
+The repository declares its dependencies in `pyproject.toml`. The generated `uv.lock` is version controlled; use `uv sync --locked` for
+reproducible environments. Do not reintroduce Poetry or exported pip requirement
+files as parallel sources of truth.
 
-## Setting Up Your Environment
+## Quality workflow
 
+Run the relevant checks before submitting a pull request:
 
-1. **Fork the Repository:**
+```bash
+uv run ruff check django_notification
+uv run black --check django_notification scripts
+uv run ruff format --check django_notification/tests docs/conf.py
+uv run pytest
+uv run pre-commit run --all-files
+```
 
-   Begin by forking the `dj-notification-api` repository on GitHub. This creates your own copy where you can make changes.
+Install both Git hook stages with `uv run pre-commit install`. Commitizen
+checks the commit message at `commit-msg`; the other checks run before commit.
+The local and CI hook files enforce the same checks, and the metadata check
+rejects a missing hook or configuration drift between them.
 
-2. **Clone Your Fork:**
+Hooks include file checks, pyproject/tox formatting, pyupgrade, isort, Black,
+docformatter, Python documentation formatting, RST validation, Bandit, Pylint,
+the full pytest suite and Django migration lint. Tools run through the locked
+uv environment. Black formats production code/scripts; Ruff formats tests and
+the Sphinx configuration. Run `uv run python scripts/lint_migrations.py` for
+migration lint without creating a separate host Django project.
 
-   Use the following command to clone your fork locally:
+The default test suite uses `pytest-django` and enforces 100% statement coverage
+of package source through `pyproject.toml`. Existing test/migration exclusions
+remain unchanged. Cover observable behavior, validation failures and recovery
+paths; do not add exclusions to reach the threshold. For an individual
+compatibility environment, use tox:
 
-   ```bash
-   git clone https://github.com/your-username/dj-notification-api.git
-   cd dj-notification-api
-   ```
+```bash
+uv run tox -e py313-django61-drf318
+```
 
-3. **Install Dependencies:**
+Other supported environments are listed in `tox.ini` and the CI workflow.
+Migration changes should be accompanied by a fresh-database migration test
+and appropriate tests for upgrades from supported released schemas.
 
-   Install the necessary dependencies using `Poetry`. If Poetry isn't installed on your machine, you can find installation instructions on the [Poetry website](https://python-poetry.org/docs/#installation).
+Changes to the outbox and delivery workers require extra attention to
+transaction boundaries, concurrency, lease expiry, replay/idempotency, and
+cross-database behavior. For permission or API changes, test both direct and
+group audiences, unauthorized access, user-state isolation, and historical
+GET compatibility.
 
-   ```bash
-   poetry install
-   ```
+## Coding practices
 
-4. **Create a Feature Branch:**
+- Follow existing modules and Django conventions; use explicit dependencies
+  and avoid hidden network effects at import time.
+- Keep Channels, Redis, and provider libraries optional unless approved as
+  a project-wide requirement.
+- Use lifecycle services for notification state mutations; direct ORM writes
+  do not automatically publish lifecycle events.
+- Avoid collecting or logging message bodies, provider credentials, recipient
+  contact details, and raw provider errors in delivery histories.
+- Prefer bounded database operations and idempotent consumers for all
+  at-least-once processing paths.
+- Add documentation when changing a setting, endpoint, migration, or
+  externally observable behavior.
 
-   It’s a good practice to create a new branch for your work:
+## Pull requests
 
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+1. State the problem and the behavior change.
+2. Reference the related issue, if any.
+3. Describe tests performed, including Django/Python matrix entries.
+4. Note migrations, breaking changes, and security consequences explicitly.
+5. Do not publish directly to PyPI from a local development machine. Release
+   controls are described in [the development guide](docs/development_toolchain.rst).
 
-## Testing Your Changes
+Use a focused conventional commit message, for example:
 
-We use `pytest` for running tests. Before submitting your changes, ensure that all tests pass:
+```text
+fix(notifications): preserve group recipient visibility
+```
 
-   ```bash
-   poetry run pytest
-   ```
+Security vulnerabilities should be reported privately using
+[SECURITY.md](SECURITY.md), not filed as public exploit reports.
 
-If you’re adding a new feature or fixing a bug, don’t forget to write tests to cover your changes.
+## Contributor resources
 
+- [Django documentation](https://docs.djangoproject.com/)
+- [Django REST Framework documentation](https://www.django-rest-framework.org/)
+- [uv documentation](https://docs.astral.sh/uv/)
+- [Project documentation](https://dj-notification-api.readthedocs.io/en/latest/)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Changelog](CHANGELOG.md)
 
-## Code Style Guidelines
+## PostgreSQL validation
 
-Maintaining a consistent code style is crucial. We use `black` for code formatting and `isort` for import sorting. Make sure your code adheres to these styles:
-
-   ```bash
-    poetry run black .
-    poetry run isort .
-   ```
-For linting, `pylint` is used to enforce style and catch potential errors:
-
-   ```bash
-   poetry run pylint dj-notification-api
-   ```
-
-## Utilizing Pre-commit Hooks
-
-Pre-commit hooks are used to automatically check and format code before you make a commit. This ensures consistency and quality in the codebase.
-
-1. **Install Pre-commit:**
-
-   ```bash
-   poetry add --dev pre-commit
-   ```
-
-2. **Set Up the Hooks:**
-
-   Install the pre-commit hooks by running:
-
-   ```bash
-   poetry run pre-commit install
-   ```
-3. **Set Up django_migration_linter:**
-
-    To ensure that `django_migration_linter` functions properly, add it to the INSTALLED_APPS section in your `settings.py` file:
-
-   ```python
-   INSTALLED_APPS = [
-      # ...
-      'django_migration_linter'
-      # ...
-   ]
-   ```
-This step integrates the migration linter into your Django project, allowing it to monitor migrations effectively.
-
-4. **Manual Hook Execution (Optional):**
-
-   To run all hooks manually on your codebase:
-
-   ```bash
-   poetry run pre-commit run --all-files
-   ```
-
-## Creating a Pull Request
-
-Once your changes are ready, follow these steps to submit them:
-
-1. **Commit Your Changes:**
-
-   Write clear and concise commit messages. Following the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format is recommended:
-
-   ```bash
-   git commit -am 'refactor: update api notification permission class'
-   ```
-2. **Push Your Branch:**
-
-   Push your branch to your fork on GitHub:
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-3. **Open a Pull Request:**
-
-   Go to the original `dj-notification-api` repository and open a pull request. Include a detailed description of your changes and link any related issues.
-
-4. **Respond to Feedback:**
-
-   After submitting, a maintainer will review your pull request. Be prepared to make revisions based on their feedback.
-
-## Reporting Issues
-
-Found a bug or have a feature request? We’d love to hear from you!
-
-1. **Open an Issue:**
-
-   Head over to the `Issues` section of the `dj-notification-api` repository and click "New Issue".
-
-2. **Describe the Problem:**
-
-   Fill out the issue template with as much detail as possible. This helps us understand and address the issue more effectively.
-
-## Resources
-
-Here are some additional resources that might be helpful:
-
-- [Poetry Documentation](https://python-poetry.org/docs/)
-- [Black Documentation](https://black.readthedocs.io/en/stable/)
-- [isort Documentation](https://pycqa.github.io/isort/)
-- [pytest Documentation](https://docs.pytest.org/en/stable/)
-- [pylint Documentation](https://pylint.pycqa.org/en/latest/)
-- [Pre-commit Documentation](https://pre-commit.com/)
-
----
-
-Thank you for your interest in contributing to `dj-notification-api`! We look forward to your contributions.
+Run the full suite against a disposable PostgreSQL database using
+`DJANGO_NOTIFICATION_TEST_DATABASE=postgresql` and the standard `PGHOST`,
+`PGPORT`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` environment variables.
+The database account must be allowed to create the prefixed test database.
+The PostgreSQL job in CI provides a disposable PostgreSQL 17 service.
+Read `VALIDATION_REPORT.md` and `RELEASE_READINESS.md` before preparing a release.

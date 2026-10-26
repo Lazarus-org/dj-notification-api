@@ -15,23 +15,23 @@ we’re thrilled that you want to contribute to `dj-notification-api`! to ensure
     git checkout -b feature/your-feature-name
     ```
 
-3. **Install Dependencies**: Use Poetry to install the project’s dependencies. if poetry isn’t installed, refer to the [Poetry installation guide](https://python-poetry.org/docs/#installation)
+3. **Install Dependencies**: Use uv to install the locked development dependencies.
     ```bash
-    poetry install
+    uv sync --locked --all-extras --python 3.13
     ```
 
 4. **Write Code and Tests**: Make your changes and write tests for your new code. Ensure that all tests pass:
    ```bash
-    poetry run pytest
+    uv run --locked pytest
     ```
 5. **Run Code Quality Checks**: Ensure code quality with Pylint:
     ```bash
-    poetry run pylint django_notification
+    uv run --locked pylint django_notification
     ```
 
 6. **Commit Your Changes**: Use Commitizen to commit your changes according to the Conventional Commits specification:
     ```bash
-    cz commit
+    uv run cz commit
     ```
 
 7. **Push and Create a PR**: Push your changes to your fork on GitHub and open a pull request:
