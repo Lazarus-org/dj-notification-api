@@ -12,15 +12,14 @@ class DjangoNotificationConfig(AppConfig):
     def ready(self) -> None:
         """This method is called when the application is fully loaded.
 
-        Its main purpose is to perform startup tasks, such as importing
-        and registering system checks for validating the configuration
-        settings of the `django_notification` app. It ensures that
-        all necessary configurations are in place and properly validated
-        when the Django project initializes.
+        Its main purpose is to perform startup tasks, such as importing and registering
+        system checks for validating the configuration settings of the
+        `django_notification` app. It ensures that all necessary configurations are in
+        place and properly validated when the Django project initializes.
 
         In this case, it imports the settings checks from the
-        `django_notification.settings` module to validate the configuration
-        settings for notifications.
+        `django_notification.settings` module to validate the configuration settings for
+        notifications.
 
         """
         import_module("django_notification.settings.checks")

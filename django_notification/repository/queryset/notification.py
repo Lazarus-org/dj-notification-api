@@ -81,9 +81,9 @@ class NotificationQuerySet(QuerySet["Notification"]):
     ) -> "NotificationQuerySet":
         """Match direct recipients OR targeted groups without duplicate rows.
 
-        ``None`` means no constraint for that dimension. Explicit empty inputs
-        do not widen the queryset; if both are empty, the result is empty.
-        If both are None, this acts as an unfiltered selection for admin code.
+        ``None`` means no constraint for that dimension. Explicit empty inputs do not
+        widen the queryset; if both are empty, the result is empty. If both are None,
+        this acts as an unfiltered selection for admin code.
 
         """
         matches = []
@@ -110,9 +110,9 @@ class NotificationQuerySet(QuerySet["Notification"]):
     def visible_to(self, user: UserModel) -> "NotificationQuerySet":
         """Limit records to a direct recipient or member of a targeted group.
 
-        Dynamic groups use current membership; snapshot groups are resolved
-        through persisted direct-recipient rows. Staff never bypass this rule.
-        Users without ``groups`` can still receive direct notifications.
+        Dynamic groups use current membership; snapshot groups are resolved through
+        persisted direct-recipient rows. Staff never bypass this rule. Users without
+        ``groups`` can still receive direct notifications.
 
         """
         if not self._valid_user(user):
@@ -163,9 +163,9 @@ class NotificationQuerySet(QuerySet["Notification"]):
     def active_at(self, when=None) -> "NotificationQuerySet":
         """Notifications whose expiration has not yet elapsed.
 
-        A null expiry means no expiration. At the exact expiry instant, the
-        record is expired. Supplying ``when`` lets applications use a stable
-        reference time throughout multi-query reporting.
+        A null expiry means no expiration. At the exact expiry instant, the record is
+        expired. Supplying ``when`` lets applications use a stable reference time
+        throughout multi-query reporting.
 
         """
         when = timezone.now() if when is None else when

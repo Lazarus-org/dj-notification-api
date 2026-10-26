@@ -272,7 +272,6 @@ class Notification(Model):
             str: The generated title for the notification.
 
         """
-
         if self.target:
             if self.action_object:
                 return _("{actor} {verb} {action_object} on {target}").format(

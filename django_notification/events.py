@@ -1,8 +1,8 @@
 """Best-effort notification lifecycle events emitted after database commit.
 
-Connect to ``notification_event`` with Django's standard signal API. Receivers
-should re-fetch data and enforce authorization for their delivery channel.
-Events are not a durable outbox or a transactional messaging guarantee.
+Connect to ``notification_event`` with Django's standard signal API. Receivers should
+re-fetch data and enforce authorization for their delivery channel. Events are not a
+durable outbox or a transactional messaging guarantee.
 
 """
 
@@ -48,9 +48,9 @@ class NotificationEventKind:
 class NotificationEvent:
     """Minimal safe metadata for one lifecycle action.
 
-    ``affected_count`` means eligible candidate rows for a bulk operation;
-    for conflict-tolerant bulk inserts it is not an exact new-row count under
-    concurrent requests. Bulk events intentionally omit individual IDs.
+    ``affected_count`` means eligible candidate rows for a bulk operation; for conflict-
+    tolerant bulk inserts it is not an exact new-row count under concurrent requests.
+    Bulk events intentionally omit individual IDs.
 
     """
 
@@ -67,9 +67,9 @@ class NotificationEvent:
 def publish_notification_event(event: NotificationEvent) -> None:
     """Publish via post-commit signal or opt-in transactional outbox.
 
-    Signal receivers use ``send_robust`` so a broken receiver does not turn a
-    committed DB operation into an API error. Failures are logged generically,
-    without serializing notification content, user data, or exception messages.
+    Signal receivers use ``send_robust`` so a broken receiver does not turn a committed
+    DB operation into an API error. Failures are logged generically, without serializing
+    notification content, user data, or exception messages.
 
     """
     delivery_mode = getattr(

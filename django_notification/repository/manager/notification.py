@@ -37,9 +37,9 @@ NotificationQueryManager = Manager.from_queryset(NotificationQuerySet)
 class NotificationDataAccessLayer(NotificationQueryManager):
     """Expose chainable selections plus transactional notification mutations.
 
-    ``Manager.from_queryset`` publishes the queryset's read-only filters.
-    Creation, updates and per-user state transitions live in the lifecycle
-    service instead of on the queryset. Existing manager calls remain usable.
+    ``Manager.from_queryset`` publishes the queryset's read-only filters. Creation,
+    updates and per-user state transitions live in the lifecycle service instead of on
+    the queryset. Existing manager calls remain usable.
 
     """
 

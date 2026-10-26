@@ -98,7 +98,6 @@ class DeletedNotification(Model):
             PermissionError: If the user does not have permission to delete the notification.
 
         """
-
         permission_class = NotificationPermission(self.notification)
         permission_class.validate_permission(self.user, "delete")
 

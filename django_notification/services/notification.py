@@ -105,9 +105,9 @@ class NotificationLifecycleService:
     def _snapshot_group_recipients(self, notification):
         """Persist group members with bounded writes, retaining recipient overlap.
 
-        Resolves membership inside the creation transaction. Once stored, group
-        changes do not affect the frozen audience. A user model must define a
-        ManyToManyField named ``groups`` targeting Django's Group model.
+        Resolves membership inside the creation transaction. Once stored, group changes
+        do not affect the frozen audience. A user model must define a ManyToManyField
+        named ``groups`` targeting Django's Group model.
 
         """
         if not notification.group.exists():

@@ -1,7 +1,7 @@
 """Optional external notification delivery backends and durable workers.
 
-No external provider client is imported when the core package is loaded.
-Enable explicitly with ``connect_notification_delivery`` in AppConfig.ready().
+No external provider client is imported when the core package is loaded. Enable
+explicitly with ``connect_notification_delivery`` in AppConfig.ready().
 
 """
 

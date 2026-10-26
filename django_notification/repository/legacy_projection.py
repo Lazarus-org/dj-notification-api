@@ -1,8 +1,8 @@
 """Compatibility-only projections for the pre-composable manager selectors.
 
-New callers should serialize model instances, not rely on projected dicts.
-This adapter intentionally lives outside ``NotificationQuerySet`` so the
-query implementation is independent of HTTP response field configuration.
+New callers should serialize model instances, not rely on projected dicts. This adapter
+intentionally lives outside ``NotificationQuerySet`` so the query implementation is
+independent of HTTP response field configuration.
 
 """
 
@@ -23,8 +23,8 @@ def legacy_notification_projection(
 ) -> QuerySet:
     """Keep historical ``display_detail`` return types for legacy selectors.
 
-    False returns a ``values()`` queryset using the original compact fields;
-    True returns notification instances with detail relationships prefetched.
+    False returns a ``values()`` queryset using the original compact fields; True
+    returns notification instances with detail relationships prefetched.
 
     """
     if display_detail:

@@ -66,8 +66,7 @@ def validate_list_fields(
 
 
 def validate_throttle_rate(rate: str, setting_name: str) -> list[Error]:
-    """
-    Validates that a throttle rate is in the correct format: `{number}/{time_unit}`.
+    """Validates that a throttle rate is in the correct format: `{number}/{time_unit}`.
 
     Args:
         rate (str): The throttle rate to validate, e.g., "10/minute".
@@ -75,6 +74,7 @@ def validate_throttle_rate(rate: str, setting_name: str) -> list[Error]:
 
     Returns:
         List[Error]: A list of errors if the rate is not valid, otherwise an empty list.
+
     """
     errors = []
     if not isinstance(rate, str) or "/" not in rate:

@@ -10,7 +10,8 @@ class DisableMethodsMixin:
 
     This mixin allows you to disable HTTP methods such as GET, POST, PUT, DELETE, etc.,
     by overriding them with a method that raises `MethodNotAllowed`. This is useful for
-    restricting access to certain actions or endpoints based on specific conditions or settings.
+    restricting access to certain actions or endpoints based on specific conditions or
+    settings.
 
     """
 

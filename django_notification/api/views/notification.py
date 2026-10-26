@@ -128,9 +128,9 @@ class NotificationViewSet(
     def get_queryset(self, display_detail: bool = False) -> QuerySet:
         """Select unseen notifications visible to the authenticated user.
 
-        ``display_detail`` is retained for extension compatibility, but
-        queryset result types are now always model instances. Presentation
-        belongs to the selected serializer.
+        ``display_detail`` is retained for extension compatibility, but queryset result
+        types are now always model instances. Presentation belongs to the selected
+        serializer.
 
         """
         queryset = (

@@ -38,11 +38,11 @@ class RetryableDeliveryError(DeliveryError):
 class DeliveryBackend:
     """Implement send(delivery, *, idempotency_key) in application backends.
 
-    Custom SMS/push backends may call delivery.rendering.render_delivery() to
-    obtain the locale-specific subject/body, or retain provider-specific output.
-    ``delivery.notification`` and ``delivery.recipient`` are model instances.
-    A stable idempotency key can be passed to providers with dedupe support.
-    Never log message contents, addresses, tokens or raw provider responses.
+    Custom SMS/push backends may call delivery.rendering.render_delivery() to obtain the
+    locale-specific subject/body, or retain provider-specific output.
+    ``delivery.notification`` and ``delivery.recipient`` are model instances. A stable
+    idempotency key can be passed to providers with dedupe support. Never log message
+    contents, addresses, tokens or raw provider responses.
 
     """
 
