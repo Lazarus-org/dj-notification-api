@@ -91,6 +91,10 @@ and stages it before the release commit hooks run. The existing
 locked dependencies are retained. The command creates a local commit and tag;
 pushing them is a separate release step.
 
+Sphinx reads its release version directly from ``[project].version`` in the
+checkout's ``pyproject.toml``. No separate documentation version update is
+needed, and an older installed distribution cannot override the checkout.
+
 Continuous integration
 ----------------------
 

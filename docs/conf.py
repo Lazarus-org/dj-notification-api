@@ -8,7 +8,12 @@
 
 import os
 import sys
-from importlib.metadata import PackageNotFoundError, version as distribution_version
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -19,10 +24,8 @@ copyright = "Lazarus"
 author = "ARYAN-NIKNEZHAD, MEHRSHAD-MIRSHEKARY"
 
 # The full version, including alpha/beta/rc tags
-try:
-    release = distribution_version("dj-notification-api")
-except PackageNotFoundError:
-    release = "2.0.0"  # source checkout without an installed distribution
+with (Path(__file__).resolve().parents[1] / "pyproject.toml").open("rb") as metadata:
+    release = tomllib.load(metadata)["project"]["version"]
 
 master_doc = "index"
 

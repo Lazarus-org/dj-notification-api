@@ -1,2 +1,3 @@
 sphinx>=8,<10
 sphinx-rtd-theme>=3,<4
+tomli>=2,<3; python_version<'3.11'
