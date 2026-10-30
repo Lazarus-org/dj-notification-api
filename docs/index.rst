@@ -41,6 +41,7 @@ Learn and integrate
 .. toctree::
    :maxdepth: 2
 
+   Overview <self>
    quick_start
    concepts
    usage
