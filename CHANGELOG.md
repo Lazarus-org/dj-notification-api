@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.0.1 (2026-10-30)
+
+### Fixed
+
+- Declare Python 3.14 support in the package metadata, matching the existing
+  tox and GitHub Actions compatibility matrices.
+
 ## v2.0.0 (2026-10-30)
 
 Version 2.0 adds recipient-scoped inboxes, notification lifecycle services,
