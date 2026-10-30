@@ -22,7 +22,7 @@ author = "ARYAN-NIKNEZHAD, MEHRSHAD-MIRSHEKARY"
 try:
     release = distribution_version("dj-notification-api")
 except PackageNotFoundError:
-    release = "1.2.1"  # source checkout without an installed distribution
+    release = "2.0.0"  # source checkout without an installed distribution
 
 master_doc = "index"
 

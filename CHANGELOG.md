@@ -1,271 +1,114 @@
 # Changelog
 
-## Unreleased
+## v2.0.0 (2026-10-30)
 
-### Release hardening (version pending approval)
+Version 2.0 adds recipient-scoped inboxes, notification lifecycle services,
+and optional background delivery. This major release changes personal API
+permissions, response fields, and the HTTP methods used to change notification
+state. Review the [upgrade guide](docs/upgrading.rst) before upgrading from 1.x.
 
-- Generate a real uv lock and verify Python 3.10–3.14 / Django 5.2, 6.0, 6.1 / DRF 3.18.
-- **Breaking security default:** GET mutations and automatic read marking on GET
-  are disabled by default. POST/DELETE routes and explicit legacy switches remain.
-- Bulk sends and the admin send action now emit per-notification delivery intent
-  while retaining the aggregate event. Low-level ORM writes remain outside this contract.
-- Redact signal receiver exceptions before Django's robust-dispatch logger sees them.
-- Serialize late digest fan-out with finalization; reopen completed slots for new
-  children and keep failed slots under explicit requeue policy.
-- Correct custom AdminSite instantiation and source typing; preserve historical migrations.
-- Repair tox's runner, use isolated coverage files, add real PostgreSQL and installed-core
-  CI gates, and require the full reusable CI workflow before gated publication.
+### Breaking changes and security
 
-### Infrastructure modernization (Phase 21, unreleased)
+- **GET requests are read-only by default.** Retrieving a notification no longer
+  marks it as seen. Use POST for read-state and bulk mutations, and DELETE for
+  deletion. Session-authenticated clients must provide CSRF tokens for writes.
+- **Staff and superusers follow recipient rules on personal endpoints.** Access
+  requires a direct recipient relationship or eligible group membership; staff
+  status no longer widens notification selections or grants cross-user access.
+- **Personal detail responses protect recipient privacy.** Built-in personal
+  serializers omit other recipients, groups, other users' read state, and
+  arbitrary notification data. Staff no longer automatically receive a full
+  administrative representation from personal list endpoints.
+- **Framework requirements have changed.** Python 3.10+ and DRF 3.18 are required.
+  Python 3.10/3.11 use Django 5.2; Python 3.12+ use Django 6.0 or 6.1 under the
+  package's dependency constraints. Upgrade older framework installations first.
+- Queryset mutation helpers are deprecated in favor of `Notification.objects`
+  manager methods. Direct ORM writes do not emit the lifecycle events used by
+  delivery integrations.
 
-- Standardized build metadata on PEP 621 / Hatchling; uv replaces Poetry
-  for development dependency management.
-- Established Python 3.10–3.14, Django 5.2/6.0/6.1 and DRF 3.18 compatibility
-  branches (breaking minimum supported version change; not yet released).
-- Declared runtime `django-filter` and optional Channels/Redis extras.
-- Replaced stale requirements exports and redundant pre-commit CI manifest;
-  introduced tox-uv, Ruff, GitHub Actions OIDC publishing controls, and an
-  offline metadata/matrix consistency check.
-- **Release gate:** generate uv.lock, execute migrations and full test matrix,
-  validate wheel/sdist and security scans before publishing.
+### Inbox, audiences, and notification lifecycle
 
-### Documentation overhaul
+- Add composable, model-returning queryset selectors for audience visibility,
+  sent state, read state, deletion, and expiration. Keep legacy projection
+  selectors available while separating serialization from database selection.
+- Add inbox summary counts, read-only previews, and bulk read/unread actions.
+  Read and cleared state belong to each recipient independently; clearing one
+  user's activity does not remove shared content for other recipients.
+- Combine direct and group recipients without duplicate inbox items. Support
+  dynamic group audiences that follow current membership and snapshot audiences
+  that copy the group's members into direct recipients at creation time.
+- Add idempotency keys for notification creation so retried application requests
+  can reuse an existing notification instead of creating duplicates.
+- Add expiration timestamps that remove expired notifications from personal
+  access, plus a retention cleanup command with a dry-run preview.
+- Add categories, priorities, and per-user category preferences. Mandatory
+  categories remain visible despite an optional-category preference.
+- Add transaction-aware lifecycle events for manager operations. Receivers run
+  after successful commits; rolled-back mutations do not dispatch events.
 
-- Replaced the legacy monolithic README with a concise package-facing overview,
-  installation example, capability map, and links to focused references.
-- Updated the Sphinx landing page, quick start, REST API reference, audience/role
-  guide, contributor instructions, and supported version/tooling guidance.
-- Aligned the optional Channels installation examples and removed dead Sphinx
-  static/template references. No application behavior or dependency changes.
+### Optional delivery and integrations
 
+- Add a transactional outbox that persists lifecycle event intent with the
+  notification mutation. Workers dispatch persisted events with leases,
+  retry limits, backoff, pruning, and explicit failed-event requeue commands.
+- Add pluggable email, SMS, push, and webhook delivery channels. Provide a Django
+  email backend and interfaces for application-provided adapters; each recipient
+  and channel has independent delivery state and retry handling.
+- Add localized notification templates, rendering context, and per-user channel
+  preferences. Add configurable routing rules to select delivery channels.
+- Add per-user, per-channel quiet hours and delivery schedules, including daily
+  and weekly email digests. Scheduling handles local time zones and daylight
+  saving transitions; mandatory categories and urgent notifications bypass
+  quiet hours and digest batching.
+- Add an optional Django Channels integration with authenticated consumers,
+  recipient-aware event fan-out, and configurable channel-layer delivery.
+- External delivery and Channels require explicit configuration and receiver
+  registration. Channels, Redis, Celery, and provider SDKs remain optional;
+  the core inbox does not require external delivery workers.
 
-### Internal worker robustness (Phase 20)
+### Correctness, recovery, and diagnostics
 
-- Share bounded retry-configuration and exponential-backoff logic between the
-  outbox and external-delivery workers (including digest retries).
-- Reconcile abandoned, retry-exhausted outbox/delivery claims in finite pages
-  of at most 500 rows per claim attempt. A large backlog no longer triggers an
-  unbounded terminal-state UPDATE in a single worker pass; claim readiness is
-  rechecked before modifying rows to protect newly renewed leases.
-- No public API, model, migration, or default delivery-policy changes.
+- Preserve action-specific DRF permissions when applying configurable view
+  settings, including the administrator restriction on permanent deletion.
+- Make bulk sends and the admin send action emit individual notification event
+  intent while preserving the aggregate event for existing receivers.
+- Redact signal receiver exceptions before robust dispatch logs them.
+- Bound exhausted-job recovery work, share capped retry backoff across workers,
+  and recheck claim eligibility before terminal-state updates.
+- Serialize late digest additions with finalization, reopen completed slots for
+  new entries, and retain explicit recovery for failed digest slots.
+- Add queue health reports, sanitized failure diagnostics, delivery analytics,
+  and targeted requeue previews for outbox events, delivery jobs, and digests.
+  External providers still need idempotency handling for at-least-once delivery.
+- Correct custom admin-site initialization and support swapped user models,
+  including direct-only notification use without a Django groups relationship.
 
+### Packaging and development
 
-### Added (phase 19)
+- Replace Poetry and requirements-file development setup with uv and a committed
+  lockfile. Refresh dependency constraints and retain compatible tooling versions
+  for Python 3.10 through Python-version markers.
+- Expand CI to cover the framework matrix, PostgreSQL concurrency, installed
+  packages without optional integrations, documentation, security, and packaging.
+  Keep the 100% coverage requirement in the test and pre-commit configuration.
+- Make Commitizen update the package version in both `pyproject.toml` and
+  `uv.lock`, validate the lockfile offline, and include it in the bump commit.
+- Expand documentation with configuration examples, delivery setup, worker
+  operations, troubleshooting, and migration guidance.
 
-- Read-only, database-backed historical delivery analytics with creation-time
-  cohorts, terminal success rates, average/maximum queue latency and buckets,
-  retry/attempt distributions, bounded category breakdowns, and UTC daily trends.
-- Aggregated JSON/CSV/text operator reports via
-  ``notification_delivery_report``. No recipient or notification content is
-  collected or exported. No new schema, API endpoints, or required dependencies.
-- Focused regression tests added; full Django runtime validation remains
-  deferred to the final integration and release gate.
+### Upgrading from 1.x
 
-
-### Added (phase 18)
-
-- Optional operator-managed category, priority-range and notification-status
-  routing policies for external email/SMS/push/webhook channels. Deterministic
-  REPLACE/ADD/REMOVE actions support priority-based channel escalation.
-- Provider configuration and per-user preferences remain authoritative;
-  route changes are rechecked immediately before individual or digest sends.
-  No rules preserves existing delivery fan-out. Migration ``0012`` and
-  ``docs/routing_rules.rst`` describe policy ordering and no-backfill limits.
-- Added focused regression coverage. Full Django runtime validation remains
-  deferred until the final integration gate.
-
-
-### Added (phase 17)
-
-- Read-only delivery observability across outbox, immediate-delivery and digest
-  queues: status, due/scheduled work, expired and stranded leases, oldest due
-  age, and privacy-safe per-channel aggregates. Exposed as importable snapshots
-  and a management command with text, JSON and Prometheus exposition formats.
-- Configurable health thresholds with opt-in nonzero exit status for monitoring,
-  plus a bounded recent-failure report with allowlisted attempt-code labels.
-- Dry-run previews for existing targeted requeue commands; default recovery
-  behavior and worker state semantics are unchanged. No new migrations or
-  required dependencies. Runtime verification remains deferred.
-
-
-### Added (phase 16)
-
-- Opt-in, per-channel IANA-timezone quiet hours with midnight and DST handling.
-- Daily/weekly email digest envelopes, per-job membership and preference checks,
-  leased processing, retry/backoff, and explicit failed-digest requeue.
-- Mandatory and urgent notifications bypass delivery scheduling.
-- Email digest sends use the existing localized message renderer with no
-  stored plaintext content. REST schedule controls and migration ``0011``.
-- Added focused regression tests. Django runtime verification remains deferred.
-
-
-### Added (phase 15)
-
-- Optional category/channel/locale message templates for email, SMS and push,
-  with restricted string placeholders, recipient locale fallback, and admin
-  editing. Built-in email delivery uses the renderer; custom provider adapters
-  can opt in without introducing additional dependencies.
-- Per-user external channel preferences, effective-state REST endpoints,
-  mandatory-category enforcement, and bounded per-recipient-batch opt-out checks
-  at enqueue with another eligibility check immediately before sending.
-- Migration ``0010`` and usage/limitations in ``docs/templates_and_channels.rst``.
-  Existing notifications and delivery behavior remain unchanged when no
-  templates or overrides are configured. Full runtime validation deferred.
-
-
-### Added (phase 14)
-
-- Opt-in external email/SMS/push/webhook delivery pipeline built on the Phase 13
-  durable outbox. A unique notification/recipient/channel job prevents duplicate
-  fan-out after outbox replay; workers track independent leased retries.
-- Django email and fixed-URL signed HTTPS webhook adapters, and a simple
-  backend protocol for application-supplied SMS/push/provider adapters.
-- Sanitized append-only attempt history, explicit failure requeue, stale-job
-  cancellation on revoked user visibility, and no mandatory provider dependencies.
-- Migration ``0009`` and ``docs/delivery.rst``; external delivery is disabled
-  unless an application explicitly configures and registers it.
-- Read-only Django admin views for delivery status and sanitized attempts.
-
-
-### Added (phase 13)
-
-- Opt-in transactional notification outbox with persistent ID-only lifecycle
-  metadata, migration ``0008``, and ``DJANGO_NOTIFICATION_API_EVENT_DELIVERY``
-  setting (``signal`` remains the default).
-- Worker command for leased multi-worker claims, expired-lease recovery,
-  bounded retries, and safe failure handling, plus operator requeue and
-  delivered-only cleanup commands.
-- Durable-mode Channels error propagation so failed layer dispatch is retried.
-  At-least-once semantics, duplicate-handling requirements, operational
-  deployment, and limitations documented in ``docs/outbox.rst``.
-
-
-### Added (phase 12)
-
-- Opt-in Django Channels integration under
-  ``django_notification.integrations.channels``: explicit signal registration,
-  a session-authenticated read-only WebSocket consumer, and an ASGI URL route.
-- Bounded database-backed per-user fan-out for direct targets and dynamic or
-  snapshot Django-group audiences, with privacy and preference filtering.
-- Safe ID-only event hints, opaque per-user Channels groups, and fresh
-  authorization checks immediately before sending over a socket.
-- Documentation in ``docs/channels.rst`` and optional integration regression
-  tests. Channels, Redis and Daphne remain optional, and no migration is added.
-- Limitations are explicit: best-effort delivery, no hard-delete or aggregate
-  sent push, and REST reconciliation after reconnect.
-
-
-### Added (phase 11)
-
-- Optional ``django_notification.events.notification_event`` Django signal
-  with an immutable ID-only payload and stable lifecycle event kinds.
-- Commit-aware dispatch for manager/service creation, updates, sends,
-  read/unread transitions, soft clear, and hard deletion. Idempotent retries
-  and sequential no-op single transitions do not re-emit events.
-- ``Notification.mark_as_seen()`` now emits commit-aware read-state events
-  without changing its historical permission-only eligibility rule.
-- Event-consumer usage, rollback and best-effort limitations are documented in
-  ``docs/events.rst``. No extra runtime dependency or migration is required.
-
-
-### Added (phase 10)
-
-- Managed ``NotificationCategory`` catalog, creation-time priority levels,
-  per-user ``NotificationPreference`` opt-outs, and migration ``0007``.
-  Existing notifications are assigned the seeded ``general`` category.
-- Personal preference GET/PUT/PATCH endpoints, category catalog endpoint,
-  and optional category/priority query filters for personal lists and counts.
-- Mandatory categories bypass user opt-outs; optional categories can be
-  re-enabled without modifying stored notification recipients or states.
-- Idempotency and deduplication creation identity now includes category and
-  priority. Compact list response defaults are unchanged; personal full
-  detail responses add category and priority.
-
-
-### Added
-
-- Optional ``Notification.expires_at`` and migration ``0006``. Personal
-  inbox queries and lifecycle operations now exclude expired records,
-  while administrative querysets can still access retained records.
-- Chainable ``active_at()`` and ``expired_at()`` selectors, and an opt-in
-  ``prune_expired_notifications`` command with dry-run by default, an
-  explicit execution switch, retention cutoff and bounded batches.
-- Expiration-aware idempotency fingerprints and deduplication reuse rules.
-
-
-- Transactional application-level ``idempotency_key`` and fixed-window
-  ``deduplication_key``/``deduplication_window`` options on
-  ``Notification.objects.create_notification()``. Concurrent retries share a
-  unique database claim; conflicting event/audience reuse raises ``ValueError``.
-  Existing unkeyed creation remains unchanged.
-- ``NotificationCreationKey`` model and migration ``0005`` for atomic,
-  database-backed event identity and deduplication windows (no Redis required).
-  Claims cascade on hard deletion; expired deduplication claims are reusable.
-
-- Optional `group_audience_mode="SNAPSHOT"` when creating notifications via the
-  manager, persisting creation-time group members as direct recipients. Default
-  `DYNAMIC` remains compatible with existing current-membership targeting.
-- Django migration `0004` adds the audience mode field (existing rows remain
-  dynamic), with admin visibility and trusted serializer metadata.
-
-- Personal inbox summary (total/read/unread), safe preview, explicit per-item
-  read/unread actions, bounded and atomic bulk read/unread, and selected
-  activity soft-deletion endpoints. Counts and mutations respect both direct
-  and current group recipients and each user's independent state.
-- HTTP-correct POST/DELETE equivalents for existing mark-all and activity
-  clear actions, including ``DELETE /activities/{id}/``.
-- ``DJANGO_NOTIFICATION_API_ALLOW_LEGACY_GET_MUTATIONS`` and
-  ``DJANGO_NOTIFICATION_API_RETRIEVE_MARKS_SEEN`` compatibility settings.
-
-### Changed
-
-- Legacy mutating GET responses include deprecation and no-store headers.
-  The old mutating GET actions can be disabled without disabling new POST/
-  DELETE counterparts; detail retrieval can be made read-only.
-
-- Reuse the composable ``visible_to(user)`` policy for model-level permission
-  checks, including inactive users and custom user models without groups.
-- Scope individual activity clear and configured administrative hard-delete
-  actions to the acting user's **seen, visible, undeleted** activity queryset.
-- Use a privacy-safe full personal serializer: other recipient identities,
-  group relationships/permissions, other users' seen state, internal
-  content-type metadata, and arbitrary notification ``data`` are no longer
-  returned by built-in self-service detail or full-list responses. This is
-  an intentional HTTP response-contract change; the old comprehensive
-  ``NotificationSerializer`` remains available for trusted admin code.
-
-- Use model-backed, chainable querysets for notification and activity REST lists;
-  preserve the existing compact JSON fields and configured detail serializers.
-- Move legacy ``display_detail`` dictionary projection into a compatibility
-  adapter outside the composable queryset implementation.
-- Support both notification model instances and legacy dictionaries in the
-  dynamic serializer, including the original default title behavior.
-
-- Move notification creation, selective updates, hard/soft deletion, sent-state
-  updates, and per-user read/clear mutations into a transactional lifecycle
-  service. Manager entry points keep their existing signatures.
-- Bound per-user bulk state writes to 500-ID keyset batches, with atomic
-  rollback and conflict-tolerant inserts for concurrent duplicate attempts.
-- Make notification creation and recipient/group assignment atomic.
-- Keep legacy filtered-queryset mutation methods as deprecated delegating
-  compatibility shims; new code should use the manager for state changes.
-
-- Add composable model-returning notification filters for visibility,
-  targeting, sent status, read state, and per-user soft deletion.
-- Make recipient and group matching use OR semantics and database ``Exists``
-  predicates, avoiding duplicated notifications and pagination counts.
-- Treat explicitly empty recipient/group constraints as match-none, without
-  changing the meaning of omitted constraints.
-- Preserve legacy queryset response projections while consolidating their
-  filtering logic; personal seen/unseen queries now include current group
-  membership by default and cannot be widened by arbitrary target filters.
-
-
-### Security
-
-- Scope notification/activity self-service endpoints and per-user read/soft-delete state to direct recipients and members of targeted Django groups; staff status alone grants no access.
-- Stop staff status from implicitly widening sent/unsent query results.
-- Stop staff status from automatically selecting the full serializer for notification/activity list responses; personal detail retrieval now uses the privacy-safe serializer for authorized direct recipients and group members.
+1. Install a compatible Python/Django/DRF environment and apply the package's
+   migrations with `python manage.py migrate`; retain existing migration history.
+2. Update clients to explicit POST/DELETE operations and review assumptions about
+   personal response fields and staff access. Temporary legacy GET switches are
+   documented in the [upgrade guide](docs/upgrading.rst); leave them disabled
+   after clients have migrated.
+3. Move application mutations to manager methods before enabling lifecycle
+   receivers, the outbox, or external delivery. Existing notifications are not
+   automatically backfilled into a newly enabled delivery integration.
+4. Configure optional integrations deliberately and exercise recipient access,
+   retries, retention previews, and provider idempotency in the host application.
 
 ## v1.2.1 (2025-01-15)
 
