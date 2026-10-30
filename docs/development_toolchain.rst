@@ -81,6 +81,16 @@ with uv rather than editing resolved records by hand. Framework combinations
 in the tox matrix are resolved separately so branch-specific Django version
 requirements remain effective.
 
+Version bumps
+-------------
+
+Run ``uv run --locked cz bump --increment MAJOR`` for an approved major
+release. Commitizen's ``uv`` version provider updates the project version in
+both ``pyproject.toml`` and ``uv.lock``. A hook checks the lockfile offline
+and stages it before the release commit hooks run. The existing
+locked dependencies are retained. The command creates a local commit and tag;
+pushing them is a separate release step.
+
 Continuous integration
 ----------------------
 

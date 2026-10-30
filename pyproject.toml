@@ -285,8 +285,9 @@ report.exclude_lines = [ "def __repr__", "pragma: no cover", "raise AssertionErr
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version_provider = "pep621"
+version_provider = "uv"
 tag_format = "v$version"
+pre_bump_hooks = [ "uv lock --check --offline", "git add uv.lock" ]
 
 [tool.django_migration_linter]
 exclude_migration_tests = [ "NOT_NULL", "ADD_UNIQUE" ]
