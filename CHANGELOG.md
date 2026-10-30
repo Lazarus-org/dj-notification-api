@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.2 (2026-10-30)
+
+### Fixed
+
+- Read the documentation release version directly from `pyproject.toml` so
+  Sphinx follows version bumps automatically and cannot display a stale
+  installed-package version or hard-coded fallback.
+- Include the TOML parser dependency for documentation builds on Python 3.10.
+
 ## v2.0.1 (2026-10-30)
 
 ### Fixed

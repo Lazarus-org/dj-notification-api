@@ -4,7 +4,7 @@ requires = [ "hatchling>=1.32.4,<2" ]
 
 [project]
 name = "dj-notification-api"
-version = "2.0.1"
+version = "2.0.2"
 description = "A pluggable Django notification API with in-app and optional external delivery"
 readme = "README.md"
 keywords = [ "django", "django-rest-framework", "notification", "notifications" ]
